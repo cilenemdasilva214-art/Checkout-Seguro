@@ -472,7 +472,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Globais para rastreamento de produto Shopify
+  let shpfyProductTitle = null;
+  let shpfyProductSku = null;
+  let shpfyProductPrice = null;
+  let shpfyProductQuantity = 1;
+  let shpfyVariantId = null;
+
+  // Função para carregar produtos vindos do redirecionamento Shopify
+  function parseUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramTitle = urlParams.get('title');
+    const paramPrice = urlParams.get('price');
+    const paramSku = urlParams.get('sku');
+    const paramQty = urlParams.get('quantity');
+    const paramVariant = urlParams.get('shopify_variant_id');
+
+    if (paramTitle && paramPrice) {
+      shpfyProductTitle = paramTitle;
+      shpfyProductSku = paramSku || 'SHPFY-DEFAULT';
+      shpfyProductPrice = parseFloat(paramPrice) || 0;
+      shpfyProductQuantity = parseInt(paramQty) || 1;
+      shpfyVariantId = paramVariant || null;
+
+      // 1. Atualizar o Título do produto no resumo da compra
+      const itemTitleSpan = document.querySelector('.items-list .item-title');
+      if (itemTitleSpan) {
+        itemTitleSpan.textContent = shpfyProductTitle;
+      }
+      
+      // 2. Atualizar o Subtítulo para mostrar SKU e Quantidade
+      const itemSubtitleSpan = document.querySelector('.items-list .item-subtitle');
+      if (itemSubtitleSpan) {
+        itemSubtitleSpan.textContent = `SKU: ${shpfyProductSku} | Qtd: ${shpfyProductQuantity}`;
+      }
+
+      // 3. Preencher o preço e bloquear o campo (impede fraude do cliente)
+      if (amountInput) {
+        amountInput.value = (shpfyProductPrice * shpfyProductQuantity).toFixed(2);
+        amountInput.disabled = true; 
+        amountInput.style.opacity = '0.7';
+        amountInput.style.cursor = 'not-allowed';
+      }
+
+      // Recalcular totais finais
+      calculateTotals();
+      console.log(`🛒 Produto do Shopify carregado com sucesso: ${shpfyProductTitle} (${shpfyProductSku})`);
+    }
+  }
+
   calculateTotals();
+  parseUrlParameters();
 
   // ==========================================
   // 8. ACORDION AVANÇADO (TESTE 3DS)
@@ -537,7 +587,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const totalAmount = subtotal + shippingPrice;
 
-    const itemsPayload = [
+    const itemsPayload = shpfyProductTitle ? [
+      {
+        name: shpfyProductTitle,
+        price: shpfyProductPrice,
+        quantity: shpfyProductQuantity,
+        sku: shpfyProductSku,
+        shopify_variant_id: shpfyVariantId
+      }
+    ] : [
       {
         name: "Pacote Sandbox Elite",
         price: subtotal,
