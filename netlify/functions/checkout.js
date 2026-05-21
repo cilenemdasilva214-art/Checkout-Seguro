@@ -89,15 +89,22 @@ exports.handler = async (event, context) => {
     // ========================================================
     // INTEGRACAO SHOPIFY: CRIAÇÃO DO PEDIDO PENDENTE
     // ========================================================
-    console.log('🛍️ Criando pedido no Shopify para o cliente...');
-    const shopifyOrder = await createShopifyOrder(data, totalAmount, paymentMethod);
-    const shopifyOrderId = shopifyOrder ? shopifyOrder.id : null;
-    const shopifyOrderName = shopifyOrder ? shopifyOrder.name : null;
+    let shopifyOrderId = null;
+    let shopifyOrderName = null;
+    
+    if (transactionStatus !== 'draft') {
+      console.log('🛍️ Criando pedido no Shopify para o cliente...');
+      const shopifyOrder = await createShopifyOrder(data, totalAmount, paymentMethod);
+      shopifyOrderId = shopifyOrder ? shopifyOrder.id : null;
+      shopifyOrderName = shopifyOrder ? shopifyOrder.name : null;
 
-    // Liquidar imediatamente no Shopify se for cartão aprovado
-    if (paymentMethod === 'card' && transactionStatus === 'APPROVED' && shopifyOrderId) {
-      console.log('💳 Pagamento em Cartão aprovado. Marcando pedido no Shopify como PAGO...');
-      await markShopifyOrderAsPaid(shopifyOrderId, totalAmount);
+      // Liquidar imediatamente no Shopify se for cartão aprovado
+      if (paymentMethod === 'card' && transactionStatus === 'APPROVED' && shopifyOrderId) {
+        console.log('💳 Pagamento em Cartão aprovado. Marcando pedido no Shopify como PAGO...');
+        await markShopifyOrderAsPaid(shopifyOrderId, totalAmount);
+      }
+    } else {
+      console.log('📝 Pedido é um Rascunho (carrinho abandonado). Pulando sincronização inicial com Shopify.');
     }
 
     // ========================================================
@@ -258,16 +265,54 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Fazer requisição POST diretamente para a REST API do Supabase
-    const targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw`;
-    
+    // Fazer requisição diretamente para a REST API do Supabase (com suporte a UPDATE para rascunhos existentes)
+    let orderExists = false;
+    let orderId = null;
+    const checkoutSessionId = data.checkout_session_id;
+    if (checkoutSessionId) {
+      const checkUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?checkout_session_id=eq.${checkoutSessionId}&select=id`;
+      try {
+        const checkRes = await fetch(checkUrl, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          if (checkData && checkData.length > 0) {
+            orderExists = true;
+            orderId = checkData[0].id;
+          }
+        }
+      } catch (checkErr) {
+        console.error('⚠️ Erro ao verificar rascunho existente:', checkErr.message);
+      }
+    }
+
+    let targetUrl;
+    let httpMethod;
+    let preferHeader;
+
+    if (orderExists && orderId) {
+      console.log(`🔄 Registro de rascunho existente encontrado com ID ${orderId}. Fazendo UPDATE (PATCH)...`);
+      targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?id=eq.${orderId}`;
+      httpMethod = 'PATCH';
+      preferHeader = 'return=representation';
+    } else {
+      console.log('🆕 Criando novo registro de transação no Supabase...');
+      targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw`;
+      httpMethod = 'POST';
+      preferHeader = 'return=representation';
+    }
+
     const response = await fetch(targetUrl, {
-      method: 'POST',
+      method: httpMethod,
       headers: {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=representation',
+        'Prefer': preferHeader,
       },
       body: JSON.stringify(payload),
     });

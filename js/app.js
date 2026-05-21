@@ -6,6 +6,139 @@
 document.addEventListener('DOMContentLoaded', () => {
   
   // ==========================================
+  // 0. SESSÃO LOCAL, DRAFT E FACEBOOK PIXEL
+  // ==========================================
+  // Gerar ID de Sessão único para rastreamento de rascunhos (carrinho abandonado)
+  let checkoutSessionId = localStorage.getItem('checkout_session_id');
+  if (!checkoutSessionId) {
+    checkoutSessionId = generateUUID();
+    localStorage.setItem('checkout_session_id', checkoutSessionId);
+  }
+
+  // Inicialização dinâmica do Facebook Pixel
+  function loadFacebookPixel(pixelId) {
+    if (!pixelId) return;
+    
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    
+    fbq('init', pixelId);
+    fbq('track', 'PageView');
+    console.log(`🎯 Facebook Pixel ${pixelId} inicializado com sucesso e PageView registrado.`);
+  }
+
+  // Disparar evento de rastreamento do Pixel
+  function trackPixelEvent(eventName, eventData = {}) {
+    if (window.fbq) {
+      fbq('track', eventName, eventData);
+      console.log(`🎯 Facebook Pixel evento '${eventName}' enviado com dados:`, eventData);
+    } else {
+      console.log(`⚠️ fbq indisponível. Ignorando evento '${eventName}'`);
+    }
+  }
+
+  // Buscar configurações globais e inicializar Pixel
+  async function initConfigsAndPixel() {
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.facebook_pixel_id) {
+          window.facebookPixelId = data.facebook_pixel_id;
+          loadFacebookPixel(data.facebook_pixel_id);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao inicializar configurações e Pixel:', err);
+    }
+  }
+
+  initConfigsAndPixel();
+
+  // Helper para salvar rascunho de checkout em tempo real no Supabase
+  async function saveCheckoutDraft(stepName) {
+    const selectedMethod = document.getElementById('selected-payment-method').value;
+    const subtotal = parseFloat(amountInput.value) || 0;
+    
+    let shippingPrice = 15.00;
+    let shippingMethodVal = 'standard';
+    const selectedRadio = document.querySelector('input[name="shipping_method"]:checked');
+    if (selectedRadio) {
+      shippingMethodVal = selectedRadio.value;
+      const priceSpan = selectedRadio.closest('.shipping-option').querySelector('.option-price');
+      shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
+    }
+    const totalAmount = subtotal + shippingPrice;
+
+    const itemsPayload = shpfyProductTitle ? [
+      {
+        name: shpfyProductTitle,
+        price: shpfyProductPrice,
+        quantity: shpfyProductQuantity,
+        sku: shpfyProductSku,
+        shopify_variant_id: shpfyVariantId
+      }
+    ] : [
+      {
+        name: "Pacote Sandbox Elite",
+        price: subtotal,
+        quantity: 1,
+        sku: "SANDBOX-ELITE-PK"
+      }
+    ];
+
+    const payload = {
+      checkout_session_id: checkoutSessionId,
+      payment_method: selectedMethod,
+      
+      // Cliente
+      customer_name: document.getElementById('customer_name').value || null,
+      customer_email: document.getElementById('customer_email').value || null,
+      customer_phone: phoneInput.value || null,
+      customer_cpf: cpfInput.value || null,
+
+      // Endereço
+      cep: cepInput.value || null,
+      street: document.getElementById('street').value || null,
+      street_number: document.getElementById('street_number').value || null,
+      complement: document.getElementById('complement').value || null,
+      neighborhood: document.getElementById('neighborhood').value || null,
+      city: document.getElementById('city').value || null,
+      state: document.getElementById('state').value ? document.getElementById('state').value.toUpperCase() : null,
+
+      // Entrega & Pedido
+      shipping_method: shippingMethodVal,
+      shipping_price: shippingPrice,
+      items: itemsPayload,
+      amount: totalAmount,
+      
+      status: "draft",
+      funnel_step: stepName
+    };
+
+    try {
+      console.log(`📝 Salvando rascunho de checkout (${stepName})...`);
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const resData = await response.json();
+      console.log('✅ Rascunho atualizado com sucesso no Supabase:', resData);
+    } catch (err) {
+      console.error('❌ Falha ao salvar rascunho:', err);
+    }
+  }
+  
+  // ==========================================
   // 1. GERENCIAMENTO DAS SEÇÕES (ACCORDION)
   // ==========================================
   const sections = document.querySelectorAll('.checkout-section');
@@ -13,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Avançar etapas clicando no botão "Continuar"
   const nextButtons = document.querySelectorAll('.next-step');
   nextButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
       const currentSection = btn.closest('.checkout-section');
       const currentStepIndex = parseInt(currentSection.getAttribute('data-step'));
@@ -26,6 +159,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextSection = document.querySelector(`.checkout-section[data-step="${currentStepIndex + 1}"]`);
         if (nextSection) {
           nextSection.classList.add('active');
+        }
+
+        // --- Rastreamento do Funil & Salvamento de Rascunhos ---
+        let subtotal = parseFloat(amountInput.value) || 0;
+        let shippingPrice = 15.00;
+        const selectedRadio = document.querySelector('input[name="shipping_method"]:checked');
+        if (selectedRadio) {
+          const priceSpan = selectedRadio.closest('.shipping-option').querySelector('.option-price');
+          shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
+        }
+        const totalAmount = subtotal + shippingPrice;
+
+        if (currentStepIndex === 1) {
+          // Salvamento do primeiro rascunho de carrinho abandonado
+          await saveCheckoutDraft('dados_pessoais');
+          trackPixelEvent('InitiateCheckout', {
+            content_name: shpfyProductTitle || 'Pacote Sandbox Elite',
+            currency: 'BRL',
+            value: totalAmount
+          });
+        } 
+        else if (currentStepIndex === 2) {
+          // Atualiza rascunho com o endereço e frete
+          await saveCheckoutDraft('entrega');
+          trackPixelEvent('AddPaymentInfo', {
+            content_name: shpfyProductTitle || 'Pacote Sandbox Elite',
+            currency: 'BRL',
+            value: totalAmount
+          });
+          // Salva automaticamente o passo de pagamento visto que o passo 3 acaba de ser aberto
+          await saveCheckoutDraft('pagamento');
         }
       }
     });
@@ -655,7 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnLoader.classList.remove('hide');
 
     const selectedMethod = paymentMethodInput.value;
-    const uuid = generateUUID();
+    const uuid = checkoutSessionId;
     const subtotal = parseFloat(amountInput.value) || 0;
     
     let shippingPrice = 15.00;
@@ -822,6 +986,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnLoader.classList.add('hide');
               } else {
                 // Sucesso absoluto! Redirecionar para tela de pré-aprovação premium
+                trackPixelEvent('Purchase', {
+                  content_name: shpfyProductTitle || 'Pacote Sandbox Elite',
+                  currency: 'BRL',
+                  value: totalAmount
+                });
+
+                // Limpar rascunho de sessão atual
+                localStorage.removeItem('checkout_session_id');
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const storeParam = urlParams.get('store_url');
                 
@@ -935,6 +1108,26 @@ document.addEventListener('DOMContentLoaded', () => {
           qrLoadingSpinner.classList.add('show');
           pixQrImage.onload = () => qrLoadingSpinner.classList.remove('show');
           pixQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(responseData.pix_qr_code)}`;
+
+          // Rastreamento Pix Purchase
+          let subtotal = parseFloat(amountInput.value) || 0;
+          let shippingPrice = 15.00;
+          const selectedRadio = document.querySelector('input[name="shipping_method"]:checked');
+          if (selectedRadio) {
+            const priceSpan = selectedRadio.closest('.shipping-option').querySelector('.option-price');
+            shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
+          }
+          const totalAmount = subtotal + shippingPrice;
+
+          trackPixelEvent('Purchase', {
+            content_name: shpfyProductTitle || 'Pacote Sandbox Elite',
+            currency: 'BRL',
+            value: totalAmount,
+            payment_method: 'pix'
+          });
+
+          // Limpar rascunho de sessão atual
+          localStorage.removeItem('checkout_session_id');
         } else {
           statusTitle.textContent = 'Transação Registrada!';
           statusSubtitle.textContent = 'O rascunho de cartão foi criado e salvo no Supabase com sucesso!';
