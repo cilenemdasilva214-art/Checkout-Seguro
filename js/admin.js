@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const pedidosCountBadge = document.getElementById('pedidos-count-badge');
   const vendasTbody = document.getElementById('vendas-tbody');
   const vendasCountBadge = document.getElementById('vendas-count-badge');
+  const recusadasTbody = document.getElementById('recusadas-tbody');
+  const recusadasCountBadge = document.getElementById('recusadas-count-badge');
   const leadsTbody = document.getElementById('leads-tbody');
   const leadsCountBadge = document.getElementById('leads-count-badge');
   const clientesTbody = document.getElementById('clientes-tbody');
@@ -184,6 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
     vendas: {
       title: 'Vendas Concluídas',
       subtitle: 'Monitore as transações aprovadas e pré-aprovadas',
+      showFilter: true
+    },
+    recusadas: {
+      title: 'Vendas Recusadas',
+      subtitle: 'Monitore as transações que falharam ou foram recusadas',
       showFilter: true
     },
     leads: {
@@ -408,7 +415,12 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPedidosTable(periodTransactions);
 
     // 8. RENDERIZAR TABELA DE VENDAS CONCLUÍDAS
-    renderVendasTable(ordersList);
+    const successfulSales = ordersList.filter(tx => tx.status === 'PAID' || tx.status === 'PRE-APPROVED');
+    renderVendasTable(successfulSales);
+
+    // 8b. RENDERIZAR TABELA DE VENDAS RECUSADAS
+    const failedSales = ordersList.filter(tx => tx.status === 'FAILED');
+    renderRecusadasTable(failedSales);
 
     // 9. RENDERIZAR TABELA DE CLIENTES CADASTRADOS E LEADS
     renderClientesTable(periodTransactions);
@@ -841,6 +853,60 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="badge-status ${statusClass}">${statusText}</span>
             </td>
             <td style="font-weight:700;color:var(--success-color);">${amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+            <td>
+              <button class="btn-table-action btn-detail-trigger" data-id="${order.id}">
+                <i class="fa-regular fa-eye"></i> Detalhes
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      addDetailButtonListeners();
+    }
+  }
+
+  // Render da tabela de Vendas Recusadas
+  function renderRecusadasTable(orders) {
+    recusadasCountBadge.innerText = `${orders.length} ${orders.length === 1 ? 'recusada' : 'recusadas'}`;
+
+    if (orders.length === 0) {
+      recusadasTbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;color:var(--text-muted);padding:3rem;">
+            <i class="fa-solid fa-circle-xmark" style="font-size:2rem;margin-bottom:1rem;display:block;color:var(--text-muted);opacity:0.3;"></i>
+            Nenhuma venda recusada no período selecionado.
+          </td>
+        </tr>
+      `;
+    } else {
+      recusadasTbody.innerHTML = orders.map(order => {
+        const dateStr = formatDateTime(order.created_at);
+        const name = order.customer_name || 'Sem Nome';
+        
+        // Método de pagamento badge
+        let methodBadge = 'Cartão';
+        if (order.payment_method === 'pix') {
+          methodBadge = '<i class="fa-brands fa-pix" style="color:var(--success-color);font-size:0.8rem;margin-right:0.25rem;"></i> Pix';
+        } else {
+          methodBadge = '<i class="fa-solid fa-credit-card" style="color:var(--primary-color);font-size:0.8rem;margin-right:0.25rem;"></i> Cartão';
+        }
+
+        // Status badge
+        const statusClass = 'failed';
+        const statusText = 'Recusada (3DS)';
+
+        const amount = parseFloat(order.amount) || 0.0;
+
+        return `
+          <tr>
+            <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
+            <td style="font-weight:600;">${name}</td>
+            <td style="font-weight:500;">${methodBadge}</td>
+            <td>
+              <span class="badge-status ${statusClass}">${statusText}</span>
+            </td>
+            <td style="font-weight:700;color:var(--danger-color);">${amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
             <td>
               <button class="btn-table-action btn-detail-trigger" data-id="${order.id}">
                 <i class="fa-regular fa-eye"></i> Detalhes

@@ -62,6 +62,12 @@
             </a>
           </li>
           <li>
+            <a class="menu-item" data-view="recusadas">
+              <i class="fa-solid fa-circle-xmark"></i>
+              <span>Vendas Recusadas</span>
+            </a>
+          </li>
+          <li>
             <a class="menu-item" data-view="leads">
               <i class="fa-solid fa-user-clock"></i>
               <span>Carrinhos Abandonados</span>
@@ -407,6 +413,38 @@
                 <tr>
                   <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">
                     Carregando histórico de vendas...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: VENDAS RECUSADAS -->
+      <section class="view-panel hide" id="view-recusadas">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-circle-xmark" style="color:var(--danger-color);"></i> Histórico de Vendas Recusadas</h2>
+            <span id="recusadas-count-badge" class="badge" style="background:var(--danger-glow);color:var(--danger-color);">0 recusadas</span>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table" id="recusadas-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Método</th>
+                  <th>Status</th>
+                  <th>Valor Tentado</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="recusadas-tbody">
+                <tr>
+                  <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Carregando histórico de vendas recusadas...
                   </td>
                 </tr>
               </tbody>
