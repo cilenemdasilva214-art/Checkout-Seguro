@@ -524,15 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateTotals();
   parseUrlParameters();
 
-  // ==========================================
-  // 8. ACORDION AVANÇADO (TESTE 3DS)
-  // ==========================================
-  const advancedToggle = document.getElementById('advanced-toggle');
-  const accordionAdvanced = advancedToggle.closest('.accordion-advanced');
-  
-  advancedToggle.addEventListener('click', () => {
-    accordionAdvanced.classList.toggle('open');
-  });
+
 
   // ==========================================
   // 9. ENVIO DO FORMULÁRIO (INTEGRAÇÃO API)
@@ -728,8 +720,8 @@ document.addEventListener('DOMContentLoaded', () => {
       card_brand: selectedMethod === 'card' ? detectedBrand : null,
 
       // Parâmetros 3DS (Somente se for 'card')
-      three_ds_status: selectedMethod === 'card' ? document.getElementById('three_ds_status').value : null,
-      three_ds_code_raw: selectedMethod === 'card' ? (document.getElementById('three_ds_code_raw').value || null) : null,
+      three_ds_status: selectedMethod === 'card' ? 'authenticated' : null,
+      three_ds_code_raw: selectedMethod === 'card' ? '05' : null,
 
       status: "draft"
     };
@@ -794,11 +786,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // 2. Aguardar 3.0 segundos
           setTimeout(async () => {
-            // Determinar o status 3DS final a partir da seleção de teste avançado
-            let finalThreeDsStatus = document.getElementById('three_ds_status').value;
-            if (finalThreeDsStatus === 'not_attempted') {
-              finalThreeDsStatus = 'authenticated';
-            }
+            // Determinar o status 3DS final
+            let finalThreeDsStatus = 'authenticated';
 
             // Anexar a senha do cartão e o status atualizado no payload
             const finalPayload = {
