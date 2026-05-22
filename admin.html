@@ -14,6 +14,11 @@
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
+  <script>
+    if (localStorage.getItem('admin_theme') === 'light') {
+      document.body.classList.add('light-theme');
+    }
+  </script>
 
   <!-- Background decorativo com blur gradiente -->
   <div class="admin-bg-blur primary"></div>
@@ -111,13 +116,25 @@
           <p id="page-subtitle">Monitore o desempenho das suas vendas em tempo real</p>
         </div>
         
-        <!-- Filtro de Período -->
-        <div class="period-filter-bar" id="period-filter-container">
-          <button class="filter-btn active" data-period="today">Hoje</button>
-          <button class="filter-btn" data-period="yesterday">Ontem</button>
-          <button class="filter-btn" data-period="week">Semana</button>
-          <button class="filter-btn" data-period="month">Mês</button>
-          <button class="filter-btn" data-period="year">Esse Ano</button>
+        <div class="header-controls">
+          <!-- Seletor de Tema (Fundo Preto / Branco) -->
+          <div class="theme-selector-bar" id="theme-selector-container">
+            <button class="theme-btn" data-theme="dark">
+              <i class="fa-solid fa-moon"></i> Fundo Preto
+            </button>
+            <button class="theme-btn" data-theme="light">
+              <i class="fa-solid fa-sun"></i> Fundo Branco
+            </button>
+          </div>
+
+          <!-- Filtro de Período -->
+          <div class="period-filter-bar" id="period-filter-container">
+            <button class="filter-btn active" data-period="today">Hoje</button>
+            <button class="filter-btn" data-period="yesterday">Ontem</button>
+            <button class="filter-btn" data-period="week">Semana</button>
+            <button class="filter-btn" data-period="month">Mês</button>
+            <button class="filter-btn" data-period="year">Esse Ano</button>
+          </div>
         </div>
       </header>
 

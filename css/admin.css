@@ -883,3 +883,244 @@ body {
   30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
   40%, 60% { transform: translate3d(4px, 0, 0); }
 }
+
+/* ==========================================================================
+   THEME TOGGLE AND SELECTION BAR (PRETO / BRANCO)
+   ========================================================================== */
+
+/* Header controls container */
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Theme selector bar */
+.theme-selector-bar {
+  display: flex;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 0.35rem;
+  gap: 0.25rem;
+  backdrop-filter: blur(10px);
+}
+
+.theme-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.theme-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+}
+
+/* Ensure responsiveness on smaller screens */
+@media (max-width: 1024px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  
+  .header-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .theme-selector-bar, .period-filter-bar {
+    width: 100%;
+    justify-content: space-around;
+  }
+}
+
+/* ==========================================================================
+   PREMIUM LIGHT THEME SPECIFIC OVERRIDES (FUNDO BRANCO)
+   ========================================================================== */
+body.light-theme {
+  --bg-color: #f8fafc; /* Slate-50 */
+  --panel-bg: rgba(255, 255, 255, 0.85);
+  --panel-border: rgba(15, 23, 42, 0.08); /* Slate-900 border with low opacity */
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-hover-bg: rgba(241, 245, 249, 0.98); /* Slate-100 */
+  
+  --primary-color: #1d4ed8; /* Blue-700 for high contrast readability */
+  --primary-glow: rgba(29, 78, 216, 0.12);
+  --accent-color: #6d28d9; /* Purple-700 */
+  --accent-glow: rgba(109, 40, 217, 0.12);
+  
+  --success-color: #047857; /* Emerald-700 */
+  --success-glow: rgba(4, 120, 87, 0.12);
+  --warning-color: #b45309; /* Amber-700 */
+  --warning-glow: rgba(180, 83, 9, 0.12);
+  --danger-color: #b91c1c; /* Red-700 */
+  --danger-glow: rgba(185, 28, 28, 0.12);
+  
+  --text-main: #0f172a; /* Slate-900 */
+  --text-muted: #475569; /* Slate-600 */
+  --text-dark: #64748b; /* Slate-500 */
+}
+
+/* Background Gradients */
+body.light-theme .admin-bg-blur {
+  opacity: 0.07;
+}
+
+/* Login Lock Screen */
+body.light-theme .lock-screen-overlay {
+  background: rgba(241, 245, 249, 0.95);
+}
+
+body.light-theme .lock-box {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+body.light-theme .lock-input {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+}
+
+/* Sidebar Nav and Items */
+body.light-theme .sidebar-logo span {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.light-theme .menu-item {
+  color: #475569;
+}
+
+body.light-theme .menu-item:hover, 
+body.light-theme .menu-item.active {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.04);
+}
+
+body.light-theme .menu-item.active {
+  background: linear-gradient(90deg, rgba(29, 78, 216, 0.1), rgba(109, 40, 217, 0.03));
+  border-color: rgba(29, 78, 216, 0.15);
+  color: var(--primary-color);
+}
+
+body.light-theme .menu-item i {
+  color: inherit;
+}
+
+/* Theme selector overrides */
+body.light-theme .theme-btn:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--text-main);
+}
+
+body.light-theme .theme-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  box-shadow: 0 4px 15px rgba(29, 78, 216, 0.25);
+}
+
+/* Period filter overrides */
+body.light-theme .filter-btn:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--text-main);
+}
+
+body.light-theme .filter-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  box-shadow: 0 4px 15px rgba(29, 78, 216, 0.25);
+}
+
+/* Cards Hover Shadows */
+body.light-theme .metric-card:hover {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+/* Table light mode styling overrides */
+body.light-theme .dashboard-table td {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+body.light-theme .dashboard-table tbody tr:hover {
+  background: rgba(15, 23, 42, 0.02);
+}
+
+/* Funnel bars adjustments for light mode readability */
+body.light-theme .funnel-step-bar-wrapper {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+/* Distribution Bars backgrounds */
+body.light-theme .dist-bar-bg {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+/* Details Modal visual fixes */
+body.light-theme .modal-content {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+body.light-theme .detail-section {
+  background: rgba(15, 23, 42, 0.015);
+  border-color: rgba(15, 23, 42, 0.04);
+}
+
+body.light-theme .detail-section h4 {
+  color: var(--primary-color);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+/* Form configs elements */
+body.light-theme .form-group input, 
+body.light-theme .form-group textarea, 
+body.light-theme .form-group select {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+body.light-theme .form-group input:focus, 
+body.light-theme .form-group textarea:focus, 
+body.light-theme .form-group select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+body.light-theme .wa-help-card {
+  background: rgba(29, 78, 216, 0.03);
+  border-color: rgba(29, 78, 216, 0.08);
+}
+
+body.light-theme .installments-badge {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--text-muted);
+}
+

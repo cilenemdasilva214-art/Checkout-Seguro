@@ -313,6 +313,38 @@ Receber notificações atualizadas diretamente no celular
   });
 
   // ==========================================
+  // 3.5 SELEÇÃO DE TEMA (DARK / LIGHT MODE)
+  // ==========================================
+  const themeBtns = document.querySelectorAll('.theme-btn');
+  const savedTheme = localStorage.getItem('admin_theme') || 'dark';
+
+  // Configura o visual dos botões de tema inicialmente
+  themeBtns.forEach(btn => {
+    if (btn.getAttribute('data-theme') === savedTheme) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Registra os cliques para mudança de tema
+  themeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      themeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const targetTheme = btn.getAttribute('data-theme');
+      
+      localStorage.setItem('admin_theme', targetTheme);
+      
+      if (targetTheme === 'light') {
+        document.body.classList.add('light-theme');
+      } else {
+        document.body.classList.remove('light-theme');
+      }
+    });
+  });
+
+  // ==========================================
   // 4. CHAMADAS À API (FETCH DATA & CONFIGS)
   // ==========================================
   async function loadInitialData() {
