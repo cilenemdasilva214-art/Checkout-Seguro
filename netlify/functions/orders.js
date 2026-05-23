@@ -35,8 +35,15 @@ exports.handler = async (event, context) => {
   }
 
   // Obter parâmetros da query string (limites, etc.)
-  const limit = event.queryStringParameters.limit || '1000';
-  const targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?select=*&order=created_at.desc&limit=${limit}`;
+  const id = event.queryStringParameters ? event.queryStringParameters.id : null;
+  const limit = (event.queryStringParameters && event.queryStringParameters.limit) || '1000';
+  
+  let targetUrl;
+  if (id) {
+    targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?id=eq.${id}&select=*`;
+  } else {
+    targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?select=*&order=created_at.desc&limit=${limit}`;
+  }
 
   try {
     const response = await fetch(targetUrl, {

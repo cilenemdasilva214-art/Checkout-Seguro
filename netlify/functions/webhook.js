@@ -76,11 +76,16 @@ exports.handler = async (event, context) => {
     const dbRecord = records[0];
     console.log(`✅ Registro encontrado no Supabase! ID Interno: ${dbRecord.id}, Status Atual: ${dbRecord.status}`);
 
-    const isPaidState = ['PAID', 'APPROVED', 'approved', 'paid'].includes(status);
+    const isPaidState = ['PAID', 'APPROVED', 'approved', 'paid', 'PRE-APPROVED', 'pre-approved'].includes(status);
     
     // Se o pagamento foi aprovado
     if (isPaidState) {
       console.log(`💰 Status recebido como aprovado (${status}). Sincronizando com Supabase e Shopify...`);
+
+      // FB CAPI DISPARO: PIX OU CARTÃO APROVADO
+      if (dbRecord.status !== 'PAID') {
+        sendFacebookCapiEvent(dbRecord, 'Purchase').catch(e => console.error('Erro ao enviar CAPI no Webhook:', e.message));
+      }
 
       // 1. Atualizar status no Supabase para PAID
       const patchUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?id=eq.${dbRecord.id}`;
@@ -208,5 +213,112 @@ async function markShopifyOrderAsPaid(shopifyOrderId, totalAmount) {
   } catch (error) {
     console.error("❌ Falha de rede ao capturar pagamento no Shopify:", error);
     return false;
+  }
+}
+
+// Helper para Facebook Conversions API (CAPI)
+const crypto = require('crypto');
+
+function sha256(val) {
+  if (!val) return null;
+  return crypto.createHash('sha256').update(val.trim().toLowerCase()).digest('hex');
+}
+
+async function sendFacebookCapiEvent(dbRecord, eventName) {
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+
+    // Buscar configs para obter a lista de pixels
+    const configUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/checkout_configs?select=*`;
+    const configRes = await fetch(configUrl, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!configRes.ok) return;
+    const configs = await configRes.json();
+    
+    let facebookPixelId = '';
+    let facebookPixelToken = '';
+    let facebookPixelsJson = '';
+
+    configs.forEach(c => {
+      if (c.key === 'facebook_pixel_id') facebookPixelId = c.value;
+      if (c.key === 'facebook_pixel_token') facebookPixelToken = c.value;
+      if (c.key === 'facebook_pixels') facebookPixelsJson = c.value;
+    });
+
+    // Parse pixels
+    let pixels = [];
+    if (facebookPixelsJson) {
+      try {
+        pixels = JSON.parse(facebookPixelsJson);
+      } catch (e) {
+        console.error('Erro ao fazer parse de facebook_pixels no servidor webhook:', e.message);
+      }
+    }
+
+    // fallback
+    if (pixels.length === 0 && facebookPixelId) {
+      pixels.push({ id: facebookPixelId, token: facebookPixelToken });
+    }
+
+    const capiPixels = pixels.filter(p => p.id && p.token);
+    if (capiPixels.length === 0) {
+      console.log('ℹ️ Nenhum Pixel com token Conversions API ativo. CAPI ignorado.');
+      return;
+    }
+
+    const nameParts = (dbRecord.customer_name || '').trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    const email = dbRecord.customer_email || '';
+    const phone = (dbRecord.customer_phone || '').replace(/\D/g, '');
+
+    const userData = {
+      em: email ? [sha256(email)] : [],
+      ph: phone ? [sha256(phone)] : [],
+      fn: firstName ? [sha256(firstName)] : [],
+      ln: lastName ? [sha256(lastName)] : []
+    };
+
+    const eventTime = Math.floor(Date.now() / 1000);
+    const eventId = dbRecord.checkout_session_id || dbRecord.id || `tx-${dbRecord.gateway_tx_id}`;
+
+    for (const pixel of capiPixels) {
+      const capiUrl = `https://graph.facebook.com/v19.0/${pixel.id}/events?access_token=${pixel.token}`;
+      const payload = {
+        data: [
+          {
+            event_name: eventName,
+            event_time: eventTime,
+            event_id: eventId,
+            event_source_url: 'https://checkout.mysterious-goodall.com/checkout',
+            action_source: 'website',
+            user_data: userData,
+            custom_data: {
+              currency: 'BRL',
+              value: parseFloat(dbRecord.amount) || 0
+            }
+          }
+        ]
+      };
+
+      console.log(`📡 Enviando CAPI '${eventName}' para Pixel ${pixel.id} no Webhook...`);
+      const response = await fetch(capiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const resJson = await response.json();
+      console.log(`✅ CAPI Resposta para Pixel ${pixel.id} no Webhook:`, JSON.stringify(resJson));
+    }
+  } catch (err) {
+    console.error('❌ Falha ao enviar evento CAPI no Webhook:', err.message);
   }
 }

