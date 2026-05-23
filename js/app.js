@@ -1031,6 +1031,40 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
           }
         }
       }
+
+      if (input.id === 'card_expiry' && input.value.trim() && selectedMethod === 'card') {
+        const value = input.value.trim();
+        const parts = value.split('/');
+        let isExpiryValid = true;
+        
+        if (parts.length === 2) {
+          const month = parseInt(parts[0], 10);
+          const year = parseInt(parts[1], 10);
+          
+          if (isNaN(month) || isNaN(year) || month < 1 || month > 12 || year < 28) {
+            isExpiryValid = false;
+          }
+        } else {
+          isExpiryValid = false;
+        }
+
+        if (!isExpiryValid) {
+          isValid = false;
+          if (wrapper) {
+            wrapper.classList.add('input-error');
+            shakeElement(wrapper);
+          }
+          const errorMsg = document.getElementById('expiry-error-message');
+          if (errorMsg) {
+            errorMsg.classList.remove('hide');
+          }
+        } else {
+          const errorMsg = document.getElementById('expiry-error-message');
+          if (errorMsg) {
+            errorMsg.classList.add('hide');
+          }
+        }
+      }
     });
 
     // Validar valor mínimo de R$ 5,00 para Pix
@@ -1221,6 +1255,12 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
 
     const viewValue = cardExpiryInput.value || 'MM/AA';
     document.getElementById('card-expiry-view').textContent = viewValue;
+
+    // Resetar estilos de erro ao digitar
+    const errorMsg = document.getElementById('expiry-error-message');
+    if (errorMsg) errorMsg.classList.add('hide');
+    const wrapper = cardExpiryInput.closest('.input-wrapper');
+    if (wrapper) wrapper.classList.remove('input-error');
   });
 
   // Máscara CVV
