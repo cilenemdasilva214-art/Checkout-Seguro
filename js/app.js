@@ -693,61 +693,85 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     }
   }
 
-  // Buscar configurações globais e inicializar Pixel
+  // Função auxiliar para aplicar as configurações no DOM e iniciar pixels
+  function applyConfigData(data) {
+    if (!data) return;
+
+    // Múltiplos Pixels
+    window.facebookPixels = [];
+    if (data.facebook_pixels) {
+      try {
+        window.facebookPixels = JSON.parse(data.facebook_pixels);
+      } catch (e) {
+        console.error('Erro ao ler facebook_pixels no checkout:', e);
+      }
+    }
+    
+    // Sincronização inicial de retrocompatibilidade
+    if (window.facebookPixels.length === 0 && data.facebook_pixel_id) {
+      window.facebookPixels.push({ id: data.facebook_pixel_id, token: data.facebook_pixel_token });
+    }
+
+    // Inicializar todos os pixels
+    if (window.facebookPixels.length > 0) {
+      window.facebookPixels.forEach(p => {
+        if (p.id) {
+          loadFacebookPixel(p.id);
+        }
+      });
+    }
+
+    if (data.discount_pix_percent !== undefined) {
+      discountPixPercent = parseFloat(data.discount_pix_percent) || 0;
+    }
+    
+    if (data.checkout_wa_store_name) {
+      dbWaStoreName = data.checkout_wa_store_name;
+    }
+    if (data.checkout_wa_msg_pix) {
+      dbWaMsgPix = data.checkout_wa_msg_pix;
+    }
+    
+    // Atualizar fretes com dados reais do banco
+    updateShippingOptionsDOM(data);
+
+    // Carregar configurações de tema visual personalizado
+    if (data.checkout_theme_config) {
+      try {
+        const themeConfig = JSON.parse(data.checkout_theme_config);
+        window._currentThemeConfig = themeConfig;
+        applyThemeConfig(themeConfig);
+      } catch (e) {
+        console.error('Erro ao ler checkout_theme_config:', e);
+      }
+    }
+  }
+
+  // Buscar configurações globais e inicializar Pixel com cache reativo local (carregamento instantâneo)
   async function initConfigsAndPixel() {
+    // 1. Tentar ler do localStorage para renderização imediata da logo e estilos
+    const cachedConfig = localStorage.getItem('cached_checkout_config');
+    if (cachedConfig) {
+      try {
+        const cachedData = JSON.parse(cachedConfig);
+        applyConfigData(cachedData);
+        calculateTotals();
+      } catch (e) {
+        console.error('Erro ao ler configurações em cache:', e);
+      }
+    }
+
+    // 2. Fazer requisição na rede em segundo plano para manter atualizado
     try {
       const res = await fetch('/api/config');
       if (res.ok) {
         const data = await res.json();
-        // Múltiplos Pixels
-        window.facebookPixels = [];
-        if (data.facebook_pixels) {
-          try {
-            window.facebookPixels = JSON.parse(data.facebook_pixels);
-          } catch (e) {
-            console.error('Erro ao ler facebook_pixels no checkout:', e);
-          }
-        }
         
-        // Sincronização inicial de retrocompatibilidade
-        if (window.facebookPixels.length === 0 && data.facebook_pixel_id) {
-          window.facebookPixels.push({ id: data.facebook_pixel_id, token: data.facebook_pixel_token });
-        }
-
-        // Inicializar todos os pixels
-        if (window.facebookPixels.length > 0) {
-          window.facebookPixels.forEach(p => {
-            if (p.id) {
-              loadFacebookPixel(p.id);
-            }
-          });
-        }
-
-        if (data.discount_pix_percent !== undefined) {
-          discountPixPercent = parseFloat(data.discount_pix_percent) || 0;
-        }
+        // Salvar em cache para o próximo carregamento instantâneo
+        localStorage.setItem('cached_checkout_config', JSON.stringify(data));
         
-        if (data.checkout_wa_store_name) {
-          dbWaStoreName = data.checkout_wa_store_name;
-        }
-        if (data.checkout_wa_msg_pix) {
-          dbWaMsgPix = data.checkout_wa_msg_pix;
-        }
-        
-        // Atualizar fretes com dados reais do banco
-        updateShippingOptionsDOM(data);
-
-        // Carregar configurações de tema visual personalizado
-        if (data.checkout_theme_config) {
-          try {
-            const themeConfig = JSON.parse(data.checkout_theme_config);
-            window._currentThemeConfig = themeConfig;
-            applyThemeConfig(themeConfig);
-          } catch (e) {
-            console.error('Erro ao ler checkout_theme_config:', e);
-          }
-        }
-        // Recalcular totais na carga inicial com dados reais de descontos carregados do banco de dados
+        // Aplicar os dados novos na interface
+        applyConfigData(data);
         calculateTotals();
       }
     } catch (err) {
