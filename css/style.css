@@ -452,53 +452,91 @@ body {
 .pt-3 { padding-top: 12px; }
 .mt-4 { margin-top: 24px; }
 
-/* Abas de Escolha de Pagamento */
-.payment-tabs {
+/* Acordeão de Escolha de Pagamento (Premium / Tipo Shopify) */
+.payment-methods-accordion {
   display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-bottom: 24px;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid var(--panel-border);
-}
-.payment-tab {
-  flex: 1;
-  padding: 12px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.25s ease;
-}
-.payment-tab:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.02);
-}
-.payment-tab.active {
-  background: var(--primary-color);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(124, 77, 255, 0.25);
-}
-.payment-tab[data-target="pix"].active {
-  background: var(--pix-color);
-  box-shadow: 0 4px 12px rgba(50, 188, 173, 0.25);
+  margin-top: 15px;
+  width: 100%;
 }
 
-/* Alternância dos campos de pagamento */
-.payment-method-fields {
-  display: none;
+.payment-option-box {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.25s ease;
+  cursor: pointer;
 }
-.payment-method-fields.active {
-  display: block;
-  animation: fadeIn 0.35s ease;
+
+.payment-option-box.active {
+  border: 1.5px solid var(--primary-color) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.payment-option-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+}
+
+.payment-option-header .header-left {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Input radio customizado */
+.payment-option-header input[type="radio"] {
+  display: none; /* Esconder o nativo */
+}
+
+.radio-custom {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--panel-border);
+  border-radius: 50%;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  background: var(--secondary-bg);
+}
+
+.payment-option-box.active .radio-custom {
+  border-color: var(--primary-color);
+}
+
+.payment-option-box.active .radio-custom::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.payment-option-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease-out, opacity 0.2s ease-out, padding-top 0.25s ease-out;
+  opacity: 0;
+  padding-top: 0;
+}
+
+.payment-option-box.active .payment-option-body {
+  max-height: 1000px;
+  opacity: 1;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 14px;
 }
 
 @keyframes fadeIn {

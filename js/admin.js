@@ -66,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
     footerStoreAddress: 'Avenida Brasil, 1814 - Jardim América, São Paulo - SP',
     footerStoreCnpj: '43.855.557/0001-18',
     footerStorePhone: '+55 (11) 3432-5980',
-    footerStoreEmail: 'sacporto@gmail.com'
+    footerStoreEmail: 'sacporto@gmail.com',
+    defaultPaymentMethod: 'pix'
   };
 
   // Listas de cache locais para novos recursos
@@ -3565,7 +3566,8 @@ Fico no aguardo! 😊`;
     { id: 'theme-footer-store-address', key: 'footerStoreAddress', type: 'text' },
     { id: 'theme-footer-store-cnpj', key: 'footerStoreCnpj', type: 'text' },
     { id: 'theme-footer-store-phone', key: 'footerStorePhone', type: 'text' },
-    { id: 'theme-footer-store-email', key: 'footerStoreEmail', type: 'text' }
+    { id: 'theme-footer-store-email', key: 'footerStoreEmail', type: 'text' },
+    { id: 'theme-default-payment-method', key: 'defaultPaymentMethod', type: 'select' }
   ];
 
   function setupInputSync() {

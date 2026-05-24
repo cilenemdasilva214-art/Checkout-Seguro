@@ -691,6 +691,17 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       const spacer = (emailPart && phonePart) ? ' | ' : '';
       if (footerStoreContactText) footerStoreContactText.innerText = `${emailPart}${spacer}${phonePart}`;
     }
+
+    // 11. Forma de Pagamento Padrão
+    if (config.defaultPaymentMethod) {
+      if (typeof switchPaymentMethod === 'function') {
+        switchPaymentMethod(config.defaultPaymentMethod, true);
+      }
+    } else {
+      if (typeof switchPaymentMethod === 'function') {
+        switchPaymentMethod('pix', true);
+      }
+    }
   }
 
   // Função auxiliar para aplicar as configurações no DOM e iniciar pixels
@@ -1218,61 +1229,115 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
   }
 
   // ==========================================
-  // 2. ALTERNÂNCIA DE ABAS DE PAGAMENTO (CARTÃO / PIX)
+  // 2. ALTERNÂNCIA DE ACORDEÃO DE PAGAMENTO (CARTÃO / PIX)
   // ==========================================
-  const paymentTabs = document.querySelectorAll('.payment-tab');
   const paymentMethodInput = document.getElementById('selected-payment-method');
-  const cardFields = document.getElementById('payment-card-fields');
-  const pixFields = document.getElementById('payment-pix-fields');
   const virtualCardViewer = document.getElementById('virtual-card');
   const pixVirtualViewer = document.getElementById('pix-virtual-viewer');
+  const submitBtnElement = document.getElementById('btn-submit-checkout');
 
-  paymentTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const target = tab.getAttribute('data-target');
-      
-      // Alternar classe ativa nas abas
-      paymentTabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      
-      // Atualizar input oculto
-      paymentMethodInput.value = target;
+  function switchPaymentMethod(method, immediate = false) {
+    if (!method) method = 'pix';
+    
+    // Atualizar input oculto
+    if (paymentMethodInput) {
+      paymentMethodInput.value = method;
+    }
 
-      // Elementos do cartão para gerenciamento de required
-      const cardNum = document.getElementById('card_number');
-      const cardName = document.getElementById('card_holder');
-      const cardExp = document.getElementById('card_expiry');
-      const cardCvv = document.getElementById('card_cvv');
+    // Elementos do cartão para gerenciamento de required
+    const cardNum = document.getElementById('card_number');
+    const cardName = document.getElementById('card_holder');
+    const cardExp = document.getElementById('card_expiry');
+    const cardCvv = document.getElementById('card_cvv');
 
-      // Mostrar/Ocultar campos no formulário e gerenciar validação exigida
-      if (target === 'card') {
-        cardFields.classList.add('active');
-        pixFields.classList.remove('active');
-        virtualCardViewer.classList.add('active');
-        pixVirtualViewer.classList.remove('active');
+    // Pegar as caixas de opções
+    const optionBoxPix = document.getElementById('option-box-pix');
+    const optionBoxCard = document.getElementById('option-box-card');
 
-        // Restaurar validação nativa nos campos de cartão
-        if (cardNum) cardNum.setAttribute('required', '');
-        if (cardName) cardName.setAttribute('required', '');
-        if (cardExp) cardExp.setAttribute('required', '');
-        if (cardCvv) cardCvv.setAttribute('required', '');
-      } else {
-        cardFields.classList.remove('active');
-        pixFields.classList.add('active');
-        virtualCardViewer.classList.remove('active');
-        pixVirtualViewer.classList.add('active');
+    // Pegar os rádios
+    const radioPix = document.getElementById('payment-method-pix');
+    const radioCard = document.getElementById('payment-method-card');
 
-        // Remover validação nativa para evitar bloqueio silencioso do HTML5 ao pagar com Pix
-        if (cardNum) cardNum.removeAttribute('required');
-        if (cardName) cardName.removeAttribute('required');
-        if (cardExp) cardExp.removeAttribute('required');
-        if (cardCvv) cardCvv.removeAttribute('required');
+    if (method === 'card') {
+      if (optionBoxPix) optionBoxPix.classList.remove('active');
+      if (optionBoxCard) optionBoxCard.classList.add('active');
+      if (radioPix) radioPix.checked = false;
+      if (radioCard) radioCard.checked = true;
+
+      // Ativar card virtual se houver
+      if (virtualCardViewer) virtualCardViewer.classList.add('active');
+      if (pixVirtualViewer) pixVirtualViewer.classList.remove('active');
+
+      // Requerer campos do cartão
+      if (cardNum) cardNum.setAttribute('required', '');
+      if (cardName) cardName.setAttribute('required', '');
+      if (cardExp) cardExp.setAttribute('required', '');
+      if (cardCvv) cardCvv.setAttribute('required', '');
+
+      // Mover botão de submit para o cartão
+      const cardAnchor = document.getElementById('card-btn-anchor');
+      if (submitBtnElement && cardAnchor) {
+        cardAnchor.appendChild(submitBtnElement);
       }
+    } else {
+      if (optionBoxPix) optionBoxPix.classList.add('active');
+      if (optionBoxCard) optionBoxCard.classList.remove('active');
+      if (radioPix) radioPix.checked = true;
+      if (radioCard) radioCard.checked = false;
 
-      // Recalcular totais para aplicar/remover desconto do Pix
+      // Desativar card virtual
+      if (virtualCardViewer) virtualCardViewer.classList.remove('active');
+      if (pixVirtualViewer) pixVirtualViewer.classList.add('active');
+
+      // Remover obrigatoriedade dos campos de cartão
+      if (cardNum) cardNum.removeAttribute('required');
+      if (cardName) cardName.removeAttribute('required');
+      if (cardExp) cardExp.removeAttribute('required');
+      if (cardCvv) cardCvv.removeAttribute('required');
+
+      // Mover botão de submit para o Pix
+      const pixAnchor = document.getElementById('pix-btn-anchor');
+      if (submitBtnElement && pixAnchor) {
+        pixAnchor.appendChild(submitBtnElement);
+      }
+    }
+
+    // Recalcular totais para aplicar/remover desconto do Pix
+    if (typeof calculateTotals === 'function') {
       calculateTotals();
+    }
+  }
+
+  // Vincular eventos nas caixas do accordion e botões de rádio
+  const optionBoxPix = document.getElementById('option-box-pix');
+  const optionBoxCard = document.getElementById('option-box-card');
+
+  if (optionBoxPix) {
+    optionBoxPix.addEventListener('click', (e) => {
+      if (e.target.closest('.payment-option-body')) return;
+      switchPaymentMethod('pix');
     });
-  });
+  }
+
+  if (optionBoxCard) {
+    optionBoxCard.addEventListener('click', (e) => {
+      if (e.target.closest('.payment-option-body')) return;
+      switchPaymentMethod('card');
+    });
+  }
+
+  const radioPix = document.getElementById('payment-method-pix');
+  const radioCard = document.getElementById('payment-method-card');
+  if (radioPix) {
+    radioPix.addEventListener('change', () => {
+      if (radioPix.checked) switchPaymentMethod('pix');
+    });
+  }
+  if (radioCard) {
+    radioCard.addEventListener('change', () => {
+      if (radioCard.checked) switchPaymentMethod('card');
+    });
+  }
 
   // ==========================================
   // 3. MÁSCARAS DE ENTRADA (MASCARAMENTO)
@@ -1611,6 +1676,10 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     }
     if (pixTotalToPay) {
       pixTotalToPay.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    const pixValueAmount = document.getElementById('pix-value-amount');
+    if (pixValueAmount) {
+      pixValueAmount.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
     if (pixEconomyText) {
       if (discountVal > 0) {
