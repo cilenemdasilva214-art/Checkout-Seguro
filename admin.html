@@ -2106,9 +2106,9 @@
             
             <!-- Box informativo superior -->
             <div style="background: rgba(149, 191, 71, 0.08); border: 1px solid rgba(149, 191, 71, 0.2); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
-              <h3 style="font-size: 1.1rem; font-weight: 700; color: #95bf47; margin: 0;">Olá Porto dos vinhos</h3>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: #95bf47; margin: 0;">Olá!</h3>
               <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
-                Vamos instalar o checkout transparente da Zedy na sua loja Shopify.
+                Vamos instalar o checkout transparente na sua loja Shopify.
               </p>
             </div>
 
@@ -2205,7 +2205,7 @@
               <!-- Dúvidas Link -->
               <div style="margin-top: 1rem; font-size: 0.85rem;">
                 <span style="color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Está com dúvidas?</span>
-                <a href="#" style="color: #95bf47; font-weight: 600; text-decoration: underline; transition: 0.2s;">
+                <a href="#" id="link-shopify-tutorial" style="color: #95bf47; font-weight: 600; text-decoration: underline; transition: 0.2s;">
                   Aprenda como integrar sua loja com o shopify.
                 </a>
               </div>
@@ -2222,7 +2222,7 @@
               
               <!-- Copiador de Link -->
               <div style="display: flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden; height: 42px;">
-                <input type="text" readonly id="sh-install-url" value="https://app.zedy.com.br/api/postback/shopify/installapp" style="flex: 1; background: transparent; border: none; padding: 0 0.75rem; color: #95bf47; font-family: 'Space Mono', monospace; font-size: 0.8rem; outline: none;">
+                <input type="text" readonly id="sh-install-url" value="https://app.checkout.com.br/api/postback/shopify/installapp" style="flex: 1; background: transparent; border: none; padding: 0 0.75rem; color: #95bf47; font-family: 'Space Mono', monospace; font-size: 0.8rem; outline: none;">
                 <button type="button" class="btn-copy-install-url" style="background: rgba(255,255,255,0.08); border: none; border-left: 1px solid var(--panel-border); color: var(--text-main); height: 100%; width: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
                   <i class="fa-solid fa-copy"></i>
                 </button>
@@ -2435,5 +2435,103 @@
 
   <!-- Script Core Admin -->
   <script src="js/admin.js"></script>
+  <!-- MODAL: PASSO A PASSO INTEGRAÇÃO SHOPIFY -->
+  <div class="modal-overlay" id="shopify-tutorial-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 650px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 24px; padding: 2rem;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+          <i class="fa-brands fa-shopify" style="color:#95bf47;"></i> Passo a Passo da Integração Shopify
+        </h3>
+        <button class="modal-close-btn" id="btn-close-shopify-tutorial" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; transition: var(--transition-fast);"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="modal-body" style="max-height: 480px; overflow-y: auto; padding-right: 0.5rem;">
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          
+          <!-- PASSO 1 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">1</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Acessar o menu de desenvolvedor na Shopify</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                No painel de controle da sua loja Shopify, clique em <strong>Configurações</strong> (no canto inferior esquerdo) e vá para a aba <strong>Apps e canais de vendas</strong>. Depois, clique em <strong>Desenvolver apps</strong> na parte superior direita.
+              </p>
+            </div>
+          </div>
+          
+          <!-- PASSO 2 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">2</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Criar o Aplicativo Personalizado</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Clique no botão <strong>Criar um app</strong>. Digite um nome amigável para a integração (por exemplo, <code>Checkout Transparente</code>) e confirme a criação.
+              </p>
+            </div>
+          </div>
+
+          <!-- PASSO 3 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">3</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Configurar Escopos da API Admin</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Sob a guia <em>Configurações</em>, clique em <strong>Configurar escopos da API Admin</strong>. Procure pelos seguintes escopos e ative as caixas de <strong>Leitura e Escrita (Read & Write)</strong>:
+              </p>
+              <ul style="font-size: 0.85rem; color: var(--text-muted); margin: 0.5rem 0; padding-left: 1.25rem; line-height: 1.6; list-style-type: disc;">
+                <li><strong>Customers</strong> (<code>write_customers</code>, <code>read_customers</code>)</li>
+                <li><strong>Orders</strong> (<code>write_orders</code>, <code>read_orders</code>)</li>
+                <li><strong>Products</strong> (<code>write_products</code>, <code>read_products</code>)</li>
+              </ul>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Ao terminar, clique no botão <strong>Salvar</strong> na barra inferior ou superior.
+              </p>
+            </div>
+          </div>
+
+          <!-- PASSO 4 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">4</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Instalar o Aplicativo e Copiar Token</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Vá para a guia <strong>Credenciais da API</strong> e clique no botão verde <strong>Instalar app</strong>. Após a confirmação, o seu <strong>Token de acesso da API Admin</strong> será revelado. Copie-o (ele começa com <code>shpat_</code>).
+              </p>
+            </div>
+          </div>
+
+          <!-- PASSO 5 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">5</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Preencher os dados no Checkout</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Insira o <strong>Token</strong> copiado, o <strong>Client ID</strong> e o <strong>Secret</strong> (também disponíveis na guia <em>Credenciais da API</em>) nos campos correspondentes na coluna à esquerda da tela de sincronização e clique em <strong>Reinstalar Checkout</strong>.
+              </p>
+            </div>
+          </div>
+
+          <!-- PASSO 6 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">6</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Configurar Webhooks (URL de Instalação)</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Copie a <strong>URL de instalação</strong> disponível no card lateral direito e configure na sua Shopify para ativar por completo a captura transparente de pedidos do seu checkout!
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <div style="margin-top: 2rem; border-top: 1px solid var(--panel-border); padding-top: 1.25rem; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-submit-settings" id="btn-close-shopify-tutorial-footer" style="background: var(--primary-color); border: none; color: #fff; padding: 0.65rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+          Entendi, fechar tutorial
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

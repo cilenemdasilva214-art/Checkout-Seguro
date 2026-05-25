@@ -4127,6 +4127,26 @@ Fico no aguardo! 😊`;
     });
   }
 
+  // Tutorial Modal Listeners
+  const linkShopifyTutorial = document.getElementById('link-shopify-tutorial');
+  const shopifyTutorialModal = document.getElementById('shopify-tutorial-modal');
+  const btnCloseShopifyTutorial = document.getElementById('btn-close-shopify-tutorial');
+  const btnCloseShopifyTutorialFooter = document.getElementById('btn-close-shopify-tutorial-footer');
+
+  if (linkShopifyTutorial && shopifyTutorialModal) {
+    linkShopifyTutorial.addEventListener('click', (e) => {
+      e.preventDefault();
+      shopifyTutorialModal.style.display = 'flex';
+    });
+  }
+
+  const closeTutorialModal = () => {
+    if (shopifyTutorialModal) shopifyTutorialModal.style.display = 'none';
+  };
+
+  if (btnCloseShopifyTutorial) btnCloseShopifyTutorial.addEventListener('click', closeTutorialModal);
+  if (btnCloseShopifyTutorialFooter) btnCloseShopifyTutorialFooter.addEventListener('click', closeTutorialModal);
+
   // ==========================================
   // INICIALIZAÇÃO AUTOMÁTICA
   // ==========================================
