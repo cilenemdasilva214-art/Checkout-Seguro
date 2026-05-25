@@ -3727,7 +3727,10 @@ Fico no aguardo! 😊`;
         mockLogoImg.classList.remove('hide');
       }
     } else {
-      if (mockLogoPlaceholder) mockLogoPlaceholder.classList.remove('hide');
+      if (mockLogoPlaceholder) {
+        mockLogoPlaceholder.classList.remove('hide');
+        mockLogoPlaceholder.innerText = themeConfig.footerStoreName || 'Sua Logo';
+      }
       if (mockLogoImg) {
         mockLogoImg.src = '';
         mockLogoImg.classList.add('hide');
