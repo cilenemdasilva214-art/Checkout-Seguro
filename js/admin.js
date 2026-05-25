@@ -3902,6 +3902,62 @@ Fico no aguardo! 😊`;
         mockActionBtn.classList.add('style-gradient');
       }
     }
+
+    // Rodapé Sincronização Dinâmica em Tempo Real
+    const mockFooterElement = document.getElementById('mock-footer-element');
+    if (mockFooterElement) {
+      const footerBg = themeConfig.footerBgColor || themeConfig.colorFooterBg || '#164620';
+      const footerText = themeConfig.footerTextColor || '#ffffff';
+      
+      mockFooterElement.style.backgroundColor = footerBg;
+      mockFooterElement.style.color = footerText;
+      
+      const storeName = themeConfig.footerStoreName || 'Checkout';
+      const storeAddress = themeConfig.footerStoreAddress || '';
+      const storeCnpj = themeConfig.footerStoreCnpj || '';
+      const storePhone = themeConfig.footerStorePhone || '';
+      const storeEmail = themeConfig.footerStoreEmail || '';
+      
+      const mockNameText = document.getElementById('mock-footer-store-name-text');
+      if (mockNameText) {
+        mockNameText.innerText = `${storeName} | Todos os direitos reservados`;
+        mockNameText.style.color = footerText;
+      }
+      
+      const mockAddressText = document.getElementById('mock-footer-store-address-text');
+      if (mockAddressText) {
+        mockAddressText.innerText = storeAddress;
+        mockAddressText.style.color = footerText;
+        mockAddressText.classList.toggle('hide', !storeAddress);
+      }
+      
+      const mockCopyrightText = document.getElementById('mock-footer-store-copyright-text');
+      if (mockCopyrightText) {
+        const year = new Date().getFullYear();
+        mockCopyrightText.innerText = `© ${year} ${storeName} ${storeCnpj ? `- CNPJ: ${storeCnpj}` : ''}`;
+        mockCopyrightText.style.color = footerText;
+      }
+      
+      const mockContactText = document.getElementById('mock-footer-store-contact-text');
+      if (mockContactText) {
+        let contactStr = '';
+        if (storePhone) contactStr += `Telefone: ${storePhone} `;
+        if (storeEmail) contactStr += `E-mail: ${storeEmail}`;
+        mockContactText.innerText = contactStr.trim();
+        mockContactText.style.color = footerText;
+        mockContactText.classList.toggle('hide', !contactStr.trim());
+      }
+      
+      const paymentTitle = mockFooterElement.querySelector('.payment-title');
+      if (paymentTitle) paymentTitle.style.color = footerText;
+      
+      const securitySeal = mockFooterElement.querySelector('.security-seal');
+      if (securitySeal) {
+        securitySeal.style.color = footerText;
+        const sealSpans = securitySeal.querySelectorAll('span');
+        sealSpans.forEach(span => span.style.color = footerText);
+      }
+    }
   }
 
   // 7. Alternador de Dispositivos (Desktop / Mobile)
