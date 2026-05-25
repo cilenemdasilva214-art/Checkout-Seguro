@@ -175,8 +175,7 @@ exports.handler = async (event, context) => {
 
 // Helper para marcar pedido do Shopify como pago
 async function markShopifyOrderAsPaid(shopifyOrderId, totalAmount) {
-  const storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
-  const accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+  const { storeDomain, accessToken } = await resolveShopifyCredentials();
 
   if (!storeDomain || !accessToken || !shopifyOrderId) {
     console.warn("⚠️ Credenciais do Shopify ausentes para registrar pagamento.");
@@ -321,4 +320,46 @@ async function sendFacebookCapiEvent(dbRecord, eventName) {
   } catch (err) {
     console.error('❌ Falha ao enviar evento CAPI no Webhook:', err.message);
   }
+}
+
+async function resolveShopifyCredentials() {
+  let storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
+  let accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    try {
+      const configUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/checkout_configs?select=*`;
+      const configRes = await fetch(configUrl, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (configRes.ok) {
+        const configs = await configRes.json();
+        let themeConfigStr = '';
+        configs.forEach(c => {
+          if (c.key === 'checkout_theme_config') themeConfigStr = c.value;
+        });
+
+        if (themeConfigStr) {
+          const themeConfig = JSON.parse(themeConfigStr);
+          if (themeConfig.shopifyDomain) {
+            storeDomain = themeConfig.shopifyDomain.trim() + '.myshopify.com';
+          }
+          if (themeConfig.shopifyToken) {
+            accessToken = themeConfig.shopifyToken.trim();
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao buscar credenciais dinâmicas do Shopify no Webhook:', err);
+    }
+  }
+
+  return { storeDomain, accessToken };
 }

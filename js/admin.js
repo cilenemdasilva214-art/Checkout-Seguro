@@ -3675,6 +3675,21 @@ Fico no aguardo! 😊`;
         }
       }
     });
+
+    // Populate Shopify integration screen inputs from themeConfig
+    const shDomainPrefix = document.getElementById('sh-domain-prefix');
+    const shAccessToken = document.getElementById('sh-access-token');
+    const shClientId = document.getElementById('sh-client-id');
+    const shSecret = document.getElementById('sh-secret');
+    const shSkipCart = document.getElementById('sh-skip-cart');
+    const shImportCoupons = document.getElementById('sh-import-coupons');
+
+    if (shDomainPrefix) shDomainPrefix.value = themeConfig.shopifyDomain || 's1pwiw-kv';
+    if (shAccessToken) shAccessToken.value = themeConfig.shopifyToken || 'shpat_c0e256979d2452fc854db87384386xxxx';
+    if (shClientId) shClientId.value = themeConfig.shopifyClientId || '01f8ba9c35c5bb9bef70d949d2356676';
+    if (shSecret) shSecret.value = themeConfig.shopifySecret || 'shpss_252c116837c44ea156428f65c773xxxx';
+    if (shSkipCart) shSkipCart.checked = !!themeConfig.shopifySkipCart;
+    if (shImportCoupons) shImportCoupons.checked = !!themeConfig.shopifyImportCoupons;
     
     updateMockup();
   }
@@ -4104,26 +4119,106 @@ Fico no aguardo! 😊`;
 
   const btnDisconnectShopify = document.getElementById('btn-disconnect-shopify');
   if (btnDisconnectShopify) {
-    btnDisconnectShopify.addEventListener('click', () => {
+    btnDisconnectShopify.addEventListener('click', async () => {
       if (confirm('Deseja realmente desconectar a integração com a Shopify?')) {
         const domPref = document.getElementById('sh-domain-prefix');
         const accTok = document.getElementById('sh-access-token');
         const clId = document.getElementById('sh-client-id');
         const sec = document.getElementById('sh-secret');
+        const skipC = document.getElementById('sh-skip-cart');
+        const impC = document.getElementById('sh-import-coupons');
+
         if (domPref) domPref.value = '';
         if (accTok) accTok.value = '';
         if (clId) clId.value = '';
         if (sec) sec.value = '';
-        alert('Integração desconectada com sucesso!');
+        if (skipC) skipC.checked = false;
+        if (impC) impC.checked = false;
+
+        themeConfig.shopifyDomain = '';
+        themeConfig.shopifyToken = '';
+        themeConfig.shopifyClientId = '';
+        themeConfig.shopifySecret = '';
+        themeConfig.shopifySkipCart = false;
+        themeConfig.shopifyImportCoupons = false;
+
+        btnDisconnectShopify.disabled = true;
+        const originalText = btnDisconnectShopify.innerText;
+        btnDisconnectShopify.innerText = 'Salvando...';
+
+        try {
+          const response = await fetch('/api/config', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              checkout_theme_config: JSON.stringify(themeConfig)
+            })
+          });
+
+          if (response.ok) {
+            alert('Integração com a Shopify desconectada com sucesso!');
+          } else {
+            const err = await response.text();
+            alert('Erro ao salvar no banco: ' + err);
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Erro de rede ao desconectar.');
+        } finally {
+          btnDisconnectShopify.disabled = false;
+          btnDisconnectShopify.innerText = originalText;
+        }
       }
     });
   }
 
   const shopifyForm = document.getElementById('shopify-integration-form');
   if (shopifyForm) {
-    shopifyForm.addEventListener('submit', (e) => {
+    shopifyForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      alert('Checkout reinstalado e sincronizado com a Shopify com sucesso!');
+
+      const btn = document.getElementById('btn-reinstall-shopify');
+      const originalHtml = btn ? btn.innerHTML : 'Reinstalar Checkout';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+      }
+
+      themeConfig.shopifyDomain = document.getElementById('sh-domain-prefix').value;
+      themeConfig.shopifyToken = document.getElementById('sh-access-token').value;
+      themeConfig.shopifyClientId = document.getElementById('sh-client-id').value;
+      themeConfig.shopifySecret = document.getElementById('sh-secret').value;
+      themeConfig.shopifySkipCart = document.getElementById('sh-skip-cart').checked;
+      themeConfig.shopifyImportCoupons = document.getElementById('sh-import-coupons').checked;
+
+      try {
+        const response = await fetch('/api/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            checkout_theme_config: JSON.stringify(themeConfig)
+          })
+        });
+
+        if (response.ok) {
+          alert('Checkout reinstalado e sincronizado com a Shopify com sucesso!');
+        } else {
+          const text = await response.text();
+          alert(`Erro ao sincronizar com Shopify: ${text}`);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Erro de rede ao sincronizar com Shopify.');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      }
     });
   }
 

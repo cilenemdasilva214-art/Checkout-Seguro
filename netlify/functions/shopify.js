@@ -15,8 +15,44 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
-  const accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+  let storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
+  let accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+
+  // Carregar credenciais dinâmicas do Supabase (tabela checkout_configs)
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    try {
+      const configUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/checkout_configs?select=*`;
+      const configRes = await fetch(configUrl, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (configRes.ok) {
+        const configs = await configRes.json();
+        let themeConfigStr = '';
+        configs.forEach(c => {
+          if (c.key === 'checkout_theme_config') themeConfigStr = c.value;
+        });
+
+        if (themeConfigStr) {
+          const themeConfig = JSON.parse(themeConfigStr);
+          if (themeConfig.shopifyDomain) {
+            storeDomain = themeConfig.shopifyDomain.trim() + '.myshopify.com';
+          }
+          if (themeConfig.shopifyToken) {
+            accessToken = themeConfig.shopifyToken.trim();
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao buscar credenciais dinâmicas do Shopify:', err);
+    }
+  }
 
   if (!storeDomain || !accessToken) {
     return {
