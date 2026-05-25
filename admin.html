@@ -203,6 +203,14 @@
             </a>
           </li>
 
+          <!-- SINCRONIZAR SHOPIFY TAB -->
+          <li>
+            <a class="menu-item" data-view="sincronizar-shopify">
+              <i class="fa-brands fa-shopify" style="color:#95bf47;"></i>
+              <span>Sincronizar Shopify</span>
+            </a>
+          </li>
+
           <!-- FRETE TAB -->
           <li>
             <a class="menu-item" data-view="frete">
@@ -2084,6 +2092,161 @@
 
               </div>
             </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW: SINCRONIZAR SHOPIFY (SHOPIFY INTEGRATION SCREEN) -->
+      <section class="view-panel hide" id="view-sincronizar-shopify">
+        <div class="dashboard-columns">
+          
+          <!-- COLUNA ESQUERDA: FORMULÁRIO DE CONFIGURAÇÃO -->
+          <div class="dashboard-block" style="padding: 2rem; border-radius: 20px; display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- Box informativo superior -->
+            <div style="background: rgba(149, 191, 71, 0.08); border: 1px solid rgba(149, 191, 71, 0.2); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: #95bf47; margin: 0;">Olá Porto dos vinhos</h3>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+                Vamos instalar o checkout transparente da Zedy na sua loja Shopify.
+              </p>
+            </div>
+
+            <!-- Formulário -->
+            <form id="shopify-integration-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+              
+              <!-- Campo: Domínio MyShopify -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Domínio MyShopify
+                </label>
+                <div style="display: flex; align-items: center;">
+                  <input type="text" id="sh-domain-prefix" value="s1pwiw-kv" placeholder="ex: minha-loja" style="flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); border-right: none; color: var(--text-main); border-top-left-radius: 8px; border-bottom-left-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px;">
+                  <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid var(--panel-border); border-left: none; color: var(--text-muted); border-top-right-radius: 8px; border-bottom-right-radius: 8px; padding: 0 1rem; height: 46px; display: flex; align-items: center; font-size: 0.9rem; font-weight: 500; min-width: 140px; justify-content: center; box-sizing: border-box;">
+                    .myshopify.com
+                  </div>
+                </div>
+                <span style="display: block; font-size: 0.75rem; color: #a1a1aa; margin-top: 0.35rem; line-height: 1.4;">
+                  A URL não pode conter os seguintes valores: myshopify.com, www., https://, http://, /, .
+                </span>
+              </div>
+
+              <!-- Campo: Token de acesso api admin -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Token de acesso api admin *
+                </label>
+                <input type="text" id="sh-access-token" value="shpat_c0e256979d2452fc854db87384386xxxx" placeholder="shpat_..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; box-sizing: border-box;">
+              </div>
+
+              <!-- Campo: Client ID -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Client ID *
+                </label>
+                <input type="text" id="sh-client-id" value="01f8ba9c35c5bb9bef70d949d2356676" placeholder="Identificador do cliente" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; box-sizing: border-box;">
+              </div>
+
+              <!-- Campo: Secret -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Secret *
+                </label>
+                <input type="password" id="sh-secret" value="shpss_252c116837c44ea156428f65c773xxxx" placeholder="Segredo da API" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; box-sizing: border-box;">
+              </div>
+
+              <!-- Checkboxes -->
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; color: var(--text-main); font-weight: 500;">
+                  <input type="checkbox" id="sh-skip-cart" style="width: 18px; height: 18px; accent-color: #95bf47; cursor: pointer;">
+                  Pular carrinho
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; color: var(--text-main); font-weight: 500;">
+                  <input type="checkbox" id="sh-import-coupons" style="width: 18px; height: 18px; accent-color: #95bf47; cursor: pointer;">
+                  Importar cupons da Shopify
+                </label>
+              </div>
+
+              <!-- Linha divisória fina -->
+              <div style="border-top: 1px solid var(--panel-border); margin: 0.5rem 0;"></div>
+
+              <!-- Botões de Ação Inferiores -->
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <button type="button" id="btn-disconnect-shopify" style="background: #ef4444; color: #fff; border: none; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit;">
+                  Desconectar
+                </button>
+                <button type="submit" id="btn-reinstall-shopify" style="background: #fff; color: #1f2937; border: 1px solid var(--panel-border); padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit;">
+                  Reinstalar Checkout
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- COLUNA DIREITA: STATUS & URLS DE COPIA -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- Card 1: Status da integração -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px;">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem 0;">
+                Status da integração
+              </h3>
+              
+              <!-- Seletor / Status Ativo -->
+              <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 0.65rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: #10b981; font-weight: 600; font-size: 0.95rem;">
+                  <i class="fa-solid fa-circle-check"></i>
+                  <span>Ativo</span>
+                </div>
+                <i class="fa-solid fa-chevron-up-down" style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.6;"></i>
+              </div>
+
+              <!-- Dúvidas Link -->
+              <div style="margin-top: 1rem; font-size: 0.85rem;">
+                <span style="color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Está com dúvidas?</span>
+                <a href="#" style="color: #95bf47; font-weight: 600; text-decoration: underline; transition: 0.2s;">
+                  Aprenda como integrar sua loja com o shopify.
+                </a>
+              </div>
+            </div>
+
+            <!-- Card 2: URL de instalação -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(251, 191, 36, 0.15); background: rgba(251, 191, 36, 0.02);">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">
+                URL de instalação
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                Copie esta URL para configurar a instalação do app Shopify.
+              </p>
+              
+              <!-- Copiador de Link -->
+              <div style="display: flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden; height: 42px;">
+                <input type="text" readonly id="sh-install-url" value="https://app.zedy.com.br/api/postback/shopify/installapp" style="flex: 1; background: transparent; border: none; padding: 0 0.75rem; color: #95bf47; font-family: 'Space Mono', monospace; font-size: 0.8rem; outline: none;">
+                <button type="button" class="btn-copy-install-url" style="background: rgba(255,255,255,0.08); border: none; border-left: 1px solid var(--panel-border); color: var(--text-main); height: 100%; width: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 3: Escopos do app -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px;">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">
+                Escopos do app
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                Use estes escopos na configuração e autorização do app Shopify.
+              </p>
+              
+              <!-- Copiador de Escopos -->
+              <div style="display: flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden; height: 42px;">
+                <input type="text" readonly id="sh-app-scopes" value="read_customers,write_customers,read_orders,write_orders,read_products,write_products" style="flex: 1; background: transparent; border: none; padding: 0 0.75rem; color: var(--text-muted); font-family: 'Space Mono', monospace; font-size: 0.8rem; outline: none;">
+                <button type="button" class="btn-copy-app-scopes" style="background: rgba(255,255,255,0.08); border: none; border-left: 1px solid var(--panel-border); color: var(--text-main); height: 100%; width: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
+            </div>
+
           </div>
 
         </div>

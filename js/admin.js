@@ -430,6 +430,11 @@ Fico no aguardo! 😊`;
       subtitle: 'Gerencie as integrações do seu checkout em segundos',
       showFilter: false
     },
+    'sincronizar-shopify': {
+      title: 'Shopify',
+      subtitle: 'Plataforma global de e-commerce',
+      showFilter: false
+    },
     frete: {
       title: 'Configurações de Frete',
       subtitle: 'Gerencie os prazos, nomes e preços de frete para o checkout',
@@ -4057,6 +4062,68 @@ Fico no aguardo! 😊`;
         btnSaveTheme.disabled = false;
         btnSaveTheme.innerHTML = originalHtml;
       }
+    });
+  }
+
+  // ==========================================
+  // LOGIC FOR SINCRONIZAR SHOPIFY (SHOPIFY INTEGRATION VIEW)
+  // ==========================================
+  const btnCopyInstallUrl = document.querySelector('.btn-copy-install-url');
+  if (btnCopyInstallUrl) {
+    btnCopyInstallUrl.addEventListener('click', () => {
+      const urlInput = document.getElementById('sh-install-url');
+      if (urlInput) {
+        navigator.clipboard.writeText(urlInput.value).then(() => {
+          const icon = btnCopyInstallUrl.querySelector('i');
+          if (icon) {
+            icon.className = 'fa-solid fa-check';
+            setTimeout(() => { icon.className = 'fa-solid fa-copy'; }, 2000);
+          }
+          alert('URL de instalação copiada com sucesso!');
+        });
+      }
+    });
+  }
+
+  const btnCopyAppScopes = document.querySelector('.btn-copy-app-scopes');
+  if (btnCopyAppScopes) {
+    btnCopyAppScopes.addEventListener('click', () => {
+      const scopesInput = document.getElementById('sh-app-scopes');
+      if (scopesInput) {
+        navigator.clipboard.writeText(scopesInput.value).then(() => {
+          const icon = btnCopyAppScopes.querySelector('i');
+          if (icon) {
+            icon.className = 'fa-solid fa-check';
+            setTimeout(() => { icon.className = 'fa-solid fa-copy'; }, 2000);
+          }
+          alert('Escopos do app copiados com sucesso!');
+        });
+      }
+    });
+  }
+
+  const btnDisconnectShopify = document.getElementById('btn-disconnect-shopify');
+  if (btnDisconnectShopify) {
+    btnDisconnectShopify.addEventListener('click', () => {
+      if (confirm('Deseja realmente desconectar a integração com a Shopify?')) {
+        const domPref = document.getElementById('sh-domain-prefix');
+        const accTok = document.getElementById('sh-access-token');
+        const clId = document.getElementById('sh-client-id');
+        const sec = document.getElementById('sh-secret');
+        if (domPref) domPref.value = '';
+        if (accTok) accTok.value = '';
+        if (clId) clId.value = '';
+        if (sec) sec.value = '';
+        alert('Integração desconectada com sucesso!');
+      }
+    });
+  }
+
+  const shopifyForm = document.getElementById('shopify-integration-form');
+  if (shopifyForm) {
+    shopifyForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      alert('Checkout reinstalado e sincronizado com a Shopify com sucesso!');
     });
   }
 
