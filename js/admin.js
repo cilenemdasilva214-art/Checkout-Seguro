@@ -53,9 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
     colorPrimary: '#164620',
     colorTextMain: '#111827',
     colorTextMuted: '#6b7280',
-    btnText: 'Concluir Compra Segura',
+    btnText: 'Finalizar Compra',
     btnStyle: 'flat',
-    btnLockIcon: true,
+    btnLockIcon: false,
     backLinkActive: true,
     backLinkText: 'Voltar para a Loja',
     backLinkUrl: '',
@@ -664,6 +664,10 @@ Fico no aguardo! 😊`;
           try {
             const parsedConfig = JSON.parse(configData.checkout_theme_config);
             themeConfig = { ...themeConfig, ...parsedConfig };
+            if (themeConfig.btnText === 'Concluir Compra Segura') {
+              themeConfig.btnText = 'Finalizar Compra';
+              themeConfig.btnLockIcon = false;
+            }
           } catch (e) {
             console.error('Erro ao fazer parse de checkout_theme_config:', e);
           }
@@ -3877,8 +3881,18 @@ Fico no aguardo! 😊`;
     const mockActionBtnText = document.getElementById('mock-action-btn-text');
     const mockActionBtnLock = document.getElementById('mock-action-btn-lock');
     
-    if (mockActionBtnText) mockActionBtnText.innerText = themeConfig.btnText || 'Concluir Compra Segura';
-    if (mockActionBtnLock) mockActionBtnLock.classList.toggle('hide', !themeConfig.btnLockIcon);
+    if (mockActionBtnText) {
+      let text = themeConfig.btnText || 'Finalizar Compra';
+      if (text === 'Concluir Compra Segura') {
+        text = 'Finalizar Compra';
+      }
+      mockActionBtnText.innerText = text;
+    }
+    let hasLock = !!themeConfig.btnLockIcon;
+    if (themeConfig.btnText === 'Concluir Compra Segura') {
+      hasLock = false;
+    }
+    if (mockActionBtnLock) mockActionBtnLock.classList.toggle('hide', !hasLock);
     
     if (mockActionBtn) {
       mockActionBtn.classList.remove('style-glow', 'style-gradient');

@@ -344,6 +344,13 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
 
       // Estilos customizados para o botão de checkout
       cssRules += `
+        #btn-submit-checkout {
+          background-color: var(--primary-color) !important;
+        }
+        #btn-submit-checkout:hover {
+          background-color: var(--primary-hover) !important;
+          transform: translateY(-1px);
+        }
         #btn-submit-checkout.style-glow {
           box-shadow: 0 0 15px var(--primary-color) !important;
           animation: pulse-glow-btn 2s infinite !important;
@@ -617,11 +624,19 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     if (submitBtn) {
       const btnTextSpan = submitBtn.querySelector('.btn-text');
       if (btnTextSpan) {
+        let text = config.btnText || 'Finalizar Compra';
+        if (text === 'Concluir Compra Segura') {
+          text = 'Finalizar Compra';
+        }
+        let hasLock = !!config.btnLockIcon;
+        if (config.btnText === 'Concluir Compra Segura') {
+          hasLock = false;
+        }
         let iconHtml = '';
-        if (config.btnLockIcon) {
+        if (hasLock) {
           iconHtml = '<i class="fa-solid fa-lock" style="margin-right: 8px;"></i>';
         }
-        btnTextSpan.innerHTML = iconHtml + (config.btnText || 'Finalizar Compra');
+        btnTextSpan.innerHTML = iconHtml + text;
       }
       
       submitBtn.classList.remove('style-glow', 'style-gradient');
