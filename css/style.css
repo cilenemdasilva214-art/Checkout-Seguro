@@ -1059,7 +1059,9 @@ body {
   -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 40px 16px;
   z-index: 1000;
   opacity: 0;
   pointer-events: none;
@@ -1078,6 +1080,7 @@ body {
   width: 100%;
   max-width: 600px;
   padding: 35px;
+  margin: auto;            /* Mantém centralizado na vertical quando cabe, e rola quando transborda */
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
   transform: translateY(30px) scale(0.95);
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1432,6 +1435,41 @@ body {
   }
   .modal-card {
     padding: 20px;
+    gap: 16px;
+    border-radius: 18px;
+  }
+  .modal-pix-area {
+    padding: 16px;
+    gap: 16px;
+    border-radius: 12px;
+  }
+  .pix-qr-container {
+    width: 160px;
+    height: 160px;
+    padding: 12px;
+    margin: 5px 0;
+  }
+  .modal-header-status {
+    gap: 8px;
+  }
+  .modal-header-status h2 {
+    font-size: 19px;
+  }
+  .modal-header-status p {
+    font-size: 13px;
+  }
+  .pix-payment-instructions {
+    padding-top: 12px;
+    gap: 8px;
+  }
+  .instruction-item {
+    font-size: 12px;
+    gap: 8px;
+  }
+  .status-icon-container {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
   }
   .payment-tabs {
     flex-direction: column;
