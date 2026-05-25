@@ -1054,6 +1054,7 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background: rgba(11, 8, 19, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -1433,43 +1434,81 @@ body {
   .checkout-section .section-content {
     padding: 20px 16px;
   }
+  .modal-overlay {
+    padding: 15px 12px; /* Margem bem menor no topo para ganhar mais espaço útil */
+  }
   .modal-card {
-    padding: 20px;
-    gap: 16px;
-    border-radius: 18px;
+    padding: 15px;      /* Menos preenchimento para diminuir altura */
+    gap: 10px;          /* Elementos mais juntos e compactos */
+    border-radius: 16px;
+    max-width: 390px;   /* Card mais estreito e alinhado */
   }
   .modal-pix-area {
-    padding: 16px;
-    gap: 16px;
+    padding: 12px;
+    gap: 12px;
     border-radius: 12px;
   }
   .pix-qr-container {
-    width: 160px;
-    height: 160px;
-    padding: 12px;
-    margin: 5px 0;
+    width: 130px;       /* QR Code menor e mais discreto para economizar altura */
+    height: 130px;
+    padding: 8px;
+    margin: 0;          /* Remove margem externa */
   }
   .modal-header-status {
-    gap: 8px;
-  }
-  .modal-header-status h2 {
-    font-size: 19px;
-  }
-  .modal-header-status p {
-    font-size: 13px;
-  }
-  .pix-payment-instructions {
-    padding-top: 12px;
-    gap: 8px;
-  }
-  .instruction-item {
-    font-size: 12px;
-    gap: 8px;
+    gap: 4px;
   }
   .status-icon-container {
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+    margin-bottom: 0;
+  }
+  .modal-header-status h2 {
+    font-size: 16px;
+  }
+  .modal-header-status p {
+    font-size: 11px;
+  }
+  .pix-copy-paste-container {
+    gap: 4px;
+  }
+  .pix-copy-paste-container label {
+    font-size: 10px;
+  }
+  .pix-input-group input {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  .btn-copy-pix {
+    padding: 0 14px;
+    font-size: 11px;
+  }
+  .pix-payment-instructions {
+    padding-top: 8px;
+    gap: 6px;
+    margin-top: 0;
+  }
+  .instruction-item {
+    font-size: 10.5px;
+    gap: 6px;
+    line-height: 1.2;
+  }
+  .instruction-item .number {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+  }
+  #pix-custom-instructions {
+    margin: 6px 0 !important;
+    padding: 6px !important;
+    font-size: 10.5px !important;
+  }
+  .modal-footer-actions {
+    margin-top: 0;
+  }
+  .modal-footer-actions .btn {
+    padding: 10px 16px !important;
+    font-size: 13px !important;
   }
   .payment-tabs {
     flex-direction: column;
