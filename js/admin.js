@@ -2319,6 +2319,25 @@ Fico no aguardo! 😊`;
     const tbody = document.getElementById('shpfy-products-tbody');
     if (!tbody) return;
 
+    // Verificar se a integração com a Shopify está ativa
+    const tokenVal = themeConfig.shopifyToken ? themeConfig.shopifyToken.trim() : '';
+    const hasActiveIntegration = themeConfig.shopifyActive && tokenVal && tokenVal !== 'shpat_c0e256979d2452fc854db87384386xxxx' && tokenVal !== '';
+
+    if (!hasActiveIntegration) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; padding:4rem 2rem; color:var(--text-muted); line-height:1.6;">
+            <i class="fa-brands fa-shopify" style="font-size:3rem; color:#95bf47; margin-bottom:1rem; display:block; opacity:0.75;"></i>
+            <strong style="display:block; margin-bottom:0.5rem; color:var(--text-main); font-size:1.1rem;">Integração com a Shopify Inativa ou Desconectada</strong>
+            Para visualizar os seus produtos sincronizados, acesse a aba 
+            <a href="#" onclick="const shBtn = document.querySelector('[data-view=\'sincronizar-shopify\']'); if(shBtn) shBtn.click(); return false;" style="color:#95bf47; text-decoration:underline; font-weight:600;">Sincronizar Shopify</a>, 
+            conecte a sua conta e ative a integração.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
     if (!force && shopifyProducts.length > 0) {
       renderShopifyProducts(shopifyProducts);
       return;
@@ -2340,11 +2359,16 @@ Fico no aguardo! 😊`;
         renderShopifyProducts(shopifyProducts);
       } else {
         const text = await response.text();
+        let errorMsg = `Erro ao buscar produtos da Shopify: ${text}`;
+        if (response.status === 401) {
+          errorMsg = `Credenciais da Shopify Inválidas ou Expiradas (Erro 401). Vá para a aba "Sincronizar Shopify" e refaça a instalação do app para gerar um novo token.`;
+        }
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" style="text-align:center; padding:2rem; color:var(--danger-color);">
-              <i class="fa-solid fa-circle-exclamation" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>
-              Erro ao buscar produtos da Shopify: ${text}
+            <td colspan="6" style="text-align:center; padding:3rem 2rem; color:var(--danger-color); line-height:1.5;">
+              <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; margin-bottom:0.75rem; display:block;"></i>
+              <strong style="display:block; margin-bottom:0.5rem;">Falha na Autenticação com a Shopify</strong>
+              ${errorMsg}
             </td>
           </tr>
         `;
@@ -2426,6 +2450,23 @@ Fico no aguardo! 😊`;
     const grid = document.getElementById('shpfy-collections-grid');
     if (!grid) return;
 
+    // Verificar se a integração com a Shopify está ativa
+    const tokenVal = themeConfig.shopifyToken ? themeConfig.shopifyToken.trim() : '';
+    const hasActiveIntegration = themeConfig.shopifyActive && tokenVal && tokenVal !== 'shpat_c0e256979d2452fc854db87384386xxxx' && tokenVal !== '';
+
+    if (!hasActiveIntegration) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align:center; padding:4rem 2rem; color:var(--text-muted); line-height:1.6;">
+          <i class="fa-brands fa-shopify" style="font-size:3rem; color:#95bf47; margin-bottom:1rem; display:block; opacity:0.75;"></i>
+          <strong style="display:block; margin-bottom:0.5rem; color:var(--text-main); font-size:1.1rem;">Integração com a Shopify Inativa ou Desconectada</strong>
+          Para visualizar as suas coleções sincronizadas, acesse a aba 
+          <a href="#" onclick="const shBtn = document.querySelector('[data-view=\'sincronizar-shopify\']'); if(shBtn) shBtn.click(); return false;" style="color:#95bf47; text-decoration:underline; font-weight:600;">Sincronizar Shopify</a>, 
+          conecte a sua conta e ative a integração.
+        </div>
+      `;
+      return;
+    }
+
     if (!force && shopifyCollections.length > 0) {
       renderShopifyCollections(shopifyCollections);
       return;
@@ -2451,10 +2492,15 @@ Fico no aguardo! 😊`;
         renderShopifyCollections(shopifyCollections);
       } else {
         const text = await response.text();
+        let errorMsg = `Erro ao buscar coleções: ${text}`;
+        if (response.status === 401) {
+          errorMsg = `Credenciais da Shopify Inválidas ou Expiradas (Erro 401). Vá para a aba "Sincronizar Shopify" e refaça a instalação do app para gerar um novo token.`;
+        }
         grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align:center; padding:2rem; color:var(--danger-color);">
-            <i class="fa-solid fa-circle-exclamation" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>
-            Erro ao buscar coleções: ${text}
+          <div style="grid-column: 1 / -1; text-align:center; padding:3rem 2rem; color:var(--danger-color); line-height:1.5;">
+            <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; margin-bottom:0.75rem; display:block;"></i>
+            <strong style="display:block; margin-bottom:0.5rem;">Falha na Autenticação com a Shopify</strong>
+            ${errorMsg}
           </div>
         `;
       }
