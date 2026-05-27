@@ -1925,15 +1925,27 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       shpfyVariantId = paramVariant || null;
 
       // 1. Atualizar o Título do produto no resumo da compra
-      const itemTitleSpan = document.querySelector('.items-list .item-title');
+      const itemTitleSpan = document.getElementById('checkout-product-name-val') || document.querySelector('.items-list .item-title');
       if (itemTitleSpan) {
         itemTitleSpan.textContent = shpfyProductTitle;
       }
       
-      // 2. Atualizar o Subtítulo para mostrar SKU e Quantidade
-      const itemSubtitleSpan = document.querySelector('.items-list .item-subtitle');
+      // 2. Atualizar o Subtítulo para mostrar SKU
+      const itemSubtitleSpan = document.getElementById('checkout-product-size-val') || document.querySelector('.items-list .item-subtitle');
       if (itemSubtitleSpan) {
-        itemSubtitleSpan.textContent = `SKU: ${shpfyProductSku} | Qtd: ${shpfyProductQuantity}`;
+        itemSubtitleSpan.textContent = `SKU: ${shpfyProductSku}`;
+      }
+
+      // 2.5. Atualizar o Preço formatado no resumo da compra
+      const itemPriceSpan = document.getElementById('checkout-product-price-val');
+      if (itemPriceSpan) {
+        itemPriceSpan.textContent = 'R$ ' + (shpfyProductPrice * shpfyProductQuantity).toFixed(2).replace('.', ',');
+      }
+
+      // 2.6. Atualizar a Quantidade exibida visualmente
+      const qtyValEl = document.getElementById('checkout-qty-val');
+      if (qtyValEl) {
+        qtyValEl.textContent = shpfyProductQuantity;
       }
 
       // 3. Preencher o preço e bloquear o campo (impede fraude do cliente)
