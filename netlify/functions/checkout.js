@@ -71,6 +71,13 @@ exports.handler = async (event, context) => {
     let transactionId = null;
     let transactionStatus = data.status || 'draft';
     let gatewayResponse = {};
+    if (data.coupon_code) {
+      gatewayResponse.coupon_applied = {
+        code: data.coupon_code,
+        discount: data.coupon_discount,
+        type: data.coupon_type
+      };
+    }
     let pixQrCode = null;
     let pixExpiration = null;
     let isMock = false;
@@ -198,6 +205,17 @@ exports.handler = async (event, context) => {
           message: 'Processado em modo de contingência/mock devido a falha na API externa.'
         };
       }
+    }
+
+    if (data.coupon_code) {
+      gatewayResponse = {
+        ...(gatewayResponse || {}),
+        coupon_applied: {
+          code: data.coupon_code,
+          discount: data.coupon_discount,
+          type: data.coupon_type
+        }
+      };
     }
 
     // ========================================================
@@ -433,6 +451,16 @@ async function createShopifyOrder(data, totalAmount, paymentMethod) {
       gateway: paymentMethod === 'pix' ? 'PagueX Pix' : 'PagueX Cartão'
     }
   };
+
+  if (data.coupon_code) {
+    orderPayload.order.discount_codes = [
+      {
+        code: data.coupon_code,
+        amount: parseFloat(data.coupon_discount || 0).toFixed(2),
+        type: data.coupon_type === 'percentage' ? 'percentage' : 'fixed_amount'
+      }
+    ];
+  }
 
   try {
     const shopifyUrl = `https://${storeDomain}/admin/api/2024-01/orders.json`;

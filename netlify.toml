@@ -3,6 +3,16 @@
   functions = "netlify/functions"
 
 [[redirects]]
+  from = "/api/postback/shopify/install"
+  to = "/admin.html"
+  status = 302
+
+[[redirects]]
+  from = "/api/postback/shopify/installapp"
+  to = "/admin.html"
+  status = 302
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200

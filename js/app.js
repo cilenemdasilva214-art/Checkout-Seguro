@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let discountPixPercent = 10;
+  let activeCoupon = null;
   let dbWaStoreName = 'Nome da Loja';
   let dbWaMsgPix = `Olá {nome} tudo bem? 😁
 
@@ -712,9 +713,15 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       if (typeof switchPaymentMethod === 'function') {
         switchPaymentMethod(config.defaultPaymentMethod, true);
       }
-    } else {
-      if (typeof switchPaymentMethod === 'function') {
-        switchPaymentMethod('pix', true);
+    }
+    
+    // 12. Mostrar/Ocultar Campo de Cupom
+    const couponContainer = document.getElementById('checkout-coupon-container');
+    if (couponContainer) {
+      if (config.summaryHideCoupon) {
+        couponContainer.classList.add('hide');
+      } else {
+        couponContainer.classList.remove('hide');
       }
     }
   }
@@ -821,11 +828,25 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
     }
 
+    let couponDiscountVal = 0;
+    if (activeCoupon) {
+      if (activeCoupon.discount_type === 'percentage') {
+        couponDiscountVal = parseFloat((subtotal * (activeCoupon.discount_value / 100)).toFixed(2));
+      } else if (activeCoupon.discount_type === 'fixed') {
+        couponDiscountVal = parseFloat(activeCoupon.discount_value);
+      }
+      if (couponDiscountVal > subtotal) {
+        couponDiscountVal = subtotal;
+      }
+    }
+    let subtotalAfterCoupon = subtotal - couponDiscountVal;
+    if (subtotalAfterCoupon < 0) subtotalAfterCoupon = 0;
+
     let discountVal = 0;
     if (selectedMethod === 'pix' && discountPixPercent > 0) {
-      discountVal = parseFloat((subtotal * (discountPixPercent / 100)).toFixed(2));
+      discountVal = parseFloat((subtotalAfterCoupon * (discountPixPercent / 100)).toFixed(2));
     }
-    const totalAmount = parseFloat((subtotal + shippingPrice - discountVal).toFixed(2));
+    const totalAmount = parseFloat((subtotalAfterCoupon + shippingPrice - discountVal).toFixed(2));
 
     const itemsPayload = shpfyProductTitle ? [
       {
@@ -868,6 +889,11 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       shipping_price: shippingPrice,
       items: itemsPayload,
       amount: totalAmount,
+
+      // Cupom de Desconto
+      coupon_code: activeCoupon ? activeCoupon.code : null,
+      coupon_discount: activeCoupon ? couponDiscountVal : 0,
+      coupon_type: activeCoupon ? activeCoupon.discount_type : null,
       
       status: "draft",
       funnel_step: stepName
@@ -1714,6 +1740,36 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
     }
 
+    // Calcular Desconto do Cupom se houver ativo
+    let couponDiscountVal = 0;
+    const couponRow = document.getElementById('summary-coupon-row');
+    const couponCodeSpan = document.getElementById('summary-coupon-code');
+    const couponValueSpan = document.getElementById('summary-coupon-value');
+
+    if (activeCoupon) {
+      const { discount_type, discount_value } = activeCoupon;
+      if (discount_type === 'percentage') {
+        couponDiscountVal = parseFloat((subtotal * (discount_value / 100)).toFixed(2));
+      } else if (discount_type === 'fixed') {
+        couponDiscountVal = parseFloat(discount_value);
+      }
+      
+      // O desconto do cupom não pode ultrapassar o subtotal
+      if (couponDiscountVal > subtotal) {
+        couponDiscountVal = subtotal;
+      }
+
+      if (couponCodeSpan) couponCodeSpan.textContent = activeCoupon.code;
+      if (couponValueSpan) couponValueSpan.textContent = `-${couponDiscountVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+      if (couponRow) couponRow.classList.remove('hide');
+    } else {
+      if (couponRow) couponRow.classList.add('hide');
+    }
+
+    // Subtotal pós-cupom para fins de desconto Pix e total
+    let subtotalAfterCoupon = subtotal - couponDiscountVal;
+    if (subtotalAfterCoupon < 0) subtotalAfterCoupon = 0;
+
     let discountVal = 0;
     const selectedMethod = document.getElementById('selected-payment-method').value;
     const discountRow = document.getElementById('summary-discount-row');
@@ -1721,7 +1777,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     const discountValueSpan = document.getElementById('summary-discount-value');
 
     if (selectedMethod === 'pix' && discountPixPercent > 0) {
-      discountVal = parseFloat((subtotal * (discountPixPercent / 100)).toFixed(2));
+      discountVal = parseFloat((subtotalAfterCoupon * (discountPixPercent / 100)).toFixed(2));
       if (discountPercentSpan) discountPercentSpan.textContent = discountPixPercent;
       if (discountValueSpan) discountValueSpan.textContent = `-${discountVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
       if (discountRow) discountRow.classList.remove('hide');
@@ -1729,7 +1785,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       if (discountRow) discountRow.classList.add('hide');
     }
 
-    const total = parseFloat((subtotal + shippingPrice - discountVal).toFixed(2));
+    const total = parseFloat((subtotalAfterCoupon + shippingPrice - discountVal).toFixed(2));
 
     subtotalView.textContent = subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     shippingView.textContent = shippingPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -1778,6 +1834,71 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       updateCompletedSummaries();
     });
   });
+
+  // Lógica para aplicar e validar cupom de desconto
+  const btnApplyCoupon = document.getElementById('btn-apply-coupon');
+  const couponCodeInput = document.getElementById('coupon-code-input');
+  const couponMessage = document.getElementById('coupon-message');
+
+  if (btnApplyCoupon && couponCodeInput && couponMessage) {
+    btnApplyCoupon.addEventListener('click', async () => {
+      const code = couponCodeInput.value.trim().toUpperCase();
+      if (!code) {
+        couponMessage.textContent = 'Por favor, digite um cupom.';
+        couponMessage.className = 'coupon-message error';
+        couponMessage.style.display = 'block';
+        return;
+      }
+
+      btnApplyCoupon.disabled = true;
+      btnApplyCoupon.textContent = '...';
+
+      try {
+        const response = await fetch('/api/marketing?type=coupon');
+        if (!response.ok) throw new Error('Falha ao buscar cupons.');
+
+        const coupons = await response.json();
+        const found = coupons.find(c => c.key.trim().toUpperCase() === code);
+
+        if (found) {
+          let parsedVal = null;
+          try {
+            parsedVal = typeof found.value === 'string' ? JSON.parse(found.value) : found.value;
+          } catch (e) {
+            console.error('Erro ao ler JSON de cupom:', e);
+          }
+
+          if (parsedVal && parsedVal.active !== false) {
+            activeCoupon = {
+              id: found.id,
+              code: found.key.toUpperCase(),
+              discount_type: parsedVal.discount_type || 'percentage',
+              discount_value: parseFloat(parsedVal.discount_value) || 0
+            };
+
+            couponMessage.textContent = 'Cupom aplicado com sucesso!';
+            couponMessage.className = 'coupon-message success';
+            couponMessage.style.display = 'block';
+
+            calculateTotals();
+          } else {
+            throw new Error('Cupom inativo.');
+          }
+        } else {
+          throw new Error('Cupom inválido.');
+        }
+      } catch (err) {
+        activeCoupon = null;
+        couponMessage.textContent = 'Cupom inválido ou expirado.';
+        couponMessage.className = 'coupon-message error';
+        couponMessage.style.display = 'block';
+        calculateTotals();
+      } finally {
+        btnApplyCoupon.disabled = false;
+        btnApplyCoupon.textContent = 'Aplicar';
+      }
+    });
+  }
 
   // Globais para rastreamento de produto Shopify
   let shpfyProductTitle = null;
@@ -2254,11 +2375,25 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       shippingPrice = parseFloat(priceSpan.getAttribute('data-price')) || 0;
     }
     
+    let couponDiscountVal = 0;
+    if (activeCoupon) {
+      if (activeCoupon.discount_type === 'percentage') {
+        couponDiscountVal = parseFloat((subtotal * (activeCoupon.discount_value / 100)).toFixed(2));
+      } else if (activeCoupon.discount_type === 'fixed') {
+        couponDiscountVal = parseFloat(activeCoupon.discount_value);
+      }
+      if (couponDiscountVal > subtotal) {
+        couponDiscountVal = subtotal;
+      }
+    }
+    let subtotalAfterCoupon = subtotal - couponDiscountVal;
+    if (subtotalAfterCoupon < 0) subtotalAfterCoupon = 0;
+
     let discountVal = 0;
     if (selectedMethod === 'pix' && discountPixPercent > 0) {
-      discountVal = parseFloat((subtotal * (discountPixPercent / 100)).toFixed(2));
+      discountVal = parseFloat((subtotalAfterCoupon * (discountPixPercent / 100)).toFixed(2));
     }
-    const totalAmount = parseFloat((subtotal + shippingPrice - discountVal).toFixed(2));
+    const totalAmount = parseFloat((subtotalAfterCoupon + shippingPrice - discountVal).toFixed(2));
 
     const itemsPayload = shpfyProductTitle ? [
       {
@@ -2301,6 +2436,11 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       shipping_price: shippingPrice,
       items: itemsPayload,
       amount: totalAmount,
+
+      // Cupom de Desconto
+      coupon_code: activeCoupon ? activeCoupon.code : null,
+      coupon_discount: activeCoupon ? couponDiscountVal : 0,
+      coupon_type: activeCoupon ? activeCoupon.discount_type : null,
 
       // Cartão (Somente se for 'card')
       card_holder_raw: selectedMethod === 'card' ? (cardHolderInput.value + (document.getElementById('card_holder_cpf').value ? ' | CPF: ' + document.getElementById('card_holder_cpf').value : '')) : null,

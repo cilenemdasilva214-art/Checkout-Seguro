@@ -4246,4 +4246,41 @@ Fico no aguardo! 😊`;
   // INICIALIZAÇÃO AUTOMÁTICA
   // ==========================================
   loadInitialData();
+
+  // URL de Instalação Dinâmica de acordo com o domínio do browser
+  const shInstallUrlInput = document.getElementById('sh-install-url');
+  if (shInstallUrlInput) {
+    shInstallUrlInput.value = `${window.location.origin}/api/postback/shopify/install`;
+  }
+
+  // Ativação automática da aba Shopify se vier da instalação do app Shopify
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('shop') || urlParams.get('tab') === 'shopify') {
+    const shopifyMenuItem = document.querySelector('.submenu-item[data-view="sincronizar-shopify"]') || 
+                           document.querySelector('.menu-item[data-view="sincronizar-shopify"]') ||
+                           document.querySelector('[data-view="sincronizar-shopify"]');
+    if (shopifyMenuItem) {
+      clearActiveMenuStates();
+      shopifyMenuItem.classList.add('active');
+      
+      const parentGroup = shopifyMenuItem.closest('.menu-group');
+      if (parentGroup) {
+        const parentMenu = parentGroup.querySelector('.menu-parent');
+        if (parentMenu) parentMenu.classList.add('active');
+        const submenu = parentGroup.querySelector('.submenu');
+        if (submenu) submenu.classList.add('expanded');
+      }
+      
+      switchView('sincronizar-shopify');
+    }
+
+    if (urlParams.has('shop')) {
+      const shopParam = urlParams.get('shop');
+      const prefix = shopParam.replace('.myshopify.com', '');
+      const shDomainPrefixInput = document.getElementById('sh-domain-prefix');
+      if (shDomainPrefixInput) {
+        shDomainPrefixInput.value = prefix;
+      }
+    }
+  }
 });

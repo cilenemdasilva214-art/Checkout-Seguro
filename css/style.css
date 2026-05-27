@@ -2562,6 +2562,201 @@ body.device-mobile .order-summary-box.open {
 #body-card .input-wrapper input:focus,
 #body-card .input-wrapper select:focus {
   border-color: var(--primary-color) !important;
+    display: contents !important;
+  }
+
+  #checkout-form {
+    display: contents !important;
+  }
+
+  .checkout-left-column {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .checkout-middle-column {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .checkout-summary {
+    grid-column: 3;
+    position: sticky;
+    top: 20px;
+  }
+}
+
+/* Layout vertical fluido no mobile/tablet */
+@media (max-width: 1024px) {
+  .checkout-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .checkout-forms {
+    display: block !important;
+  }
+
+  #checkout-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .checkout-left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .checkout-middle-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .checkout-summary {
+    display: block;
+    margin-top: 10px;
+  }
+}
+
+/* ==========================================
+   MOBILE DEVICE LAYOUT SPECIFIC (AUTO-DETECTION)
+   ========================================== */
+body.device-mobile {
+  background-color: var(--bg-color); /* Fundo branco gelo uniforme */
+}
+
+/* Evitar Zoom automático do iOS ao focar inputs */
+body.device-mobile input,
+body.device-mobile select,
+body.device-mobile textarea {
+  font-size: 16px !important;
+}
+
+/* Simplificar cabeçalho no mobile */
+body.device-mobile .app-header {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-bottom: 15px !important;
+  text-align: left !important;
+  width: 100% !important;
+}
+
+body.device-mobile #back-to-store-logo-link {
+  margin: 0 !important;
+}
+
+body.device-mobile .env-badge {
+  margin: 0 !important;
+  margin-left: auto !important;
+}
+
+/* Barra de Resumo Otimizada de Topo para Mobile */
+.mobile-summary-toggle {
+  display: none;
+}
+
+body.device-mobile .mobile-summary-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #fcfcfc;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  cursor: pointer;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  margin-bottom: 15px;
+  user-select: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333333;
+  transition: all 0.2s ease;
+}
+
+body.device-mobile .mobile-summary-toggle:hover {
+  background: #f5f6f8;
+}
+
+body.device-mobile .mobile-summary-toggle .toggle-left {
+  display: flex;
+  align-items: center;
+}
+
+body.device-mobile .mobile-summary-toggle .toggle-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #111111;
+}
+
+body.device-mobile .mobile-summary-toggle .chevron-icon {
+  font-size: 0.75rem;
+  color: #666666;
+  transition: transform 0.3s ease;
+}
+
+body.device-mobile .mobile-summary-toggle.open .chevron-icon {
+  transform: rotate(180deg);
+}
+
+/* Ajuste na Caixa de Resumo no Mobile (Colapsável) */
+body.device-mobile .order-summary-box {
+  display: none;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 20px;
+  margin-bottom: 15px;
+  animation: slideDownMobile 0.25s ease-out;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+body.device-mobile .order-summary-box.open {
+  display: block !important;
+}
+
+@keyframes slideDownMobile {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Redesenho da Seção de Cartão de Crédito - Estilo Clean Shopify */
+#body-card .input-wrapper input,
+#body-card .input-wrapper select {
+  padding-left: 16px !important;
+  border-radius: 8px !important;
+  border: 1px solid #d1d5db !important;
+  background: #ffffff !important;
+  font-size: 15px !important;
+  height: 48px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+#body-card .input-wrapper input:focus,
+#body-card .input-wrapper select:focus {
+  border-color: var(--primary-color) !important;
   box-shadow: 0 0 0 3px var(--input-focus) !important;
 }
 
@@ -2581,4 +2776,38 @@ body.device-mobile .order-summary-box.open {
   background-position: right 16px center !important;
   background-size: 16px !important;
   padding-right: 40px !important;
+}
+
+/* Estilos de Cupom de Desconto Premium */
+.checkout-coupon-section {
+  background: transparent;
+}
+.coupon-input-group input {
+  transition: all 0.25s ease !important;
+}
+.coupon-input-group input:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px var(--input-focus) !important;
+  background: var(--panel-bg, #ffffff) !important;
+}
+.coupon-input-group button:hover {
+  filter: brightness(0.95);
+}
+.coupon-input-group button:active {
+  transform: scale(0.98);
+}
+.coupon-message {
+  padding-left: 4px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+.coupon-message.success {
+  color: var(--success-color, #2e7d32) !important;
+}
+.coupon-message.error {
+  color: #ef4444 !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

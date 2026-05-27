@@ -507,6 +507,17 @@
             </div>
           </div>
 
+          <!-- Seção de Cupom de Desconto -->
+          <div class="checkout-coupon-section" id="checkout-coupon-container" style="margin-top: 1.25rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <div class="coupon-input-group" style="display: flex; gap: 8px;">
+              <input type="text" id="coupon-code-input" placeholder="Cupom de desconto" style="flex: 1; background: var(--input-bg, rgba(255, 255, 255, 0.03)); border: 1px solid var(--input-border, rgba(255, 255, 255, 0.08)); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.9rem; outline: none; height: 40px; box-sizing: border-box; font-family: inherit; transition: all 0.2s;">
+              <button id="btn-apply-coupon" type="button" style="background: var(--primary-color); color: #fff; border: none; padding: 0 1.25rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; height: 40px; display: flex; align-items: center; justify-content: center; font-family: inherit;">
+                Aplicar
+              </button>
+            </div>
+            <div id="coupon-message" class="coupon-message" style="font-size: 0.8rem; font-weight: 600; display: none;"></div>
+          </div>
+
           <div class="pricing-summary">
             <div class="price-row">
               <span>Subtotal</span>
@@ -515,6 +526,10 @@
             <div class="price-row">
               <span>Frete</span>
               <span id="summary-shipping">R$ 15,00</span>
+            </div>
+            <div class="price-row hide" id="summary-coupon-row">
+              <span>Cupom de Desconto (<span id="summary-coupon-code"></span>)</span>
+              <span id="summary-coupon-value" style="color: var(--success-color); font-weight: 600;">-R$ 0,00</span>
             </div>
             <div class="price-row hide" id="summary-discount-row">
               <span>Desconto Pix (<span id="summary-discount-percent">0</span>%)</span>
