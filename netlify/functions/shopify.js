@@ -17,6 +17,7 @@ exports.handler = async (event, context) => {
 
   let storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
   let accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+  let themeConfigStr = '';
 
   // Carregar credenciais dinâmicas do Supabase (tabela checkout_configs)
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -34,7 +35,6 @@ exports.handler = async (event, context) => {
 
       if (configRes.ok) {
         const configs = await configRes.json();
-        let themeConfigStr = '';
         configs.forEach(c => {
           if (c.key === 'checkout_theme_config') themeConfigStr = c.value;
         });
@@ -56,7 +56,7 @@ exports.handler = async (event, context) => {
 
   const action = event.queryStringParameters ? (event.queryStringParameters.action || 'products') : 'products';
 
-  if (action !== 'exchange_token' && (!storeDomain || !accessToken)) {
+  if (action !== 'exchange_token' && action !== 'cart' && (!storeDomain || !accessToken)) {
     return {
       statusCode: 500,
       headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
@@ -65,6 +65,84 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // ----------------------------------------------------
+    // AÇÃO: CART (CARRINHO E REDIRECIONAMENTO DE CHECKOUT TRANSPARENTE)
+    // ----------------------------------------------------
+    if (action === 'cart' && event.httpMethod === 'POST') {
+      const data = JSON.parse(event.body || '{}');
+      const { shop, origin, cart_payload } = data;
+
+      // Se a integração Shopify não estiver ativa, desabilita o redirecionamento
+      let isShopifyActive = false;
+      let shopifySkipCart = false;
+
+      if (themeConfigStr) {
+        try {
+          const themeConfig = JSON.parse(themeConfigStr);
+          isShopifyActive = !!themeConfig.shopifyActive;
+          shopifySkipCart = !!themeConfig.shopifySkipCart;
+        } catch (e) {
+          console.error('Erro ao processar themeConfig:', e);
+        }
+      }
+
+      if (!isShopifyActive) {
+        return {
+          statusCode: 200,
+          headers: { 
+            'Access-Control-Allow-Origin': '*', 
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify({ active: false }),
+        };
+      }
+
+      if (!cart_payload || !cart_payload.items || cart_payload.items.length === 0) {
+        return {
+          statusCode: 200,
+          headers: { 
+            'Access-Control-Allow-Origin': '*', 
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify({ active: true, skip_cart: false, checkout_direct_url: '' }),
+        };
+      }
+
+      // Extrai informações do primeiro item do carrinho
+      const firstItem = cart_payload.items[0];
+      const title = encodeURIComponent(firstItem.title || firstItem.product_title || 'Produto Shopify');
+      const price = ((firstItem.price || 0) / 100).toFixed(2);
+      const sku = encodeURIComponent(firstItem.sku || 'SHPFY-DEFAULT');
+      const quantity = firstItem.quantity || 1;
+      const variantId = firstItem.variant_id || '';
+      const productId = firstItem.product_id || '';
+
+      // URL base do checkout transparente (dinâmica)
+      const checkoutDomain = process.env.URL || 'https://checkout-portodosvinhos.netlify.app';
+      const checkoutDirectUrl = `${checkoutDomain.replace(/\/$/, '')}/?title=${title}&price=${price}&sku=${sku}&quantity=${quantity}&shopify_variant_id=${variantId}&shopify_product_id=${productId}`;
+
+      console.log(`🛒 Processando redirecionamento Shopify para: ${checkoutDirectUrl}`);
+
+      return {
+        statusCode: 200,
+        headers: { 
+          'Access-Control-Allow-Origin': '*', 
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          active: true,
+          skip_cart: shopifySkipCart,
+          checkout_direct_url: checkoutDirectUrl
+        }),
+      };
+    }
+
     // ----------------------------------------------------
     // AÇÃO: EXCHANGE TOKEN (OBTER TOKEN DE ACESSO PERMANENTE)
     // ----------------------------------------------------
