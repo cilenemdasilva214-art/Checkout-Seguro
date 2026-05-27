@@ -212,7 +212,11 @@ exports.handler = async (event, context) => {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Erro na API do Shopify ao buscar produtos: ${response.status} - ${errText}`);
+        return {
+          statusCode: response.status,
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: errText,
+        };
       }
 
       const resData = await response.json();
@@ -242,6 +246,14 @@ exports.handler = async (event, context) => {
         fetch(customUrl, { headers }),
         fetch(smartUrl, { headers })
       ]);
+
+      if (customRes.status === 401 || smartRes.status === 401) {
+        return {
+          statusCode: 401,
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: '[API] Invalid API key or access token' }),
+        };
+      }
 
       let collections = [];
 

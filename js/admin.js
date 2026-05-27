@@ -2360,7 +2360,7 @@ Fico no aguardo! 😊`;
       } else {
         const text = await response.text();
         let errorMsg = `Erro ao buscar produtos da Shopify: ${text}`;
-        if (response.status === 401) {
+        if (response.status === 401 || text.includes('401') || text.toLowerCase().includes('invalid api key') || text.toLowerCase().includes('unrecognized login') || text.toLowerCase().includes('wrong password')) {
           errorMsg = `Credenciais da Shopify Inválidas ou Expiradas (Erro 401). Vá para a aba "Sincronizar Shopify" e refaça a instalação do app para gerar um novo token.`;
         }
         tbody.innerHTML = `
@@ -2493,7 +2493,7 @@ Fico no aguardo! 😊`;
       } else {
         const text = await response.text();
         let errorMsg = `Erro ao buscar coleções: ${text}`;
-        if (response.status === 401) {
+        if (response.status === 401 || text.includes('401') || text.toLowerCase().includes('invalid api key') || text.toLowerCase().includes('unrecognized login') || text.toLowerCase().includes('wrong password')) {
           errorMsg = `Credenciais da Shopify Inválidas ou Expiradas (Erro 401). Vá para a aba "Sincronizar Shopify" e refaça a instalação do app para gerar um novo token.`;
         }
         grid.innerHTML = `
