@@ -180,16 +180,18 @@ exports.handler = async (event, context) => {
       const oauthUrl = `https://${shopUrl}/admin/oauth/access_token`;
       console.log(`📡 Solicitando Token de Acesso Permanente em: ${oauthUrl}`);
 
+      const params = new URLSearchParams();
+      params.append('client_id', cleanClientId);
+      params.append('client_secret', cleanSecret);
+      params.append('code', code.trim());
+
       const response = await fetch(oauthUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          client_id: cleanClientId,
-          client_secret: cleanSecret,
-          code: code.trim()
-        })
+        body: params.toString()
       });
 
       const resText = await response.text();
