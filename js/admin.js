@@ -4372,9 +4372,21 @@ Fico no aguardo! 😊`;
       }
 
       themeConfig.shopifyDomain = document.getElementById('sh-domain-prefix').value.trim();
-      themeConfig.shopifyToken = document.getElementById('sh-access-token').value.trim();
-      themeConfig.shopifyClientId = document.getElementById('sh-client-id').value.trim();
-      themeConfig.shopifySecret = document.getElementById('sh-secret').value.trim();
+      
+      const tokenInputVal = document.getElementById('sh-access-token').value.trim();
+      themeConfig.shopifyToken = tokenInputVal;
+
+      // Defensivamente limpar prefixos errados (shpss_) do Client ID e Secret
+      const rawClientId = document.getElementById('sh-client-id').value.trim();
+      const cleanClientId = rawClientId.replace(/^shpat_|^shpss_/, '');
+      themeConfig.shopifyClientId = cleanClientId;
+      document.getElementById('sh-client-id').value = cleanClientId; // Atualiza o input visual
+
+      const rawSecret = document.getElementById('sh-secret').value.trim();
+      const cleanSecret = rawSecret.replace(/^shpat_|^shpss_/, '');
+      themeConfig.shopifySecret = cleanSecret;
+      document.getElementById('sh-secret').value = cleanSecret; // Atualiza o input visual
+
       themeConfig.shopifySkipCart = document.getElementById('sh-skip-cart').checked;
       themeConfig.shopifyImportCoupons = document.getElementById('sh-import-coupons').checked;
       
@@ -4475,8 +4487,10 @@ Fico no aguardo! 😊`;
         // Se houver parâmetro 'code', iniciamos a troca de token de acesso automática
         if (urlParams.has('code')) {
           const codeParam = urlParams.get('code');
-          const clientId = themeConfig.shopifyClientId || document.getElementById('sh-client-id').value.trim();
-          const secret = themeConfig.shopifySecret || document.getElementById('sh-secret').value.trim();
+          const rawClientId = themeConfig.shopifyClientId || document.getElementById('sh-client-id').value.trim();
+          const rawSecret = themeConfig.shopifySecret || document.getElementById('sh-secret').value.trim();
+          const clientId = rawClientId.replace(/^shpat_|^shpss_/, '');
+          const secret = rawSecret.replace(/^shpat_|^shpss_/, '');
 
           if (!clientId || !secret || clientId === '01f8ba9c35c5bb9bef70d949d2356676' || secret === 'shpss_252c116837c44ea156428f65c773xxxx') {
             alert('Atenção: Para gerar o Token de acesso API Admin automaticamente, você precisa primeiro preencher e salvar o seu Client ID e Client Secret na tela de integração da Shopify.');

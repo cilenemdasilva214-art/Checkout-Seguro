@@ -168,6 +168,10 @@ exports.handler = async (event, context) => {
         };
       }
 
+      // Limpeza robusta contra erros de cópia/cola (ex: manter prefixo shpss_ do placeholder)
+      const cleanClientId = client_id.trim().replace(/^shpat_|^shpss_/, '');
+      const cleanSecret = client_secret.trim().replace(/^shpat_|^shpss_/, '');
+
       let shopUrl = shop.trim();
       if (!shopUrl.endsWith('.myshopify.com')) {
         shopUrl = shopUrl + '.myshopify.com';
@@ -182,8 +186,8 @@ exports.handler = async (event, context) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          client_id: client_id.trim(),
-          client_secret: client_secret.trim(),
+          client_id: cleanClientId,
+          client_secret: cleanSecret,
           code: code.trim()
         })
       });
