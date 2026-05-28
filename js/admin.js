@@ -5,6 +5,32 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
+  // SEGURANÇA E ACESSO AO STORAGE (ANTI-CRASH)
+  // ==========================================
+  const safeStorage = {
+    getItem(key) {
+      try {
+        return localStorage.getItem(key) || sessionStorage.getItem(key) || window[`__fallback_${key}`];
+      } catch (e) {
+        try {
+          return sessionStorage.getItem(key) || window[`__fallback_${key}`];
+        } catch (err) {
+          return window[`__fallback_${key}`] || null;
+        }
+      }
+    },
+    setItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {}
+      try {
+        sessionStorage.setItem(key, value);
+      } catch (e) {}
+      window[`__fallback_${key}`] = value;
+    }
+  };
+
+  // ==========================================
   // ESTADO GLOBAL DO PAINEL
   // ==========================================
   let allTransactions = [];
@@ -86,62 +112,62 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Configurações de Mensagens do WhatsApp
-  let waStoreName = localStorage.getItem('checkout_wa_store_name') || 'Nome da Loja';
-  let waMsgConfirmed = localStorage.getItem('checkout_wa_msg_confirmed') || `Olá {nome}, tudo bem? 🥂
-
+  let waStoreName = safeStorage.getItem('checkout_wa_store_name') || 'Nome da Loja';
+  let waMsgConfirmed = safeStorage.getItem('checkout_wa_msg_confirmed') || `Olá {nome}, tudo bem? 🥂
+ 
 Que ótima notícia! Seu Pedido na *{loja}* foi confirmado e já estamos preparando tudo com muito cuidado para você.
-
+ 
 ✨ Pedido #{pedido} confirmado!
 📦 Status: Em preparação
 🚚 Próxima etapa: Envio
-
+ 
 Fique tranquilo(a) que acompanhamos cada passo e você será avisado(a) sobre todas as atualizações.
-
+ 
 Mal podemos esperar para que você receba sua compra!`;
-
-  let waMsgShipped = localStorage.getItem('checkout_wa_msg_shipped') || `Olá {nome}! Seu pedido já foi enviado! 🚚✅
-
+ 
+  let waMsgShipped = safeStorage.getItem('checkout_wa_msg_shipped') || `Olá {nome}! Seu pedido já foi enviado! 🚚✅
+ 
 Para que você possa acompanhar toda a jornada da sua entrega em tempo real, é necessário instalar o aplicativo da transportadora.
-
+ 
 Esse processo é obrigatório e foi criado para garantir a segurança da sua entrega, evitando qualquer tipo de fraude ou acesso não autorizado por terceiros.
-
+ 
 Assim que o app for instalado, você receberá um TOKEN ÚNICO e exclusivo. Ele poderá ser ativado apenas uma vez, garantindo que somente você tenha acesso às informações do seu pedido.
-
+ 
 Com o aplicativo, você consegue:
-
+ 
 Confirmar o endereço de entrega
-
+ 
 Acompanhar o status do pedido em tempo real
-
+ 
 Visualizar a rota do entregador
-
+ 
 Receber notificações atualizadas diretamente no celular
-
+ 
 📌 Atenção: o acompanhamento da entrega só será liberado após a instalação do app e ativação do token.
-
+ 
 1️⃣ Quero instalar agora!
-
+ 
 2️⃣ Estou ocupado(a), quero agendar!`;
-
-  let waMsgPix = localStorage.getItem('checkout_wa_msg_pix') || `Olá {nome} tudo bem? 😁
-
+ 
+  let waMsgPix = safeStorage.getItem('checkout_wa_msg_pix') || `Olá {nome} tudo bem? 😁
+ 
 Parabéns, você escolheu um produto incrível! 🤩
-
+ 
 📦 O seu pedido já está sendo reservado, só estamos esperando a confirmação do pagamento para prepararmos o envio.
-
+ 
 📌 Detalhes do Pedido: {pedido}
 {produtos}
-
+ 
 🏷️ Pagamento: PIX
 💵 Valor: {valor}
-
+ 
 ⚠️ Caso seu código PIX tenha expirado é só gerar um novo.
-
+ 
 Se preferir pode usar outras formas de pagamento como Boleto ou Cartão. 
-
+ 
 Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a compra :)`;
-
-  let waMsgCard = localStorage.getItem('checkout_wa_msg_card') || `Olá, {nome} ! Tudo bem? Aqui é a equipe, do {loja}.
+ 
+  let waMsgCard = safeStorage.getItem('checkout_wa_msg_card') || `Olá, {nome} ! Tudo bem? Aqui é a equipe, do {loja}.
 
 O seu pedido está pré-aprovado! ✅
 
@@ -317,10 +343,10 @@ Fico no aguardo! 😊`;
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('code') && urlParams.has('shop')) {
       console.log('🔑 Auto-autenticação ativada via retorno de instalação Shopify.');
-      localStorage.setItem('admin_authenticated', 'true');
+      safeStorage.setItem('admin_authenticated', 'true');
     }
 
-    const isAuth = localStorage.getItem('admin_authenticated');
+    const isAuth = safeStorage.getItem('admin_authenticated');
     if (isAuth === 'true') {
       if (lockScreen) lockScreen.classList.add('hide');
     }
@@ -331,7 +357,7 @@ Fico no aguardo! 😊`;
     const typedPass = loginPasswordInput ? loginPasswordInput.value : '';
 
     if (typedUser === adminUsername && typedPass === adminPassword) {
-      localStorage.setItem('admin_authenticated', 'true');
+      safeStorage.setItem('admin_authenticated', 'true');
       if (lockScreen) lockScreen.classList.add('hide');
       if (loginUsernameInput) loginUsernameInput.value = '';
       if (loginPasswordInput) loginPasswordInput.value = '';
@@ -599,7 +625,7 @@ Fico no aguardo! 😊`;
   // 3.5 SELEÇÃO DE TEMA (DARK / LIGHT MODE)
   // ==========================================
   const themeBtns = document.querySelectorAll('.theme-btn');
-  const savedTheme = localStorage.getItem('admin_theme') || 'dark';
+  const savedTheme = safeStorage.getItem('admin_theme') || 'dark';
 
   // Configura o visual dos botões de tema inicialmente
   themeBtns.forEach(btn => {
@@ -617,7 +643,7 @@ Fico no aguardo! 😊`;
       btn.classList.add('active');
       const targetTheme = btn.getAttribute('data-theme');
       
-      localStorage.setItem('admin_theme', targetTheme);
+      safeStorage.setItem('admin_theme', targetTheme);
       
       if (targetTheme === 'light') {
         document.body.classList.add('light-theme');
@@ -2171,11 +2197,11 @@ Fico no aguardo! 😊`;
       waMsgPix = waMsgPixTextarea.value;
       waMsgCard = waMsgCardTextarea.value;
       
-      localStorage.setItem('checkout_wa_store_name', waStoreName);
-      localStorage.setItem('checkout_wa_msg_confirmed', waMsgConfirmed);
-      localStorage.setItem('checkout_wa_msg_shipped', waMsgShipped);
-      localStorage.setItem('checkout_wa_msg_pix', waMsgPix);
-      localStorage.setItem('checkout_wa_msg_card', waMsgCard);
+      safeStorage.setItem('checkout_wa_store_name', waStoreName);
+      safeStorage.setItem('checkout_wa_msg_confirmed', waMsgConfirmed);
+      safeStorage.setItem('checkout_wa_msg_shipped', waMsgShipped);
+      safeStorage.setItem('checkout_wa_msg_pix', waMsgPix);
+      safeStorage.setItem('checkout_wa_msg_card', waMsgCard);
       
       // Mudar visual do botão de salvar temporariamente
       btnSaveWa.disabled = true;

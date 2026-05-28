@@ -15,8 +15,12 @@
 </head>
 <body>
   <script>
-    if (localStorage.getItem('admin_theme') === 'light') {
-      document.body.classList.add('light-theme');
+    try {
+      if (localStorage.getItem('admin_theme') === 'light') {
+        document.body.classList.add('light-theme');
+      }
+    } catch (e) {
+      console.warn("Acesso ao localStorage bloqueado no iframe:", e);
     }
   </script>
 
