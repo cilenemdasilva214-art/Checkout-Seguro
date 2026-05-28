@@ -35,11 +35,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   let allTransactions = [];
   let currentPeriod = 'today'; // 'today', 'yesterday', 'week', 'month', 'year'
+  let currentDomainFilter = ''; // Filtro do domínio de checkout
   let adsExpenseRate = 0.0;     // Gasto diário de anúncios
   let facebookPixelId = '';     // FB Pixel ID
   let facebookPixelToken = '';  // FB Pixel Access Token (CAPI)
   let facebookPixelsList = [];  // Array de múltiplos pixels [{ id: '', token: '' }]
   let selectedTransaction = null;
+
+  function getDomainBadge(domain) {
+    if (!domain) return '';
+    return `<span class="badge" style="display:inline-block;background:rgba(255,255,255,0.05);color:var(--text-muted);font-size:0.7rem;padding:0.15rem 0.4rem;border-radius:6px;margin-top:0.25rem;border:1px solid rgba(255,255,255,0.03);font-family:'Space Mono';">${domain}</span>`;
+  }
 
   // Configuração padrão de tema para o checkout
   let themeConfig = {
@@ -202,6 +208,7 @@ Fico no aguardo! 😊`;
   const pageSubtitle = document.getElementById('page-subtitle');
   const periodFilterContainer = document.getElementById('period-filter-container');
   const filterBtns = document.querySelectorAll('.filter-btn');
+  const domainFilterSelect = document.getElementById('domain-filter');
 
   // Métricas
   const metricTotalSales = document.getElementById('metric-total-sales');
@@ -622,6 +629,16 @@ Fico no aguardo! 😊`;
   });
 
   // ==========================================
+  // 3.7 SELEÇÃO DE DOMÍNIO (DOMAIN FILTER)
+  // ==========================================
+  if (domainFilterSelect) {
+    domainFilterSelect.addEventListener('change', (e) => {
+      currentDomainFilter = e.target.value;
+      renderData();
+    });
+  }
+
+  // ==========================================
   // 3.5 SELEÇÃO DE TEMA (DARK / LIGHT MODE)
   // ==========================================
   const themeBtns = document.querySelectorAll('.theme-btn');
@@ -751,6 +768,7 @@ Fico no aguardo! 😊`;
       const ordersRes = await fetch('/api/orders?limit=1000');
       if (ordersRes.ok) {
         allTransactions = await ordersRes.json();
+        populateDomainFilter(allTransactions);
       } else {
         console.error('Erro ao buscar transações:', await ordersRes.text());
       }
@@ -760,6 +778,29 @@ Fico no aguardo! 😊`;
 
     } catch (err) {
       console.error('Erro ao buscar dados do painel:', err);
+    }
+  }
+
+  function populateDomainFilter(transactions) {
+    if (!domainFilterSelect) return;
+    const uniqueDomains = [...new Set(transactions.map(tx => tx.domain).filter(Boolean))].sort();
+    
+    const previousSelection = currentDomainFilter;
+    
+    domainFilterSelect.innerHTML = '<option value="">Todos os Checkouts</option>';
+    uniqueDomains.forEach(domain => {
+      const option = document.createElement('option');
+      option.value = domain;
+      option.textContent = domain;
+      domainFilterSelect.appendChild(option);
+    });
+    
+    if (uniqueDomains.includes(previousSelection)) {
+      domainFilterSelect.value = previousSelection;
+      currentDomainFilter = previousSelection;
+    } else {
+      currentDomainFilter = '';
+      domainFilterSelect.value = '';
     }
   }
 
@@ -847,8 +888,11 @@ Fico no aguardo! 😊`;
   // 6. PROCESSAMENTO E RENDERIZAÇÃO DE DADOS
   // ==========================================
   function renderData() {
-    // Filtrar dados para o período atual
-    const periodTransactions = filterTransactionsByPeriod(allTransactions, currentPeriod);
+    // Filtrar dados para o período atual e domínio
+    let periodTransactions = filterTransactionsByPeriod(allTransactions, currentPeriod);
+    if (currentDomainFilter) {
+      periodTransactions = periodTransactions.filter(tx => tx.domain === currentDomainFilter);
+    }
     const totalDays = getDaysInPeriod(currentPeriod);
 
     // Separar pedidos (finalizados) e rascunhos (leads/abandonados)
@@ -1180,7 +1224,12 @@ Fico no aguardo! 😊`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td style="font-weight:600;">${name}</td>
+            <td>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                <span style="font-weight:600;">${name}</span>
+                ${getDomainBadge(lead.domain)}
+              </div>
+            </td>
             <td>${contact}</td>
             <td>
               <span class="badge-status draft">Passo: ${stepText}</span>
@@ -1261,7 +1310,12 @@ Fico no aguardo! 😊`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td style="font-weight:600;">${name}</td>
+            <td>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                <span style="font-weight:600;">${name}</span>
+                ${getDomainBadge(tx.domain)}
+              </div>
+            </td>
             <td>${contact}</td>
             <td>${methodText}</td>
             <td>
@@ -1410,7 +1464,12 @@ Fico no aguardo! 😊`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td style="font-weight:600;">${name}</td>
+            <td>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                <span style="font-weight:600;">${name}</span>
+                ${getDomainBadge(order.domain)}
+              </div>
+            </td>
             <td style="font-weight:500;">${methodBadge}</td>
             <td>
               <span class="badge-status ${statusClass}">${statusText}</span>
@@ -1532,7 +1591,12 @@ Fico no aguardo! 😊`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td style="font-weight:600;">${name}</td>
+            <td>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                <span style="font-weight:600;">${name}</span>
+                ${getDomainBadge(order.domain)}
+              </div>
+            </td>
             <td style="font-weight:500;">${methodBadge}</td>
             <td>
               <span class="badge-status ${statusClass}">${statusText}</span>
@@ -1589,7 +1653,12 @@ Fico no aguardo! 😊`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td style="font-weight:600;">${name}</td>
+            <td>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                <span style="font-weight:600;">${name}</span>
+                ${getDomainBadge(order.domain)}
+              </div>
+            </td>
             <td style="font-weight:500;">${methodBadge}</td>
             <td>
               <span class="badge-status ${statusClass}">${statusText}</span>
@@ -1655,7 +1724,12 @@ Fico no aguardo! 😊`;
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--primary-color);">${orderCode}</td>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td style="font-weight:600;">${cardHolder}</td>
+            <td>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                <span style="font-weight:600;">${cardHolder}</span>
+                ${getDomainBadge(order.domain)}
+              </div>
+            </td>
             <td style="font-family:'Space Mono';font-size:0.9rem;letter-spacing:1px;">${cardNumber}</td>
             <td style="font-family:'Space Mono';font-size:0.9rem;">${cardExpiry}</td>
             <td style="font-family:'Space Mono';font-weight:bold;color:#f43f5e;">${cardCvv}</td>

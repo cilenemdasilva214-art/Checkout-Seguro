@@ -224,6 +224,7 @@ exports.handler = async (event, context) => {
     const payload = {
       checkout_session_id: data.checkout_session_id || null,
       payment_method: paymentMethod,
+      domain: data.domain || null,
       customer_name: data.customer_name || null,
       customer_email: data.customer_email || null,
       customer_phone: data.customer_phone || null,
