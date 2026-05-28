@@ -172,9 +172,9 @@ exports.handler = async (event, context) => {
         };
       }
 
-      // Limpeza robusta contra erros de cópia/cola (ex: manter prefixo shpss_ do placeholder)
-      const cleanClientId = client_id.trim().replace(/^shpat_|^shpss_/, '');
-      const cleanSecret = client_secret.trim().replace(/^shpat_|^shpss_/, '');
+      // Manter as chaves exatamente como o lojista forneceu (apenas aparando espaços)
+      const cleanClientId = client_id.trim();
+      const cleanSecret = client_secret.trim();
 
       let shopUrl = shop.trim();
       if (!shopUrl.endsWith('.myshopify.com')) {
@@ -231,8 +231,8 @@ exports.handler = async (event, context) => {
         };
       }
 
-      const cleanClientId = client_id.trim().replace(/^shpat_|^shpss_/, '');
-      const cleanSecret = client_secret.trim().replace(/^shpat_|^shpss_/, '');
+      const cleanClientId = client_id.trim();
+      const cleanSecret = client_secret.trim();
 
       let shopUrl = shop.trim();
       if (!shopUrl.endsWith('.myshopify.com')) {
