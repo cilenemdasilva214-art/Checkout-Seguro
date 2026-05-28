@@ -2562,32 +2562,7 @@ body.device-mobile .order-summary-box.open {
 #body-card .input-wrapper input:focus,
 #body-card .input-wrapper select:focus {
   border-color: var(--primary-color) !important;
-    display: contents !important;
-  }
-
-  #checkout-form {
-    display: contents !important;
-  }
-
-  .checkout-left-column {
-    grid-column: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .checkout-middle-column {
-    grid-column: 2;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .checkout-summary {
-    grid-column: 3;
-    position: sticky;
-    top: 20px;
-  }
+  box-shadow: 0 0 0 3px var(--input-focus) !important;
 }
 
 /* Layout vertical fluido no mobile/tablet */
