@@ -4241,6 +4241,100 @@ Fico no aguardo! 😊`;
     });
   }
 
+  // Listener para gerar o token via Client Credentials da API Shopify de forma imediata
+  const btnGenerateTokenCredentials = document.getElementById('btn-generate-token-credentials');
+  if (btnGenerateTokenCredentials) {
+    btnGenerateTokenCredentials.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      const rawDomain = document.getElementById('sh-domain-prefix').value.trim();
+      const shopParam = rawDomain.replace(/\.myshopify\.com$/, '');
+      const rawClientId = document.getElementById('sh-client-id').value.trim();
+      const rawSecret = document.getElementById('sh-secret').value.trim();
+      const clientId = rawClientId.replace(/^shpat_|^shpss_/, '');
+      const secret = rawSecret.replace(/^shpat_|^shpss_/, '');
+
+      if (!shopParam || !clientId || !secret || clientId === '01f8ba9c35c5bb9bef70d949d2356676' || secret === 'shpss_252c116837c44ea156428f65c773xxxx') {
+        alert('Atenção: Para gerar o Token de acesso automaticamente, preencha primeiro o seu Domínio MyShopify, o seu Client ID e o seu Secret (API Secret Key) nos campos abaixo.');
+        return;
+      }
+
+      const originalHtml = btnGenerateTokenCredentials.innerHTML;
+      btnGenerateTokenCredentials.disabled = true;
+      btnGenerateTokenCredentials.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Gerando...`;
+
+      try {
+        console.log('📡 Solicitando geração de token via Client Credentials para:', shopParam);
+        const response = await fetch('/api/shopify?action=exchange_credentials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            shop: shopParam,
+            client_id: clientId,
+            client_secret: secret
+          })
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          const permanentToken = resData.access_token;
+
+          // Preencher os dados no formulário
+          const shAccessTokenInput = document.getElementById('sh-access-token');
+          if (shAccessTokenInput) shAccessTokenInput.value = permanentToken;
+
+          // Atualizar themeConfig
+          themeConfig.shopifyDomain = shopParam;
+          themeConfig.shopifyToken = permanentToken;
+          themeConfig.shopifyClientId = clientId;
+          themeConfig.shopifySecret = secret;
+          themeConfig.shopifyActive = true;
+
+          // Atualizar badge visual
+          updateStatusBadgeVisual(true);
+          updateTokenFieldVisibility();
+
+          // Salvar tudo de forma definitiva no Supabase
+          const saveRes = await fetch('/api/config', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              checkout_theme_config: JSON.stringify(themeConfig)
+            })
+          });
+
+          if (saveRes.ok) {
+            alert('Parabéns! O Token de acesso API Admin foi gerado com sucesso e a integração com a Shopify foi ativada!');
+            // Dispara a sincronização automática do catálogo em segundo plano
+            console.log('🔄 Sincronizando catálogo do Shopify automaticamente...');
+            loadShopifyProducts(true);
+            loadShopifyCollections(true);
+          } else {
+            alert('Token gerado com sucesso, mas ocorreu um erro ao salvar as configurações no banco.');
+          }
+        } else {
+          const errText = await response.text();
+          let parsedErr = errText;
+          try {
+            const errObj = JSON.parse(errText);
+            parsedErr = errObj.error || errText;
+          } catch(e){}
+          alert(`Erro ao gerar token com a Shopify: ${parsedErr}\n\nCertifique-se de que o Client ID e Client Secret correspondem às credenciais corretas do seu Custom App no Shopify.`);
+        }
+      } catch (err) {
+        console.error('Erro na geração de token via credentials:', err);
+        alert('Ocorreu um erro de rede ao tentar gerar o token da Shopify.');
+      } finally {
+        btnGenerateTokenCredentials.disabled = false;
+        btnGenerateTokenCredentials.innerHTML = originalHtml;
+      }
+    });
+  }
+
   // Listener para o seletor dropdown do Status da Integração
   const shopifyStatusSelect = document.getElementById('shopify-status-select');
   if (shopifyStatusSelect) {

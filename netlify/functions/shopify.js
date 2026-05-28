@@ -217,6 +217,64 @@ exports.handler = async (event, context) => {
     }
 
     // ----------------------------------------------------
+    // AÇÃO: EXCHANGE CREDENTIALS (CLIENT CREDENTIALS GRANT TYPE)
+    // ----------------------------------------------------
+    if (action === 'exchange_credentials' && event.httpMethod === 'POST') {
+      const data = JSON.parse(event.body || '{}');
+      const { shop, client_id, client_secret } = data;
+
+      if (!shop || !client_id || !client_secret) {
+        return {
+          statusCode: 400,
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Shop, client_id e client_secret são obrigatórios.' }),
+        };
+      }
+
+      const cleanClientId = client_id.trim().replace(/^shpat_|^shpss_/, '');
+      const cleanSecret = client_secret.trim().replace(/^shpat_|^shpss_/, '');
+
+      let shopUrl = shop.trim();
+      if (!shopUrl.endsWith('.myshopify.com')) {
+        shopUrl = shopUrl + '.myshopify.com';
+      }
+
+      const oauthUrl = `https://${shopUrl}/admin/oauth/access_token`;
+      console.log(`📡 Solicitando Token via Client Credentials Grant em: ${oauthUrl}`);
+
+      const params = new URLSearchParams();
+      params.append('client_id', cleanClientId);
+      params.append('client_secret', cleanSecret);
+      params.append('grant_type', 'client_credentials');
+
+      const response = await fetch(oauthUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: params.toString()
+      });
+
+      const resText = await response.text();
+      if (!response.ok) {
+        throw new Error(`Erro na geração de token via Client Credentials na Shopify: ${response.status} - ${resText}`);
+      }
+
+      const resData = JSON.parse(resText);
+      console.log(`✅ Token gerado com sucesso via Client Credentials: ${shopUrl}`);
+
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: resData.access_token,
+          scope: resData.scope
+        }),
+      };
+    }
+
+    // ----------------------------------------------------
     // AÇÃO: BUSCAR PRODUTOS
     // ----------------------------------------------------
     if (action === 'products' && event.httpMethod === 'GET') {
