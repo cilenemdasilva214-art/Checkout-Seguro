@@ -126,7 +126,18 @@ exports.handler = async (event, context) => {
         };
       }
 
-      // Extrai informações do primeiro item do carrinho
+      // Mapeia todos os itens do carrinho com os campos que precisamos
+      const cartItems = cart_payload.items.map(item => ({
+        title: item.title || item.product_title || 'Produto Shopify',
+        price: ((item.price || 0) / 100).toFixed(2),
+        sku: item.sku || 'SHPFY-DEFAULT',
+        quantity: item.quantity || 1,
+        variant_id: item.variant_id || '',
+        product_id: item.product_id || '',
+        image: item.image || (item.featured_image ? (item.featured_image.url || item.featured_image) : '') || ''
+      }));
+
+      // Extrai informações do primeiro item do carrinho como fallback para compatibilidade antiga
       const firstItem = cart_payload.items[0];
       const title = encodeURIComponent(firstItem.title || firstItem.product_title || 'Produto Shopify');
       const price = ((firstItem.price || 0) / 100).toFixed(2);
@@ -137,7 +148,8 @@ exports.handler = async (event, context) => {
 
       // URL base do checkout transparente (dinâmica)
       const checkoutDomain = process.env.URL || 'https://checkout-portodosvinhos.netlify.app';
-      const checkoutDirectUrl = `${checkoutDomain.replace(/\/$/, '')}/?title=${title}&price=${price}&sku=${sku}&quantity=${quantity}&shopify_variant_id=${variantId}&shopify_product_id=${productId}`;
+      const cartParam = encodeURIComponent(JSON.stringify(cartItems));
+      const checkoutDirectUrl = `${checkoutDomain.replace(/\/$/, '')}/?title=${title}&price=${price}&sku=${sku}&quantity=${quantity}&shopify_variant_id=${variantId}&shopify_product_id=${productId}&cart=${cartParam}`;
 
       console.log(`🛒 Processando redirecionamento Shopify para: ${checkoutDirectUrl}`);
 

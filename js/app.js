@@ -848,7 +848,13 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     }
     const totalAmount = parseFloat((subtotalAfterCoupon + shippingPrice - discountVal).toFixed(2));
 
-    const itemsPayload = shpfyProductTitle ? [
+    const itemsPayload = shopifyCartItems && shopifyCartItems.length > 0 ? shopifyCartItems.map(item => ({
+      name: item.title,
+      price: parseFloat(item.price) || 0,
+      quantity: parseInt(item.quantity) || 1,
+      sku: item.sku || 'SHPFY-DEFAULT',
+      shopify_variant_id: item.variant_id || null
+    })) : (shpfyProductTitle ? [
       {
         name: shpfyProductTitle,
         price: shpfyProductPrice,
@@ -863,7 +869,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
         quantity: 1,
         sku: "SANDBOX-ELITE-PK"
       }
-    ];
+    ]);
 
     const payload = {
       checkout_session_id: checkoutSessionId,
@@ -1906,6 +1912,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
   let shpfyProductPrice = null;
   let shpfyProductQuantity = 1;
   let shpfyVariantId = null;
+  let shopifyCartItems = []; // Global variable to store all products in the Shopify cart
 
   // Função para carregar produtos vindos do redirecionamento Shopify
   function parseUrlParameters() {
@@ -1916,8 +1923,80 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     const paramQty = urlParams.get('quantity');
     const paramVariant = urlParams.get('shopify_variant_id');
     const paramProductId = urlParams.get('shopify_product_id') || urlParams.get('product_id');
+    const cartParam = urlParams.get('cart');
 
-    if (paramTitle && paramPrice) {
+    if (cartParam) {
+      try {
+        shopifyCartItems = JSON.parse(decodeURIComponent(cartParam));
+        console.log("🛒 Lista de produtos carregada do carrinho Shopify:", shopifyCartItems);
+      } catch (e) {
+        console.error("Erro ao fazer o parse do carrinho Shopify:", e);
+      }
+    }
+
+    if (shopifyCartItems && shopifyCartItems.length > 0) {
+      // Usar a lista completa de produtos do carrinho Shopify
+      const itemsListContainer = document.getElementById('items-list');
+      if (itemsListContainer) {
+        let htmlContent = '';
+        let totalBaseAmount = 0;
+
+        shopifyCartItems.forEach((item) => {
+          const priceNum = parseFloat(item.price) || 0;
+          const qtyNum = parseInt(item.quantity) || 1;
+          const subtotalItem = priceNum * qtyNum;
+          totalBaseAmount += subtotalItem;
+
+          // Se tiver imagem exibe ela, senão exibe ícone de garrafa de vinho (já que é Porto dos Vinhos!)
+          const imageHtml = item.image 
+            ? `<img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">` 
+            : `<i class="fa-solid fa-wine-bottle" style="font-size: 1.25rem;"></i>`;
+
+          htmlContent += `
+            <div class="checkout-product-card" style="margin-bottom: 12px; display: flex; gap: 16px; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 12px; transition: all 0.3s;">
+              <div class="checkout-product-icon-box" style="padding: 0; overflow: hidden; background: rgba(124, 77, 255, 0.05); display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0; box-shadow: 0 0 15px rgba(124, 77, 255, 0.2);">
+                ${imageHtml}
+              </div>
+              <div class="checkout-product-details" style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; text-align: left;">
+                <span class="checkout-product-name" style="font-weight: 600; font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${item.title}">${item.title}</span>
+                <span class="checkout-product-size" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">SKU: ${item.sku || 'SHPFY-DEFAULT'}</span>
+                <div class="checkout-product-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                  <div class="checkout-qty-selector" style="opacity: 0.85; pointer-events: none; padding: 2px 8px; font-size: 11px; font-weight: 600; color: var(--text-secondary); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                    Qtd: ${qtyNum}
+                  </div>
+                  <span class="checkout-product-price" style="font-weight: 700; color: var(--primary-color); font-size: 14px;">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        // Re-adiciona o input base-amount oculto no final
+        htmlContent += `<input type="number" id="base-amount" value="${totalBaseAmount.toFixed(2)}" style="display: none;">`;
+        itemsListContainer.innerHTML = htmlContent;
+
+        // Atualiza o base-amount e bloqueia o campo
+        if (amountInput) {
+          amountInput.value = totalBaseAmount.toFixed(2);
+          amountInput.disabled = true;
+          amountInput.style.opacity = '0.7';
+          amountInput.style.cursor = 'not-allowed';
+        }
+
+        // Definir variáveis de fallback para o primeiro produto (compatibilidade com pixels e rotinas legadas)
+        const firstItem = shopifyCartItems[0];
+        shpfyProductTitle = firstItem.title;
+        shpfyProductSku = firstItem.sku || 'SHPFY-DEFAULT';
+        shpfyProductPrice = parseFloat(firstItem.price) || 0;
+        shpfyProductQuantity = parseInt(firstItem.quantity) || 1;
+        shpfyVariantId = firstItem.variant_id || null;
+
+        // Recalcular totais finais
+        calculateTotals();
+        console.log(`🛒 ${shopifyCartItems.length} produtos do carrinho Shopify renderizados no checkout.`);
+        checkCollectionDiscounts(shpfyProductSku, shpfyVariantId, shpfyProductPrice, paramProductId);
+      }
+    } else if (paramTitle && paramPrice) {
       shpfyProductTitle = paramTitle;
       shpfyProductSku = paramSku || 'SHPFY-DEFAULT';
       shpfyProductPrice = parseFloat(paramPrice) || 0;
@@ -2407,7 +2486,13 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     }
     const totalAmount = parseFloat((subtotalAfterCoupon + shippingPrice - discountVal).toFixed(2));
 
-    const itemsPayload = shpfyProductTitle ? [
+    const itemsPayload = shopifyCartItems && shopifyCartItems.length > 0 ? shopifyCartItems.map(item => ({
+      name: item.title,
+      price: parseFloat(item.price) || 0,
+      quantity: parseInt(item.quantity) || 1,
+      sku: item.sku || 'SHPFY-DEFAULT',
+      shopify_variant_id: item.variant_id || null
+    })) : (shpfyProductTitle ? [
       {
         name: shpfyProductTitle,
         price: shpfyProductPrice,
@@ -2422,7 +2507,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
         quantity: 1,
         sku: "SANDBOX-ELITE-PK"
       }
-    ];
+    ]);
 
     const payload = {
       checkout_session_id: uuid,
