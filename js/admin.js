@@ -4378,7 +4378,10 @@ Fico no aguardo! 😊`;
         btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
       }
 
-      themeConfig.shopifyDomain = document.getElementById('sh-domain-prefix').value.trim();
+      let rawDomain = document.getElementById('sh-domain-prefix').value.trim();
+      let cleanDomain = rawDomain.replace(/\.myshopify\.com$/, '');
+      themeConfig.shopifyDomain = cleanDomain;
+      document.getElementById('sh-domain-prefix').value = cleanDomain; // Atualiza o input visual para o prefixo limpo
       
       const tokenInputVal = document.getElementById('sh-access-token').value.trim();
       themeConfig.shopifyToken = tokenInputVal;

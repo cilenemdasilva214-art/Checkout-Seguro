@@ -52,7 +52,11 @@ exports.handler = async (event, context) => {
         if (themeConfigStr) {
           const themeConfig = JSON.parse(themeConfigStr);
           if (themeConfig.shopifyDomain) {
-            storeDomain = themeConfig.shopifyDomain.trim() + '.myshopify.com';
+            let domain = themeConfig.shopifyDomain.trim();
+            if (!domain.endsWith('.myshopify.com')) {
+              domain = domain + '.myshopify.com';
+            }
+            storeDomain = domain;
           }
           if (themeConfig.shopifyToken) {
             accessToken = themeConfig.shopifyToken.trim();
