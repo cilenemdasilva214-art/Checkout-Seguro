@@ -4,7 +4,7 @@
  */
 
 :root {
-  --bg-color: #f4f6fa; /* Fundo geral claro - branco gelo premium */
+  --bg-color: #ffffff; /* Fundo geral claro - puro branco */
   --panel-bg: #ffffff; /* Fundo dos cards puro branco, como no print */
   --panel-border: #e5e7eb; /* Bordas finas cinzas */
   --primary-color: #164620; /* Verde oliva correspondente ao rodapé/print */
@@ -114,7 +114,6 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--panel-border);
   padding-bottom: 20px;
 }
 .app-header .logo {
