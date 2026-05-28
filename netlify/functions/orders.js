@@ -37,12 +37,39 @@ exports.handler = async (event, context) => {
   // Obter parâmetros da query string (limites, etc.)
   const id = event.queryStringParameters ? event.queryStringParameters.id : null;
   const limit = (event.queryStringParameters && event.queryStringParameters.limit) || '1000';
+
+  // Detectar o domínio de onde partiu a requisição (através do referer)
+  const referer = event.headers.referer || event.headers.referrer || '';
+  let requestDomain = '';
+  if (referer) {
+    try {
+      const refUrl = new URL(referer);
+      requestDomain = refUrl.hostname;
+    } catch (e) {
+      console.warn('⚠️ Falha ao fazer parse do referer:', e.message);
+    }
+  }
+
+  // Se houver um domínio configurado no Netlify (CHECKOUT_DOMAIN), use ele, senão use o hostname detectado
+  const siteDomain = process.env.CHECKOUT_DOMAIN || requestDomain || '';
+
+  let domainFilter = '';
+  if (siteDomain && siteDomain !== 'localhost' && siteDomain !== '127.0.0.1') {
+    // Se for o Checkout 1 (Porto dos Vinhos ou mysterious-goodall), permite carregar as novas dele + as antigas sem domínio (null)
+    if (siteDomain.includes('porto') || siteDomain.includes('vinho') || siteDomain.includes('mysterious-goodall')) {
+      domainFilter = `or=(domain.eq.${siteDomain},domain.is.null)`;
+    } else {
+      // Se for outro checkout (Checkout 2, etc.), filtra estritamente pelo domínio dele
+      domainFilter = `domain=eq.${siteDomain}`;
+    }
+  }
   
   let targetUrl;
   if (id) {
     targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?id=eq.${id}&select=*`;
   } else {
-    targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?select=*&order=created_at.desc&limit=${limit}`;
+    const filterSeparator = domainFilter ? `&${domainFilter}` : '';
+    targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?select=*${filterSeparator}&order=created_at.desc&limit=${limit}`;
   }
 
   try {
