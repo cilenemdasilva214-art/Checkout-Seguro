@@ -146,6 +146,7 @@ exports.handler = async (event, context) => {
         checkout_theme_config,
         checkout_wa_store_name,
         checkout_wa_msg_confirmed,
+        checkout_wa_msg_shipped,
         checkout_wa_msg_pix,
         checkout_wa_msg_card,
         active_gateway,
