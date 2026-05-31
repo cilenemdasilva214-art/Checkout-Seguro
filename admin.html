@@ -243,6 +243,12 @@
               <span>Configurações</span>
             </a>
           </li>
+          <li>
+            <a class="menu-item" data-view="integracoes">
+              <i class="fa-solid fa-link" style="color:#0ea5e9;"></i>
+              <span>Integrações</span>
+            </a>
+          </li>
         </ul>
       </nav>
       <div style="margin-top:auto;">
@@ -890,6 +896,105 @@
               <span>Salvar Credenciais</span>
             </button>
           </form>
+        </div>
+      </section>
+
+      <!-- VIEW: INTEGRAÇÕES DE GATEWAYS -->
+      <section class="view-panel hide" id="view-integracoes">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-link"></i> Integração de Gateways de Pagamento</h2>
+            <span>Gerencie e alterne dinamicamente entre os gateways de pagamento do seu checkout</span>
+          </div>
+
+          <div class="gateway-container">
+            <!-- PagueX Card -->
+            <div class="gateway-card" id="card-paguex">
+              <div class="gateway-header">
+                <div class="gateway-info">
+                  <div class="gateway-logo">
+                    <i class="fa-solid fa-credit-card" style="color: #0ea5e9;"></i>
+                  </div>
+                  <div>
+                    <h3>PagueX</h3>
+                    <span class="badge active-badge">Pix & Cartão</span>
+                  </div>
+                </div>
+                <div class="gateway-toggle">
+                  <label class="switch">
+                    <input type="checkbox" id="toggle-paguex" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="gateway-body">
+                <div class="settings-group">
+                  <label for="paguex-public-key">Chave Pública (Public Key)</label>
+                  <div class="settings-input-wrapper">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="text" id="paguex-public-key" placeholder="Insira a Public Key do PagueX">
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <label for="paguex-secret-key">Chave Secreta (Secret Key)</label>
+                  <div class="settings-input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="paguex-secret-key" placeholder="Insira a Secret Key do PagueX">
+                    <button type="button" class="btn-toggle-visibility" data-target="paguex-secret-key">
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- HyperCash Card -->
+            <div class="gateway-card" id="card-hypercash">
+              <div class="gateway-header">
+                <div class="gateway-info">
+                  <div class="gateway-logo">
+                    <i class="fa-solid fa-bolt" style="color: #eab308;"></i>
+                  </div>
+                  <div>
+                    <h3>HyperCash</h3>
+                    <span class="badge secondary-badge">Exclusivo Pix</span>
+                  </div>
+                </div>
+                <div class="gateway-toggle">
+                  <label class="switch">
+                    <input type="checkbox" id="toggle-hypercash">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="gateway-body">
+                <div class="settings-group">
+                  <label for="hypercash-public-key">Chave Pública (Public Key)</label>
+                  <div class="settings-input-wrapper">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="text" id="hypercash-public-key" placeholder="Insira a Public Key do HyperCash">
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <label for="hypercash-secret-key">Chave Secreta (Secret Key)</label>
+                  <div class="settings-input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="hypercash-secret-key" placeholder="Insira a Secret Key do HyperCash">
+                    <button type="button" class="btn-toggle-visibility" data-target="hypercash-secret-key">
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem;">
+            <button type="button" class="btn-submit-settings" id="btn-save-integracoes">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Salvar Integrações</span>
+            </button>
+          </div>
         </div>
       </section>
 

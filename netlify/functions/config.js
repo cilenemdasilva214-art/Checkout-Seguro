@@ -84,9 +84,14 @@ exports.handler = async (event, context) => {
         checkout_wa_msg_confirmed: '',
         checkout_wa_msg_shipped: '',
         checkout_wa_msg_pix: '',
-        checkout_wa_msg_card: ''
+        checkout_wa_msg_card: '',
+        active_gateway: 'paguex',
+        paguex_public_key: '',
+        paguex_secret_key: '',
+        hypercash_public_key: '',
+        hypercash_secret_key: ''
       };
-
+ 
       configs.forEach(c => {
         if (c.key === 'facebook_pixel_id') result.facebook_pixel_id = c.value;
         if (c.key === 'facebook_pixel_token') result.facebook_pixel_token = c.value;
@@ -107,6 +112,11 @@ exports.handler = async (event, context) => {
         if (c.key === 'checkout_wa_msg_shipped') result.checkout_wa_msg_shipped = c.value;
         if (c.key === 'checkout_wa_msg_pix') result.checkout_wa_msg_pix = c.value;
         if (c.key === 'checkout_wa_msg_card') result.checkout_wa_msg_card = c.value;
+        if (c.key === 'active_gateway') result.active_gateway = c.value;
+        if (c.key === 'paguex_public_key') result.paguex_public_key = c.value;
+        if (c.key === 'paguex_secret_key') result.paguex_secret_key = c.value;
+        if (c.key === 'hypercash_public_key') result.hypercash_public_key = c.value;
+        if (c.key === 'hypercash_secret_key') result.hypercash_secret_key = c.value;
       });
 
       return {
@@ -136,11 +146,15 @@ exports.handler = async (event, context) => {
         checkout_theme_config,
         checkout_wa_store_name,
         checkout_wa_msg_confirmed,
-        checkout_wa_msg_shipped,
         checkout_wa_msg_pix,
-        checkout_wa_msg_card
+        checkout_wa_msg_card,
+        active_gateway,
+        paguex_public_key,
+        paguex_secret_key,
+        hypercash_public_key,
+        hypercash_secret_key
       } = data;
-
+ 
       const payloads = [];
       if (facebook_pixel_id !== undefined) payloads.push({ key: 'facebook_pixel_id', value: (facebook_pixel_id || '').trim() });
       if (facebook_pixel_token !== undefined) payloads.push({ key: 'facebook_pixel_token', value: (facebook_pixel_token || '').trim() });
@@ -163,6 +177,11 @@ exports.handler = async (event, context) => {
       if (checkout_wa_msg_shipped !== undefined) payloads.push({ key: 'checkout_wa_msg_shipped', value: (checkout_wa_msg_shipped || '').trim() });
       if (checkout_wa_msg_pix !== undefined) payloads.push({ key: 'checkout_wa_msg_pix', value: (checkout_wa_msg_pix || '').trim() });
       if (checkout_wa_msg_card !== undefined) payloads.push({ key: 'checkout_wa_msg_card', value: (checkout_wa_msg_card || '').trim() });
+      if (active_gateway !== undefined) payloads.push({ key: 'active_gateway', value: (active_gateway || 'paguex').trim() });
+      if (paguex_public_key !== undefined) payloads.push({ key: 'paguex_public_key', value: (paguex_public_key || '').trim() });
+      if (paguex_secret_key !== undefined) payloads.push({ key: 'paguex_secret_key', value: (paguex_secret_key || '').trim() });
+      if (hypercash_public_key !== undefined) payloads.push({ key: 'hypercash_public_key', value: (hypercash_public_key || '').trim() });
+      if (hypercash_secret_key !== undefined) payloads.push({ key: 'hypercash_secret_key', value: (hypercash_secret_key || '').trim() });
 
       // Salva ou atualiza usando upsert por Postgrest REST API
       const response = await fetch(targetUrl, {

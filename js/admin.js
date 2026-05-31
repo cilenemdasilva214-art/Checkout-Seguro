@@ -490,6 +490,11 @@ Fico no aguardo! 😊`;
       title: 'Personalizar Identidade Visual',
       subtitle: 'Edite cores, logomarcas, avisos e a estrutura geral do seu checkout',
       showFilter: false
+    },
+    integracoes: {
+      title: 'Integrações de Gateways',
+      subtitle: 'Gerencie e alterne dinamicamente entre os gateways de pagamento',
+      showFilter: false
     }
   };
 
@@ -757,6 +762,34 @@ Fico no aguardo! 😊`;
           waMsgCard = configData.checkout_wa_msg_card;
           if (waMsgCardTextarea) waMsgCardTextarea.value = waMsgCard;
         }
+
+        // Configurações de Integração de Gateways
+        const activeGateway = configData.active_gateway || 'paguex';
+        const pPublic = configData.paguex_public_key || '';
+        const pSecret = configData.paguex_secret_key || '';
+        const hPublic = configData.hypercash_public_key || '';
+        const hSecret = configData.hypercash_secret_key || '';
+
+        const togglePaguex = document.getElementById('toggle-paguex');
+        const toggleHypercash = document.getElementById('toggle-hypercash');
+        const cardPaguex = document.getElementById('card-paguex');
+        const cardHypercash = document.getElementById('card-hypercash');
+
+        if (togglePaguex) togglePaguex.checked = (activeGateway === 'paguex');
+        if (toggleHypercash) toggleHypercash.checked = (activeGateway === 'hypercash');
+
+        if (cardPaguex) cardPaguex.classList.toggle('active', activeGateway === 'paguex');
+        if (cardHypercash) cardHypercash.classList.toggle('active', activeGateway === 'hypercash');
+
+        const pPubKeyInput = document.getElementById('paguex-public-key');
+        const pSecKeyInput = document.getElementById('paguex-secret-key');
+        const hPubKeyInput = document.getElementById('hypercash-public-key');
+        const hSecKeyInput = document.getElementById('hypercash-secret-key');
+
+        if (pPubKeyInput) pPubKeyInput.value = pPublic;
+        if (pSecKeyInput) pSecKeyInput.value = pSecret;
+        if (hPubKeyInput) hPubKeyInput.value = hPublic;
+        if (hSecKeyInput) hSecKeyInput.value = hSecret;
 
         // Se a tabela estiver faltando, exibe aviso amigável
         if (configData.table_missing) {
@@ -4781,4 +4814,100 @@ Fico no aguardo! 😊`;
       }
     }
   })();
+
+  // ==========================================
+  // INTEGRAÇÃO DE GATEWAYS EVENT BINDINGS
+  // ==========================================
+  const togglePaguex = document.getElementById('toggle-paguex');
+  const toggleHypercash = document.getElementById('toggle-hypercash');
+  const cardPaguex = document.getElementById('card-paguex');
+  const cardHypercash = document.getElementById('card-hypercash');
+  const pPubKeyInput = document.getElementById('paguex-public-key');
+  const pSecKeyInput = document.getElementById('paguex-secret-key');
+  const hPubKeyInput = document.getElementById('hypercash-public-key');
+  const hSecKeyInput = document.getElementById('hypercash-secret-key');
+  const btnSaveIntegracoes = document.getElementById('btn-save-integracoes');
+
+  if (togglePaguex && toggleHypercash) {
+    togglePaguex.addEventListener('change', () => {
+      if (togglePaguex.checked) {
+        toggleHypercash.checked = false;
+        if (cardPaguex) cardPaguex.classList.add('active');
+        if (cardHypercash) cardHypercash.classList.remove('active');
+      } else {
+        toggleHypercash.checked = true;
+        if (cardPaguex) cardPaguex.classList.remove('active');
+        if (cardHypercash) cardHypercash.classList.add('active');
+      }
+    });
+
+    toggleHypercash.addEventListener('change', () => {
+      if (toggleHypercash.checked) {
+        togglePaguex.checked = false;
+        if (cardHypercash) cardHypercash.classList.add('active');
+        if (cardPaguex) cardPaguex.classList.remove('active');
+      } else {
+        togglePaguex.checked = true;
+        if (cardHypercash) cardHypercash.classList.remove('active');
+        if (cardPaguex) cardPaguex.classList.add('active');
+      }
+    });
+  }
+
+  if (btnSaveIntegracoes) {
+    btnSaveIntegracoes.addEventListener('click', async () => {
+      const activeGateway = togglePaguex.checked ? 'paguex' : 'hypercash';
+      const pPublic = pPubKeyInput ? pPubKeyInput.value.trim() : '';
+      const pSecret = pSecKeyInput ? pSecKeyInput.value.trim() : '';
+      const hPublic = hPubKeyInput ? hPubKeyInput.value.trim() : '';
+      const hSecret = hSecKeyInput ? hSecKeyInput.value.trim() : '';
+
+      btnSaveIntegracoes.disabled = true;
+      btnSaveIntegracoes.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Salvando...</span>`;
+
+      try {
+        const response = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            active_gateway: activeGateway,
+            paguex_public_key: pPublic,
+            paguex_secret_key: pSecret,
+            hypercash_public_key: hPublic,
+            hypercash_secret_key: hSecret
+          })
+        });
+
+        if (response.ok) {
+          alert('Integrações salvas com sucesso!');
+        } else {
+          const errText = await response.text();
+          alert(`Erro ao salvar integrações: ${errText}`);
+        }
+      } catch (err) {
+        console.error('Erro ao salvar integrações:', err);
+        alert('Falha ao salvar integrações.');
+      } finally {
+        btnSaveIntegracoes.disabled = false;
+        btnSaveIntegracoes.innerHTML = `<i class="fa-solid fa-floppy-disk"></i><span>Salvar Integrações</span>`;
+      }
+    });
+  }
+
+  // Toggle Password Visibility generically
+  document.querySelectorAll('.btn-toggle-visibility').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const targetInput = document.getElementById(targetId);
+      if (targetInput) {
+        if (targetInput.type === 'password') {
+          targetInput.type = 'text';
+          btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i>`;
+        } else {
+          targetInput.type = 'password';
+          btn.innerHTML = `<i class="fa-solid fa-eye"></i>`;
+        }
+      }
+    });
+  });
 });
