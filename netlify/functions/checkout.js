@@ -172,6 +172,22 @@ exports.handler = async (event, context) => {
                 type: 'CPF',
                 number: data.customer_cpf.replace(/\D/g, '')
               }
+            },
+            items: Array.isArray(data.items) && data.items.length > 0 
+              ? data.items.map(item => ({
+                  title: item.name || 'Item do Checkout',
+                  unitPrice: Math.round((parseFloat(item.price) || totalAmount) * 100),
+                  quantity: parseInt(item.quantity) || 1,
+                  tangible: true
+                }))
+              : [{
+                  title: 'Pacote Sandbox Elite',
+                  unitPrice: amountCents,
+                  quantity: 1,
+                  tangible: true
+                }],
+            pix: {
+              expiresInSeconds: 86400
             }
           };
 
