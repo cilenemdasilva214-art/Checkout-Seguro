@@ -1947,8 +1947,23 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     const paramOrigin = urlParams.get('origin');
     const paramShop = urlParams.get('shop');
 
-    if (paramOrigin) {
-      sessionStorage.setItem('checkout_origin', paramOrigin);
+    let checkoutOrigin = paramOrigin;
+    
+    // Fallback: se não veio pela URL, tentar extrair do document.referrer
+    if (!checkoutOrigin && document.referrer) {
+      try {
+        const refUrl = new URL(document.referrer);
+        // Só salva se não for o próprio domínio do checkout
+        if (refUrl.hostname !== window.location.hostname) {
+          checkoutOrigin = refUrl.origin;
+        }
+      } catch (e) {
+        console.error('Erro ao ler referrer:', e);
+      }
+    }
+
+    if (checkoutOrigin) {
+      sessionStorage.setItem('checkout_origin', checkoutOrigin);
     }
     if (paramShop) {
       sessionStorage.setItem('checkout_shop', paramShop);
