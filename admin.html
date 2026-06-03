@@ -2273,8 +2273,19 @@
                 </div>
               </div>
 
-              <!-- Elemento oculto mantido para evitar quebras em funções legadas -->
-              <div id="sh-awaiting-token-msg" style="display: none;"></div>
+              <!-- Elemento visível quando não há token -->
+              <div id="sh-awaiting-token-msg" style="display: none; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 8px; padding: 1rem; align-items: flex-start; gap: 0.75rem;">
+                <i class="fa-solid fa-triangle-exclamation" style="color: #eab308; margin-top: 3px;"></i>
+                <div>
+                  <h4 style="margin: 0 0 0.5rem 0; color: #eab308; font-size: 0.95rem;">Token da Shopify Ausente</h4>
+                  <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4;">
+                    Você precisa gerar ou preencher um token de acesso para ativar a integração.
+                  </p>
+                  <button type="button" id="btn-show-token-input-manual" style="margin-top: 0.75rem; background: transparent; border: 1px solid #eab308; color: #eab308; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.8rem; transition: 0.2s;">
+                    Preencher ou Gerar Token
+                  </button>
+                </div>
+              </div>
 
               <!-- Campo: Client ID -->
               <div>
