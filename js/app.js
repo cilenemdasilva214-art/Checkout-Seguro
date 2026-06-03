@@ -2707,7 +2707,17 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
             localStorage.removeItem('checkout_session_id');
 
             const urlParams = new URLSearchParams(window.location.search);
-            const storeParam = urlParams.get('store_url');
+            let storeParam = urlParams.get('store_url') || sessionStorage.getItem('checkout_origin');
+            
+            if (!storeParam || storeParam === 'null' || storeParam === 'undefined') {
+              if (window._currentThemeConfig && window._currentThemeConfig.shopifyDomain) {
+                let domain = window._currentThemeConfig.shopifyDomain.trim();
+                if (!domain.includes('.')) {
+                  domain = domain + '.myshopify.com';
+                }
+                storeParam = 'https://' + domain;
+              }
+            }
             
             let redirectUrl = `card-pre-approved.html?amount=${totalAmount}&date=${encodeURIComponent(formattedDate)}`;
             if (storeParam) {
