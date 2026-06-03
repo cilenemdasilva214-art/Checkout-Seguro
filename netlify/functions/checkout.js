@@ -279,9 +279,21 @@ exports.handler = async (event, context) => {
             formattedCep = '01001-000';
           }
 
+          const productsSum = paguexItems.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity)), 0);
+          let discount = 0;
+          let extraFee = 0;
+          
+          if (productsSum > totalAmount) {
+            discount = parseFloat((productsSum - totalAmount).toFixed(2));
+          } else if (productsSum < totalAmount) {
+            extraFee = parseFloat((totalAmount - productsSum).toFixed(2));
+          }
+
           const paguexPayload = {
             identifier: data.checkout_session_id || 'px-' + Math.random().toString(36).substr(2, 9),
             amount: totalAmount,
+            discount: discount > 0 ? discount : undefined,
+            extraFee: extraFee > 0 ? extraFee : undefined,
             client: {
               name: data.customer_name || 'Cliente Checkout',
               email: data.customer_email || 'email@teste.com',
