@@ -1908,6 +1908,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
             couponMessage.style.display = 'block';
 
             calculateTotals();
+            updateCompletedSummaries();
           } else {
             throw new Error('Cupom inativo.');
           }
@@ -1920,6 +1921,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
         couponMessage.className = 'coupon-message error';
         couponMessage.style.display = 'block';
         calculateTotals();
+        updateCompletedSummaries();
       } finally {
         btnApplyCoupon.disabled = false;
         btnApplyCoupon.textContent = 'Aplicar';
