@@ -274,6 +274,7 @@ Fico no aguardo! 😊`;
 
   // Configurações
   const configsForm = document.getElementById('configs-form');
+  const configPageTitle = document.getElementById('config-page-title');
   const configPixelId = document.getElementById('config-pixel-id');
   const configPixelToken = document.getElementById('config-pixel-token');
   const btnSaveSettings = document.getElementById('btn-save-settings');
@@ -706,6 +707,7 @@ Fico no aguardo! 😊`;
         adminPassword = configData.admin_password || '123456789';
 
         // Preencher inputs do form
+        if (configPageTitle) configPageTitle.value = configData.checkout_page_title || 'Checkout Seguro';
         configPixelId.value = facebookPixelId;
         configPixelToken.value = facebookPixelToken;
 
@@ -2101,6 +2103,7 @@ Fico no aguardo! 😊`;
 
     const pixelId = configPixelId.value.trim();
     const pixelToken = configPixelToken.value.trim();
+    const pageTitle = configPageTitle ? configPageTitle.value.trim() : '';
     const adsExpense = '0.00';
 
     // Sincronizar com facebookPixelsList
@@ -2127,6 +2130,7 @@ Fico no aguardo! 😊`;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          checkout_page_title: pageTitle,
           facebook_pixel_id: pixelId,
           facebook_pixel_token: pixelToken,
           facebook_pixels: JSON.stringify(facebookPixelsList),

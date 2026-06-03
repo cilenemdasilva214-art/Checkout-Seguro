@@ -730,6 +730,10 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
   function applyConfigData(data) {
     if (!data) return;
 
+    if (data.checkout_page_title) {
+      document.title = data.checkout_page_title;
+    }
+
     // Múltiplos Pixels
     window.facebookPixels = [];
     if (data.facebook_pixels) {

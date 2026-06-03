@@ -80,6 +80,7 @@ exports.handler = async (event, context) => {
         shipping_express_price: '25.00',
         discount_pix_percent: '10',
         checkout_theme_config: '',
+        checkout_page_title: 'Checkout Seguro',
         checkout_wa_store_name: 'Nome da Loja',
         checkout_wa_msg_confirmed: '',
         checkout_wa_msg_shipped: '',
@@ -107,6 +108,7 @@ exports.handler = async (event, context) => {
         if (c.key === 'shipping_express_price') result.shipping_express_price = c.value;
         if (c.key === 'discount_pix_percent') result.discount_pix_percent = c.value;
         if (c.key === 'checkout_theme_config') result.checkout_theme_config = c.value;
+        if (c.key === 'checkout_page_title') result.checkout_page_title = c.value;
         if (c.key === 'checkout_wa_store_name') result.checkout_wa_store_name = c.value;
         if (c.key === 'checkout_wa_msg_confirmed') result.checkout_wa_msg_confirmed = c.value;
         if (c.key === 'checkout_wa_msg_shipped') result.checkout_wa_msg_shipped = c.value;
@@ -144,6 +146,7 @@ exports.handler = async (event, context) => {
         shipping_express_price,
         discount_pix_percent,
         checkout_theme_config,
+        checkout_page_title,
         checkout_wa_store_name,
         checkout_wa_msg_confirmed,
         checkout_wa_msg_shipped,
@@ -173,6 +176,7 @@ exports.handler = async (event, context) => {
       if (shipping_express_price !== undefined) payloads.push({ key: 'shipping_express_price', value: (shipping_express_price || '25.00').trim() });
       if (discount_pix_percent !== undefined) payloads.push({ key: 'discount_pix_percent', value: (discount_pix_percent || '10').trim() });
       if (checkout_theme_config !== undefined) payloads.push({ key: 'checkout_theme_config', value: (checkout_theme_config || '').trim() });
+      if (checkout_page_title !== undefined) payloads.push({ key: 'checkout_page_title', value: (checkout_page_title || '').trim() });
       if (checkout_wa_store_name !== undefined) payloads.push({ key: 'checkout_wa_store_name', value: (checkout_wa_store_name || '').trim() });
       if (checkout_wa_msg_confirmed !== undefined) payloads.push({ key: 'checkout_wa_msg_confirmed', value: (checkout_wa_msg_confirmed || '').trim() });
       if (checkout_wa_msg_shipped !== undefined) payloads.push({ key: 'checkout_wa_msg_shipped', value: (checkout_wa_msg_shipped || '').trim() });
