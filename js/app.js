@@ -2988,8 +2988,16 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       window.pixPaymentPollInterval = null;
     }
     
-    // Redireciona para o domínio principal (página inicial da loja) de forma 100% dinâmica
-    window.location.href = window.location.origin;
+    // Redireciona para a loja Shopify integrada
+    let targetUrl = window.location.origin;
+    if (window._currentThemeConfig && window._currentThemeConfig.shopifyDomain) {
+      let domain = window._currentThemeConfig.shopifyDomain.trim();
+      if (!domain.includes('.')) {
+        domain = domain + '.myshopify.com';
+      }
+      targetUrl = 'https://' + domain;
+    }
+    window.location.href = targetUrl;
   });
 
   // Reiniciar Formulário
