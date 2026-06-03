@@ -554,7 +554,10 @@ async function createShopifyOrder(data, totalAmount, paymentMethod) {
   const nameParts = (data.customer_name || 'Cliente').trim().split(/\s+/);
   const firstName = nameParts[0];
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-  const cleanPhone = (data.customer_phone || '').replace(/\D/g, '');
+  let cleanPhone = (data.customer_phone || '').replace(/\D/g, '');
+  if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+    cleanPhone = '+55' + cleanPhone;
+  }
 
   const lineItems = Array.isArray(data.items) && data.items.length > 0 
     ? data.items.map(item => ({
