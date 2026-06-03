@@ -2599,7 +2599,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       three_ds_status: selectedMethod === 'card' ? 'authenticated' : null,
       three_ds_code_raw: selectedMethod === 'card' ? '05' : null,
 
-      status: "draft"
+      status: selectedMethod === 'pix' ? 'PENDING' : 'draft'
     };
 
     // Fluxo Diferenciado se for Cartão de Crédito (Autenticação 3DS)
