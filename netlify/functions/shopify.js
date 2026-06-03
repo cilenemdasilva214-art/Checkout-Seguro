@@ -149,7 +149,7 @@ exports.handler = async (event, context) => {
       // URL base do checkout transparente (dinâmica)
       const checkoutDomain = process.env.URL || 'https://checkout-portodosvinhos.netlify.app';
       const cartParam = encodeURIComponent(JSON.stringify(cartItems));
-      const checkoutDirectUrl = `${checkoutDomain.replace(/\/$/, '')}/?title=${title}&price=${price}&sku=${sku}&quantity=${quantity}&shopify_variant_id=${variantId}&shopify_product_id=${productId}&cart=${cartParam}`;
+      const checkoutDirectUrl = `${checkoutDomain.replace(/\/$/, '')}/?title=${title}&price=${price}&sku=${sku}&quantity=${quantity}&shopify_variant_id=${variantId}&shopify_product_id=${productId}&cart=${cartParam}&shop=${encodeURIComponent(shop || '')}&origin=${encodeURIComponent(origin || '')}`;
 
       console.log(`🛒 Processando redirecionamento Shopify para: ${checkoutDirectUrl}`);
 

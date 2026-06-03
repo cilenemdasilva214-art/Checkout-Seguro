@@ -1944,6 +1944,15 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     const paramQty = urlParams.get('quantity');
     const paramVariant = urlParams.get('shopify_variant_id');
     const paramProductId = urlParams.get('shopify_product_id') || urlParams.get('product_id');
+    const paramOrigin = urlParams.get('origin');
+    const paramShop = urlParams.get('shop');
+
+    if (paramOrigin) {
+      sessionStorage.setItem('checkout_origin', paramOrigin);
+    }
+    if (paramShop) {
+      sessionStorage.setItem('checkout_shop', paramShop);
+    }
     const cartParam = urlParams.get('cart');
 
     if (cartParam) {
@@ -2988,15 +2997,20 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       window.pixPaymentPollInterval = null;
     }
     
-    // Redireciona para a loja Shopify integrada
+    // Redireciona para a loja de origem (Shopify)
     let targetUrl = window.location.origin;
-    if (window._currentThemeConfig && window._currentThemeConfig.shopifyDomain) {
+    const sessionOrigin = sessionStorage.getItem('checkout_origin');
+    
+    if (sessionOrigin && sessionOrigin !== 'null' && sessionOrigin !== 'undefined') {
+      targetUrl = sessionOrigin;
+    } else if (window._currentThemeConfig && window._currentThemeConfig.shopifyDomain) {
       let domain = window._currentThemeConfig.shopifyDomain.trim();
       if (!domain.includes('.')) {
         domain = domain + '.myshopify.com';
       }
       targetUrl = 'https://' + domain;
     }
+    
     window.location.href = targetUrl;
   });
 
