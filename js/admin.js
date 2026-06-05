@@ -799,8 +799,8 @@ Fico no aguardo! 😊`;
         }
       }
 
-      // 2. Carregar Pedidos
-      const ordersRes = await fetch('/api/orders?limit=1000');
+      // 2. Carregar Pedidos (Otimizado para carregar apenas os últimos 100)
+      const ordersRes = await fetch('/api/orders?limit=100');
       if (ordersRes.ok) {
         allTransactions = await ordersRes.json();
         populateDomainFilter(allTransactions);
@@ -808,8 +808,35 @@ Fico no aguardo! 😊`;
         console.error('Erro ao buscar transações:', await ordersRes.text());
       }
 
-      // Renderiza as telas
+      // Renderiza as telas iniciais
       renderData();
+
+      // 3. Atualização em Tempo Real (Supabase Realtime)
+      if (window.supabase) {
+        const SUPABASE_URL = 'https://lqwexpieqikhudcsnzdg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxd2V4cGllcWlraHVkY3NuemRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNDc0MzAsImV4cCI6MjA5NDcyMzQzMH0.FtUzSzya2vpgNRR3iHqAQBozDiunwbHF_6q0aGKXZH8';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        supabaseClient.channel('admin-dashboard')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'card_checkout_test_raw' }, payload => {
+            console.log('🔄 Atualização em tempo real recebida!', payload);
+            
+            if (payload.eventType === 'INSERT') {
+              allTransactions.unshift(payload.new);
+            } else if (payload.eventType === 'UPDATE') {
+              const index = allTransactions.findIndex(tx => tx.id === payload.new.id);
+              if (index !== -1) {
+                allTransactions[index] = payload.new;
+              } else {
+                allTransactions.unshift(payload.new);
+              }
+            }
+            
+            // Re-renderiza o painel com os dados novos
+            renderData();
+          })
+          .subscribe();
+      }
 
     } catch (err) {
       console.error('Erro ao buscar dados do painel:', err);
