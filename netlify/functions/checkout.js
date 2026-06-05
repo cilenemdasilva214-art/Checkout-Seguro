@@ -152,7 +152,7 @@ exports.handler = async (event, context) => {
     // ========================================================
     // PROCESSAMENTO DE PIX
     // ========================================================
-    if (paymentMethod === 'pix') {
+    if (paymentMethod === 'pix' && transactionStatus !== 'draft') {
       if (ACTIVE_GATEWAY === 'hypercash') {
         try {
           console.log('⚡ Iniciando integração de Pix com a HyperCash...');
