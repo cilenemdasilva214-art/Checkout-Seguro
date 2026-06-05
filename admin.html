@@ -2273,6 +2273,20 @@
                 </div>
               </div>
 
+              <!-- Lembrete dos Escopos -->
+              <div style="background: rgba(149, 191, 71, 0.1); border: 1px dashed #95bf47; border-radius: 8px; padding: 1rem; margin-top: 1rem; margin-bottom: 0.5rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #95bf47; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Lembrete de Permissões (Escopos)
+                </h4>
+                <p style="margin: 0 0 0.75rem 0; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4;">
+                  Ao configurar os Escopos da API Admin na Shopify, certifique-se de marcar <strong>Leitura e Gravação</strong> para Orders. Clique nos termos abaixo para copiar:
+                </p>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <span style="background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); padding: 0.4rem 0.75rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; color: #fff; cursor: pointer; transition: 0.2s;" onclick="navigator.clipboard.writeText('write_orders'); alert('Escopo copiado: write_orders')" onmouseover="this.style.background='rgba(149, 191, 71, 0.2)'" onmouseout="this.style.background='rgba(0,0,0,0.25)'" title="Copiar write_orders">write_orders <i class="fa-regular fa-copy" style="margin-left: 4px; color: #95bf47;"></i></span>
+                  <span style="background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); padding: 0.4rem 0.75rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; color: #fff; cursor: pointer; transition: 0.2s;" onclick="navigator.clipboard.writeText('read_orders'); alert('Escopo copiado: read_orders')" onmouseover="this.style.background='rgba(149, 191, 71, 0.2)'" onmouseout="this.style.background='rgba(0,0,0,0.25)'" title="Copiar read_orders">read_orders <i class="fa-regular fa-copy" style="margin-left: 4px; color: #95bf47;"></i></span>
+                </div>
+              </div>
+
               <!-- Elemento visível quando não há token -->
               <div id="sh-awaiting-token-msg" style="display: none; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 8px; padding: 1rem; align-items: flex-start; gap: 0.75rem;">
                 <i class="fa-solid fa-triangle-exclamation" style="color: #eab308; margin-top: 3px;"></i>
