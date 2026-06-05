@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
     console.log('⚡ Webhook da PagueX recebido:', JSON.stringify(data));
 
     // Suporta múltiplos formatos de payload (plano ou aninhado sob 'data')
-    const transactionId = data.id || (data.data && data.data.id) || data.transaction_id || (data.metadata && data.metadata.gateway_tx_id);
+    const transactionId = data.id || (data.data && data.data.id) || data.transaction_id || data.transactionId || (data.metadata && data.metadata.gateway_tx_id);
     const status = data.status || (data.data && data.data.status) || (data.data && data.data.pix && data.data.pix.status);
 
     if (!transactionId) {
