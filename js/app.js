@@ -2474,8 +2474,11 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
     btnLoader.classList.add('hide');
   });
 
+  let isSubmitting = false;
   checkoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
 
     const section1 = document.querySelector('.checkout-section[data-step="1"]');
     const section2 = document.querySelector('.checkout-section[data-step="2"]');
@@ -2483,14 +2486,17 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
 
     if (!validateSectionInputs(section1)) {
       section1.scrollIntoView({ behavior: 'smooth' });
+      isSubmitting = false;
       return;
     }
     if (!validateSectionInputs(section2)) {
       section2.scrollIntoView({ behavior: 'smooth' });
+      isSubmitting = false;
       return;
     }
     if (!validateSectionInputs(section3)) {
       section3.scrollIntoView({ behavior: 'smooth' });
+      isSubmitting = false;
       return;
     }
 
@@ -2750,6 +2756,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
             submitBtn.disabled = false;
             btnText.classList.remove('hide');
             btnLoader.classList.add('hide');
+            isSubmitting = false;
           }
         }, 2000);
       };
@@ -2795,6 +2802,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       submitBtn.disabled = false;
       btnText.classList.remove('hide');
       btnLoader.classList.add('hide');
+      isSubmitting = false;
     }
   });
 
