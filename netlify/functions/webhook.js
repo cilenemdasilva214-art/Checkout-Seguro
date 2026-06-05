@@ -18,6 +18,28 @@ exports.handler = async (event, context) => {
     const data = JSON.parse(event.body || '{}');
     console.log('⚡ Webhook da PagueX recebido:', JSON.stringify(data));
 
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+
+    // NOVO: LOGAR TODO WEBHOOK RECEBIDO NO BANCO PARA DEBUG
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+      try {
+        await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            customer_name: 'WEBHOOK_LOG_RAW',
+            status: 'PENDING',
+            gateway_response: data
+          })
+        });
+      } catch(e) { console.error('Erro ao logar webhook no banco:', e); }
+    }
+
     // Suporta múltiplos formatos de payload (plano ou aninhado sob 'data')
     const transactionId = data.id || (data.data && data.data.id) || data.transaction_id || data.transactionId || (data.metadata && data.metadata.gateway_tx_id);
     const status = data.status || (data.data && data.data.status) || (data.data && data.data.pix && data.data.pix.status);
