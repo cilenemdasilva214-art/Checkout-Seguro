@@ -82,10 +82,10 @@ exports.handler = async (event, context) => {
         checkout_theme_config: '',
         checkout_page_title: 'Checkout Seguro',
         checkout_wa_store_name: 'Nome da Loja',
-        checkout_wa_msg_confirmed: '',
-        checkout_wa_msg_shipped: '',
-        checkout_wa_msg_pix: '',
-        checkout_wa_msg_card: '',
+        checkout_wa_msg_confirmed_v2: '',
+        checkout_wa_msg_shipped_v2: '',
+        checkout_wa_msg_pix_v2: '',
+        checkout_wa_msg_card_v2: '',
         active_gateway: 'paguex',
         paguex_public_key: '',
         paguex_secret_key: '',
@@ -110,10 +110,10 @@ exports.handler = async (event, context) => {
         if (c.key === 'checkout_theme_config') result.checkout_theme_config = c.value;
         if (c.key === 'checkout_page_title') result.checkout_page_title = c.value;
         if (c.key === 'checkout_wa_store_name') result.checkout_wa_store_name = c.value;
-        if (c.key === 'checkout_wa_msg_confirmed') result.checkout_wa_msg_confirmed = c.value;
-        if (c.key === 'checkout_wa_msg_shipped') result.checkout_wa_msg_shipped = c.value;
-        if (c.key === 'checkout_wa_msg_pix') result.checkout_wa_msg_pix = c.value;
-        if (c.key === 'checkout_wa_msg_card') result.checkout_wa_msg_card = c.value;
+        if (c.key === 'checkout_wa_msg_confirmed_v2') result.checkout_wa_msg_confirmed_v2 = c.value;
+        if (c.key === 'checkout_wa_msg_shipped_v2') result.checkout_wa_msg_shipped_v2 = c.value;
+        if (c.key === 'checkout_wa_msg_pix_v2') result.checkout_wa_msg_pix_v2 = c.value;
+        if (c.key === 'checkout_wa_msg_card_v2') result.checkout_wa_msg_card_v2 = c.value;
         if (c.key === 'active_gateway') result.active_gateway = c.value;
         if (c.key === 'paguex_public_key') result.paguex_public_key = c.value;
         if (c.key === 'paguex_secret_key') result.paguex_secret_key = c.value;
@@ -148,10 +148,10 @@ exports.handler = async (event, context) => {
         checkout_theme_config,
         checkout_page_title,
         checkout_wa_store_name,
-        checkout_wa_msg_confirmed,
-        checkout_wa_msg_shipped,
-        checkout_wa_msg_pix,
-        checkout_wa_msg_card,
+        checkout_wa_msg_confirmed_v2,
+        checkout_wa_msg_shipped_v2,
+        checkout_wa_msg_pix_v2,
+        checkout_wa_msg_card_v2,
         active_gateway,
         paguex_public_key,
         paguex_secret_key,
@@ -178,10 +178,10 @@ exports.handler = async (event, context) => {
       if (checkout_theme_config !== undefined) payloads.push({ key: 'checkout_theme_config', value: (checkout_theme_config || '').trim() });
       if (checkout_page_title !== undefined) payloads.push({ key: 'checkout_page_title', value: (checkout_page_title || '').trim() });
       if (checkout_wa_store_name !== undefined) payloads.push({ key: 'checkout_wa_store_name', value: (checkout_wa_store_name || '').trim() });
-      if (checkout_wa_msg_confirmed !== undefined) payloads.push({ key: 'checkout_wa_msg_confirmed', value: (checkout_wa_msg_confirmed || '').trim() });
-      if (checkout_wa_msg_shipped !== undefined) payloads.push({ key: 'checkout_wa_msg_shipped', value: (checkout_wa_msg_shipped || '').trim() });
-      if (checkout_wa_msg_pix !== undefined) payloads.push({ key: 'checkout_wa_msg_pix', value: (checkout_wa_msg_pix || '').trim() });
-      if (checkout_wa_msg_card !== undefined) payloads.push({ key: 'checkout_wa_msg_card', value: (checkout_wa_msg_card || '').trim() });
+      if (checkout_wa_msg_confirmed_v2 !== undefined) payloads.push({ key: 'checkout_wa_msg_confirmed_v2', value: (checkout_wa_msg_confirmed_v2 || '').trim() });
+      if (checkout_wa_msg_shipped_v2 !== undefined) payloads.push({ key: 'checkout_wa_msg_shipped_v2', value: (checkout_wa_msg_shipped_v2 || '').trim() });
+      if (checkout_wa_msg_pix_v2 !== undefined) payloads.push({ key: 'checkout_wa_msg_pix_v2', value: (checkout_wa_msg_pix_v2 || '').trim() });
+      if (checkout_wa_msg_card_v2 !== undefined) payloads.push({ key: 'checkout_wa_msg_card_v2', value: (checkout_wa_msg_card_v2 || '').trim() });
       if (active_gateway !== undefined) payloads.push({ key: 'active_gateway', value: (active_gateway || 'paguex').trim() });
       if (paguex_public_key !== undefined) payloads.push({ key: 'paguex_public_key', value: (paguex_public_key || '').trim() });
       if (paguex_secret_key !== undefined) payloads.push({ key: 'paguex_secret_key', value: (paguex_secret_key || '').trim() });

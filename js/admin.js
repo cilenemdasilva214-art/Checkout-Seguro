@@ -141,7 +141,7 @@ Que ótima notícia! Seu Pedido na *{loja}* foi confirmado e já estamos prepara
 Fique tranquilo(a) que acompanhamos cada passo e você será avisado(a) sobre todas as atualizações.
  
 Mal podemos esperar para que você receba sua compra!`;
-  let waMsgConfirmed = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_confirmed'), defaultWaMsgConfirmed);
+  let waMsgConfirmed = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_confirmed_v2'), defaultWaMsgConfirmed);
  
   const defaultWaMsgShipped = `Olá {nome}! Seu pedido já foi enviado! \u{1F69A}\u{2705}
  
@@ -166,7 +166,7 @@ Receber notificações atualizadas diretamente no celular
 1\u{FE0F}\u{20E3} Quero instalar agora!
  
 2\u{FE0F}\u{20E3} Estou ocupado(a), quero agendar!`;
-  let waMsgShipped = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_shipped'), defaultWaMsgShipped);
+  let waMsgShipped = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_shipped_v2'), defaultWaMsgShipped);
  
   const defaultWaMsgPix = `Olá {nome} tudo bem? \u{1F601}
  
@@ -185,7 +185,7 @@ Parabéns, você escolheu um produto incrível! \u{1F929}
 Se preferir pode usar outras formas de pagamento como Boleto ou Cartão. 
  
 Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a compra :)`;
-  let waMsgPix = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_pix'), defaultWaMsgPix);
+  let waMsgPix = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_pix_v2'), defaultWaMsgPix);
  
   const defaultWaMsgCard = `Olá, {nome} ! Tudo bem? Aqui é a equipe, do {loja}.
 
@@ -205,7 +205,7 @@ Clique em "Confirmo" e aguarde a resposta.
 Assim que você confirmar, processaremos o pagamento na hora e enviaremos o comprovante! \u{2705}
 
 Fico no aguardo! \u{1F60A}`;
-  let waMsgCard = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_card'), defaultWaMsgCard);
+  let waMsgCard = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_card_v2'), defaultWaMsgCard);
 
   // ==========================================
   // MAPEAMENTO DE ELEMENTOS DOM
@@ -763,20 +763,20 @@ Fico no aguardo! \u{1F60A}`;
           waStoreName = configData.checkout_wa_store_name;
           if (waStoreNameInput) waStoreNameInput.value = waStoreName;
         }
-        if (configData.checkout_wa_msg_confirmed) {
-          waMsgConfirmed = sanitizeWaMsg(configData.checkout_wa_msg_confirmed, defaultWaMsgConfirmed);
+        if (configData.checkout_wa_msg_confirmed_v2) {
+          waMsgConfirmed = sanitizeWaMsg(configData.checkout_wa_msg_confirmed_v2, defaultWaMsgConfirmed);
           if (waMsgConfirmedTextarea) waMsgConfirmedTextarea.value = waMsgConfirmed;
         }
-        if (configData.checkout_wa_msg_shipped) {
-          waMsgShipped = sanitizeWaMsg(configData.checkout_wa_msg_shipped, defaultWaMsgShipped);
+        if (configData.checkout_wa_msg_shipped_v2) {
+          waMsgShipped = sanitizeWaMsg(configData.checkout_wa_msg_shipped_v2, defaultWaMsgShipped);
           if (waMsgShippedTextarea) waMsgShippedTextarea.value = waMsgShipped;
         }
-        if (configData.checkout_wa_msg_pix) {
-          waMsgPix = sanitizeWaMsg(configData.checkout_wa_msg_pix, defaultWaMsgPix);
+        if (configData.checkout_wa_msg_pix_v2) {
+          waMsgPix = sanitizeWaMsg(configData.checkout_wa_msg_pix_v2, defaultWaMsgPix);
           if (waMsgPixTextarea) waMsgPixTextarea.value = waMsgPix;
         }
-        if (configData.checkout_wa_msg_card) {
-          waMsgCard = sanitizeWaMsg(configData.checkout_wa_msg_card, defaultWaMsgCard);
+        if (configData.checkout_wa_msg_card_v2) {
+          waMsgCard = sanitizeWaMsg(configData.checkout_wa_msg_card_v2, defaultWaMsgCard);
           if (waMsgCardTextarea) waMsgCardTextarea.value = waMsgCard;
         }
 
@@ -2466,10 +2466,10 @@ Fico no aguardo! \u{1F60A}`;
       waMsgCard = waMsgCardTextarea.value;
       
       safeStorage.setItem('checkout_wa_store_name', waStoreName);
-      safeStorage.setItem('checkout_wa_msg_confirmed', waMsgConfirmed);
-      safeStorage.setItem('checkout_wa_msg_shipped', waMsgShipped);
-      safeStorage.setItem('checkout_wa_msg_pix', waMsgPix);
-      safeStorage.setItem('checkout_wa_msg_card', waMsgCard);
+      safeStorage.setItem('checkout_wa_msg_confirmed_v2', waMsgConfirmed);
+      safeStorage.setItem('checkout_wa_msg_shipped_v2', waMsgShipped);
+      safeStorage.setItem('checkout_wa_msg_pix_v2', waMsgPix);
+      safeStorage.setItem('checkout_wa_msg_card_v2', waMsgCard);
       
       // Mudar visual do botão de salvar temporariamente
       btnSaveWa.disabled = true;
@@ -2483,10 +2483,10 @@ Fico no aguardo! \u{1F60A}`;
           },
           body: JSON.stringify({
             checkout_wa_store_name: waStoreName,
-            checkout_wa_msg_confirmed: waMsgConfirmed,
-            checkout_wa_msg_shipped: waMsgShipped,
-            checkout_wa_msg_pix: waMsgPix,
-            checkout_wa_msg_card: waMsgCard
+            checkout_wa_msg_confirmed_v2: waMsgConfirmed,
+            checkout_wa_msg_shipped_v2: waMsgShipped,
+            checkout_wa_msg_pix_v2: waMsgPix,
+            checkout_wa_msg_card_v2: waMsgCard
           })
         });
         
