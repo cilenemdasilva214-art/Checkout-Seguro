@@ -547,13 +547,17 @@
               <h2><i class="fa-solid fa-cart-shopping"></i> Todos os Pedidos (Checkout Sessions)</h2>
               <span id="pedidos-count-badge" class="badge" style="background:rgba(168,85,247,0.1);color:#a855f7;">0 registros</span>
             </div>
-            <button id="btn-export-csv-all" style="padding:0.6rem 1rem; border-radius:6px; font-size:0.85rem; font-weight:600; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;"><i class="fa-solid fa-file-csv"></i> Exportar Todos (CSV)</button>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button id="btn-export-csv-selected" style="padding:0.6rem 1rem; border-radius:6px; font-size:0.85rem; font-weight:600; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2); cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;"><i class="fa-solid fa-check-double"></i> Exportar Selecionados</button>
+              <button id="btn-export-csv-all" style="padding:0.6rem 1rem; border-radius:6px; font-size:0.85rem; font-weight:600; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;"><i class="fa-solid fa-file-csv"></i> Exportar Todos</button>
+            </div>
           </div>
           
           <div class="data-table-container">
             <table class="dashboard-table" id="pedidos-table">
               <thead>
                 <tr>
+                  <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkbox-select-all-orders" style="cursor:pointer;"></th>
                   <th>Data</th>
                   <th>Cliente</th>
                   <th>Contato</th>
@@ -565,7 +569,7 @@
               </thead>
               <tbody id="pedidos-tbody">
                 <tr>
-                  <td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                  <td colspan="8" style="text-align:center;color:var(--text-muted);padding:2rem;">
                     Buscando todas as sessões de pedidos...
                   </td>
                 </tr>

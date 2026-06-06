@@ -1389,6 +1389,7 @@ Fico no aguardo! \u{1F60A}`;
 
         return `
           <tr>
+            <td style="text-align: center;"><input type="checkbox" class="order-checkbox" value="${tx.id}" style="cursor:pointer;"></td>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
             <td>
               <div style="display:flex;flex-direction:column;align-items:flex-start;">
@@ -1416,6 +1417,7 @@ Fico no aguardo! \u{1F60A}`;
 
       addDetailButtonListeners();
       addCSVButtonListeners();
+      bindOrderCheckboxes();
     }
   }
 
@@ -1483,11 +1485,45 @@ Fico no aguardo! \u{1F60A}`;
     });
   }
 
+  function bindOrderCheckboxes() {
+    const selectAllCheckbox = document.getElementById('checkbox-select-all-orders');
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+
+    if (selectAllCheckbox) {
+      // Remove any existing listeners by cloning and replacing (or just overwrite onchange)
+      selectAllCheckbox.onchange = (e) => {
+        const isChecked = e.target.checked;
+        orderCheckboxes.forEach(cb => {
+          cb.checked = isChecked;
+        });
+      };
+      
+      // Reset select all state when re-rendering
+      selectAllCheckbox.checked = false;
+    }
+  }
+
   const btnExportCsvAll = document.getElementById('btn-export-csv-all');
   if (btnExportCsvAll) {
     btnExportCsvAll.addEventListener('click', () => {
       // Export all currently filtered transactions
       exportOrdersToCSV(currentFilteredTransactions.length > 0 ? currentFilteredTransactions : allTransactions);
+    });
+  }
+
+  const btnExportCsvSelected = document.getElementById('btn-export-csv-selected');
+  if (btnExportCsvSelected) {
+    btnExportCsvSelected.addEventListener('click', () => {
+      const orderCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+      if (orderCheckboxes.length === 0) {
+        alert('Nenhum pedido selecionado.');
+        return;
+      }
+      
+      const selectedIds = Array.from(orderCheckboxes).map(cb => cb.value);
+      const selectedTxs = allTransactions.filter(tx => selectedIds.includes(tx.id));
+      
+      exportOrdersToCSV(selectedTxs);
     });
   }
 
