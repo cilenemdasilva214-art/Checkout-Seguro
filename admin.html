@@ -542,9 +542,12 @@
       <!-- VIEW: PEDIDOS -->
       <section class="view-panel hide" id="view-pedidos">
         <div class="dashboard-block">
-          <div class="block-title">
-            <h2><i class="fa-solid fa-cart-shopping"></i> Todos os Pedidos (Checkout Sessions)</h2>
-            <span id="pedidos-count-badge" class="badge" style="background:rgba(168,85,247,0.1);color:#a855f7;">0 registros</span>
+          <div class="block-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <h2><i class="fa-solid fa-cart-shopping"></i> Todos os Pedidos (Checkout Sessions)</h2>
+              <span id="pedidos-count-badge" class="badge" style="background:rgba(168,85,247,0.1);color:#a855f7;">0 registros</span>
+            </div>
+            <button id="btn-export-csv-all" style="padding:0.6rem 1rem; border-radius:6px; font-size:0.85rem; font-weight:600; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;"><i class="fa-solid fa-file-csv"></i> Exportar Todos (CSV)</button>
           </div>
           
           <div class="data-table-container">

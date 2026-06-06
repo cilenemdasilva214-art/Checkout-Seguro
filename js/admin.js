@@ -964,12 +964,15 @@ Fico no aguardo! \u{1F60A}`;
   // ==========================================
   // 6. PROCESSAMENTO E RENDERIZAÇÃO DE DADOS
   // ==========================================
+  let currentFilteredTransactions = [];
+
   function renderData() {
     // Filtrar dados para o período atual e domínio
     let periodTransactions = filterTransactionsByPeriod(allTransactions, currentPeriod);
     if (currentDomainFilter) {
       periodTransactions = periodTransactions.filter(tx => tx.domain === currentDomainFilter);
     }
+    currentFilteredTransactions = periodTransactions;
     const totalDays = getDaysInPeriod(currentPeriod);
 
     // Separar pedidos (finalizados) e rascunhos (leads/abandonados)
@@ -1399,9 +1402,12 @@ Fico no aguardo! \u{1F60A}`;
               <span class="badge-status ${statusClass}">${statusText}</span>
             </td>
             <td style="font-weight:700;color:var(--text-main);">${amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-            <td>
+            <td style="display:flex; gap:0.5rem; flex-wrap:wrap;">
               <button class="btn-table-action btn-detail-trigger" data-id="${tx.id}">
                 <i class="fa-regular fa-eye"></i> Detalhes
+              </button>
+              <button class="btn-table-action btn-export-single-csv" data-id="${tx.id}" style="background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2);">
+                <i class="fa-solid fa-file-csv"></i> CSV
               </button>
             </td>
           </tr>
@@ -1409,7 +1415,80 @@ Fico no aguardo! \u{1F60A}`;
       }).join('');
 
       addDetailButtonListeners();
+      addCSVButtonListeners();
     }
+  }
+
+  function exportOrdersToCSV(ordersArray) {
+    if (!ordersArray || ordersArray.length === 0) {
+      alert('Nenhum pedido para exportar.');
+      return;
+    }
+
+    const headers = [
+      'ID', 'Data', 'Nome do Cliente', 'Email', 'Telefone', 'CPF',
+      'Metodo de Pagamento', 'Status', 'Valor Total', 'Dominio',
+      'Logradouro', 'Bairro', 'Cidade', 'Estado', 'CEP'
+    ];
+
+    const rows = ordersArray.map(tx => {
+      return [
+        tx.id || '',
+        tx.created_at || '',
+        tx.customer_name || '',
+        tx.customer_email || '',
+        tx.customer_phone || '',
+        tx.customer_cpf || '',
+        tx.payment_method || (tx.status === 'draft' ? 'Rascunho' : ''),
+        tx.status || '',
+        tx.amount || 0,
+        tx.domain || '',
+        tx.address_street || '',
+        tx.address_neighborhood || '',
+        tx.address_city || '',
+        tx.address_state || '',
+        tx.address_cep || ''
+      ].map(val => {
+        let str = String(val).replace(/"/g, '""');
+        if (str.includes(',') || str.includes('\\n') || str.includes('"')) {
+          str = `"${str}"`;
+        }
+        return str;
+      }).join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob(["\\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    const dateStr = new Date().toISOString().split('T')[0];
+    const isSingle = ordersArray.length === 1;
+    link.setAttribute("download", isSingle ? `pedido_${ordersArray[0].id}.csv` : `todos_pedidos_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function addCSVButtonListeners() {
+    const singleExportBtns = document.querySelectorAll('.btn-export-single-csv');
+    singleExportBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const tx = allTransactions.find(t => t.id === id);
+        if (tx) {
+          exportOrdersToCSV([tx]);
+        }
+      });
+    });
+  }
+
+  const btnExportCsvAll = document.getElementById('btn-export-csv-all');
+  if (btnExportCsvAll) {
+    btnExportCsvAll.addEventListener('click', () => {
+      // Export all currently filtered transactions
+      exportOrdersToCSV(currentFilteredTransactions.length > 0 ? currentFilteredTransactions : allTransactions);
+    });
   }
 
   // Render da tabela de Vendas
