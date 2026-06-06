@@ -119,19 +119,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Configurações de Mensagens do WhatsApp
   let waStoreName = safeStorage.getItem('checkout_wa_store_name') || 'Nome da Loja';
-  let waMsgConfirmed = safeStorage.getItem('checkout_wa_msg_confirmed') || `Olá {nome}, tudo bem? 🥂
+  let waMsgConfirmed = safeStorage.getItem('checkout_wa_msg_confirmed') || `Olá {nome}, tudo bem? \u{1F942}
  
 Que ótima notícia! Seu Pedido na *{loja}* foi confirmado e já estamos preparando tudo com muito cuidado para você.
  
-✨ Pedido #{pedido} confirmado!
-📦 Status: Em preparação
-🚚 Próxima etapa: Envio
+\u{2728} Pedido #{pedido} confirmado!
+\u{1F4E6} Status: Em preparação
+\u{1F69A} Próxima etapa: Envio
  
 Fique tranquilo(a) que acompanhamos cada passo e você será avisado(a) sobre todas as atualizações.
  
 Mal podemos esperar para que você receba sua compra!`;
  
-  let waMsgShipped = safeStorage.getItem('checkout_wa_msg_shipped') || `Olá {nome}! Seu pedido já foi enviado! 🚚✅
+  let waMsgShipped = safeStorage.getItem('checkout_wa_msg_shipped') || `Olá {nome}! Seu pedido já foi enviado! \u{1F69A}\u{2705}
  
 Para que você possa acompanhar toda a jornada da sua entrega em tempo real, é necessário instalar o aplicativo da transportadora.
  
@@ -149,25 +149,25 @@ Visualizar a rota do entregador
  
 Receber notificações atualizadas diretamente no celular
  
-📌 Atenção: o acompanhamento da entrega só será liberado após a instalação do app e ativação do token.
+\u{1F4CC} Atenção: o acompanhamento da entrega só será liberado após a instalação do app e ativação do token.
  
-1️⃣ Quero instalar agora!
+1\u{FE0F}\u{20E3} Quero instalar agora!
  
-2️⃣ Estou ocupado(a), quero agendar!`;
+2\u{FE0F}\u{20E3} Estou ocupado(a), quero agendar!`;
  
-  let waMsgPix = safeStorage.getItem('checkout_wa_msg_pix') || `Olá {nome} tudo bem? 😁
+  let waMsgPix = safeStorage.getItem('checkout_wa_msg_pix') || `Olá {nome} tudo bem? \u{1F601}
  
-Parabéns, você escolheu um produto incrível! 🤩
+Parabéns, você escolheu um produto incrível! \u{1F929}
  
-📦 O seu pedido já está sendo reservado, só estamos esperando a confirmação do pagamento para prepararmos o envio.
+\u{1F4E6} O seu pedido já está sendo reservado, só estamos esperando a confirmação do pagamento para prepararmos o envio.
  
-📌 Detalhes do Pedido: {pedido}
+\u{1F4CC} Detalhes do Pedido: {pedido}
 {produtos}
  
-🏷️ Pagamento: PIX
-💵 Valor: {valor}
+\u{1F3F7}\u{FE0F} Pagamento: PIX
+\u{1F4B5} Valor: {valor}
  
-⚠️ Caso seu código PIX tenha expirado é só gerar um novo.
+\u{26A0}\u{FE0F} Caso seu código PIX tenha expirado é só gerar um novo.
  
 Se preferir pode usar outras formas de pagamento como Boleto ou Cartão. 
  
@@ -175,22 +175,22 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
  
   let waMsgCard = safeStorage.getItem('checkout_wa_msg_card') || `Olá, {nome} ! Tudo bem? Aqui é a equipe, do {loja}.
 
-O seu pedido está pré-aprovado! ✅
+O seu pedido está pré-aprovado! \u{2705}
 
 
-🔔 O que você precisa fazer:
+\u{1F514} O que você precisa fazer:
 Clique em "Confirmo" e aguarde a resposta.
 
-⏱️ Atenção: Se não confirmar agora, a compra será cancelada automaticamente em 15 minutos para sua segurança.
+\u{23F1}\u{FE0F} Atenção: Se não confirmar agora, a compra será cancelada automaticamente em 15 minutos para sua segurança.
 
-📋 Detalhes do pedido:
-💳 Final do cartão: {final_cartao}
-💰 Valor: {valor}
-🛒 Produto: {produtos}
+\u{1F4CB} Detalhes do pedido:
+\u{1F4B3} Final do cartão: {final_cartao}
+\u{1F4B0} Valor: {valor}
+\u{1F6D2} Produto: {produtos}
 
-Assim que você confirmar, processaremos o pagamento na hora e enviaremos o comprovante! ✅
+Assim que você confirmar, processaremos o pagamento na hora e enviaremos o comprovante! \u{2705}
 
-Fico no aguardo! 😊`;
+Fico no aguardo! \u{1F60A}`;
 
   // ==========================================
   // MAPEAMENTO DE ELEMENTOS DOM
