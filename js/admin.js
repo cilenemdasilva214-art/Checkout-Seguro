@@ -117,9 +117,20 @@ document.addEventListener('DOMContentLoaded', () => {
     collection_discount: []
   };
 
+  // Função auxiliar para evitar carregar mensagens corrompidas (que contêm o caractere )
+  function sanitizeWaMsg(savedMsg, defaultMsg) {
+    if (!savedMsg) return defaultMsg;
+    // Se o texto salvo contiver o caractere de substituição do Unicode (), ignoramos e usamos o padrão
+    if (savedMsg.includes('\uFFFD') || savedMsg.includes('')) {
+      return defaultMsg;
+    }
+    return savedMsg;
+  }
+
   // Configurações de Mensagens do WhatsApp
   let waStoreName = safeStorage.getItem('checkout_wa_store_name') || 'Nome da Loja';
-  let waMsgConfirmed = safeStorage.getItem('checkout_wa_msg_confirmed') || `Olá {nome}, tudo bem? \u{1F942}
+  
+  const defaultWaMsgConfirmed = `Olá {nome}, tudo bem? \u{1F942}
  
 Que ótima notícia! Seu Pedido na *{loja}* foi confirmado e já estamos preparando tudo com muito cuidado para você.
  
@@ -130,8 +141,9 @@ Que ótima notícia! Seu Pedido na *{loja}* foi confirmado e já estamos prepara
 Fique tranquilo(a) que acompanhamos cada passo e você será avisado(a) sobre todas as atualizações.
  
 Mal podemos esperar para que você receba sua compra!`;
+  let waMsgConfirmed = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_confirmed'), defaultWaMsgConfirmed);
  
-  let waMsgShipped = safeStorage.getItem('checkout_wa_msg_shipped') || `Olá {nome}! Seu pedido já foi enviado! \u{1F69A}\u{2705}
+  const defaultWaMsgShipped = `Olá {nome}! Seu pedido já foi enviado! \u{1F69A}\u{2705}
  
 Para que você possa acompanhar toda a jornada da sua entrega em tempo real, é necessário instalar o aplicativo da transportadora.
  
@@ -154,8 +166,9 @@ Receber notificações atualizadas diretamente no celular
 1\u{FE0F}\u{20E3} Quero instalar agora!
  
 2\u{FE0F}\u{20E3} Estou ocupado(a), quero agendar!`;
+  let waMsgShipped = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_shipped'), defaultWaMsgShipped);
  
-  let waMsgPix = safeStorage.getItem('checkout_wa_msg_pix') || `Olá {nome} tudo bem? \u{1F601}
+  const defaultWaMsgPix = `Olá {nome} tudo bem? \u{1F601}
  
 Parabéns, você escolheu um produto incrível! \u{1F929}
  
@@ -172,8 +185,9 @@ Parabéns, você escolheu um produto incrível! \u{1F929}
 Se preferir pode usar outras formas de pagamento como Boleto ou Cartão. 
  
 Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a compra :)`;
+  let waMsgPix = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_pix'), defaultWaMsgPix);
  
-  let waMsgCard = safeStorage.getItem('checkout_wa_msg_card') || `Olá, {nome} ! Tudo bem? Aqui é a equipe, do {loja}.
+  const defaultWaMsgCard = `Olá, {nome} ! Tudo bem? Aqui é a equipe, do {loja}.
 
 O seu pedido está pré-aprovado! \u{2705}
 
@@ -191,6 +205,7 @@ Clique em "Confirmo" e aguarde a resposta.
 Assim que você confirmar, processaremos o pagamento na hora e enviaremos o comprovante! \u{2705}
 
 Fico no aguardo! \u{1F60A}`;
+  let waMsgCard = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_card'), defaultWaMsgCard);
 
   // ==========================================
   // MAPEAMENTO DE ELEMENTOS DOM
@@ -749,19 +764,19 @@ Fico no aguardo! \u{1F60A}`;
           if (waStoreNameInput) waStoreNameInput.value = waStoreName;
         }
         if (configData.checkout_wa_msg_confirmed) {
-          waMsgConfirmed = configData.checkout_wa_msg_confirmed;
+          waMsgConfirmed = sanitizeWaMsg(configData.checkout_wa_msg_confirmed, defaultWaMsgConfirmed);
           if (waMsgConfirmedTextarea) waMsgConfirmedTextarea.value = waMsgConfirmed;
         }
         if (configData.checkout_wa_msg_shipped) {
-          waMsgShipped = configData.checkout_wa_msg_shipped;
+          waMsgShipped = sanitizeWaMsg(configData.checkout_wa_msg_shipped, defaultWaMsgShipped);
           if (waMsgShippedTextarea) waMsgShippedTextarea.value = waMsgShipped;
         }
         if (configData.checkout_wa_msg_pix) {
-          waMsgPix = configData.checkout_wa_msg_pix;
+          waMsgPix = sanitizeWaMsg(configData.checkout_wa_msg_pix, defaultWaMsgPix);
           if (waMsgPixTextarea) waMsgPixTextarea.value = waMsgPix;
         }
         if (configData.checkout_wa_msg_card) {
-          waMsgCard = configData.checkout_wa_msg_card;
+          waMsgCard = sanitizeWaMsg(configData.checkout_wa_msg_card, defaultWaMsgCard);
           if (waMsgCardTextarea) waMsgCardTextarea.value = waMsgCard;
         }
 
