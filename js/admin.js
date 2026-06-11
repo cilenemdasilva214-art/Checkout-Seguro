@@ -100,7 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
     backLinkText: 'Voltar para a Loja',
     backLinkActive: true,
     defaultPaymentMethod: 'pix',
-    shopifyActive: false
+    shopifyActive: false,
+    wooCommerceActive: false
   };
 
   // Listas de cache locais para novos recursos
@@ -490,6 +491,11 @@ Fico no aguardo! \u{1F60A}`;
     'sincronizar-shopify': {
       title: 'Shopify',
       subtitle: 'Plataforma global de e-commerce',
+      showFilter: false
+    },
+    'sincronizar-woocommerce': {
+      title: 'WooCommerce',
+      subtitle: 'Integração com sua loja WooCommerce',
       showFilter: false
     },
     frete: {
@@ -2612,6 +2618,8 @@ Fico no aguardo! \u{1F60A}`;
       loadPixelSettings();
     } else if (subview === 'marketing-upsell') {
       loadMarketingItems('upsell');
+    } else if (subview === 'sincronizar-woocommerce') {
+      loadWooCommerceProducts();
     }
   }
 
@@ -2744,6 +2752,102 @@ Fico no aguardo! \u{1F60A}`;
       btnSyncShopify.disabled = false;
       alert('Catálogo da Shopify sincronizado com sucesso!');
     });
+  }
+
+  // --- CONTROLLER: PRODUTOS WOOCOMMERCE ---
+  async function loadWooCommerceProducts(force = false) {
+    const tbody = document.getElementById('wc-products-tbody');
+    if (!tbody) return;
+
+    if (!themeConfig.wooCommerceActive) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; padding:4rem 2rem; color:var(--text-muted); line-height:1.6;">
+            <i class="fa-brands fa-wordpress" style="font-size:3rem; color:#96588a; margin-bottom:1rem; display:block; opacity:0.75;"></i>
+            <strong style="display:block; margin-bottom:0.5rem; color:var(--text-main); font-size:1.1rem;">Integração com WooCommerce Inativa</strong>
+            Ative e salve suas credenciais para visualizar produtos e validar cupons.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:1rem; display:block;"></i>
+          Buscando produtos do WooCommerce via API...
+        </td>
+      </tr>
+    `;
+
+    try {
+      const response = await fetch('/api/woocommerce?action=products');
+      if (response.ok) {
+        const products = await response.json();
+        
+        if (!products || products.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                Nenhum produto cadastrado no WooCommerce.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = products.map(prod => {
+          const imgUrl = (prod.images && prod.images.length > 0) ? prod.images[0].src : '';
+          const imgHtml = imgUrl 
+            ? `<img src="${imgUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--panel-border);">`
+            : `<div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text-muted);"><i class="fa-solid fa-image"></i></div>`;
+          
+          const priceVal = parseFloat(prod.price || 0);
+          const formattedPrice = priceVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const inventoryVal = prod.manage_stock ? prod.stock_quantity : 'Sem controle';
+
+          return `
+            <tr>
+              <td>${imgHtml}</td>
+              <td style="font-weight:600; color:var(--text-main);">${escapeHtml(prod.name)}</td>
+              <td style="font-family:'Space Mono'; font-size:0.85rem;">${escapeHtml(prod.sku || '-')}</td>
+              <td style="font-weight:600; color:var(--primary-color);">${formattedPrice}</td>
+              <td>
+                <span class="status-badge ${(inventoryVal === 'Sem controle' || inventoryVal > 0) ? 'approved' : 'pending'}" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
+                  ${inventoryVal}
+                </span>
+              </td>
+              <td>
+                <span class="badge-status ${prod.status === 'publish' ? 'approved' : 'pending'}">${prod.status === 'publish' ? 'Ativo' : 'Rascunho'}</span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      } else {
+        const text = await response.text();
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center; padding:3rem 2rem; color:var(--danger-color); line-height:1.5;">
+              <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; margin-bottom:0.75rem; display:block;"></i>
+              <strong style="display:block; margin-bottom:0.5rem;">Falha na Conexão</strong>
+              Erro: ${text}
+            </td>
+          </tr>
+        `;
+      }
+    } catch (err) {
+      console.error(err);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; padding:2rem; color:var(--danger-color);">
+            <i class="fa-solid fa-circle-exclamation" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>
+            Erro de rede ao conectar com o WooCommerce backend.
+          </td>
+        </tr>
+      `;
+    }
   }
 
   // --- CONTROLLER: COLEÇÕES SHOPIFY ---
@@ -4050,6 +4154,21 @@ Fico no aguardo! \u{1F60A}`;
     updateStatusBadgeVisual(isShopifyActive);
     updateTokenFieldVisibility();
     
+    // --- WOOCOMMERCE INIT ---
+    const wcDomainPrefix = document.getElementById('wc-domain-prefix');
+    const wcConsumerKey = document.getElementById('wc-consumer-key');
+    const wcConsumerSecret = document.getElementById('wc-consumer-secret');
+    const wcImportCoupons = document.getElementById('wc-import-coupons');
+
+    if (wcDomainPrefix) wcDomainPrefix.value = themeConfig.wooCommerceDomain || 'nacional-brasil.store';
+    if (wcConsumerKey) wcConsumerKey.value = themeConfig.wooCommerceConsumerKey || '';
+    if (wcConsumerSecret) wcConsumerSecret.value = themeConfig.wooCommerceConsumerSecret || '';
+    if (wcImportCoupons) wcImportCoupons.checked = !!themeConfig.wooCommerceImportCoupons;
+
+    let isWooCommerceActive = !!themeConfig.wooCommerceActive;
+    themeConfig.wooCommerceActive = isWooCommerceActive;
+    updateWooCommerceStatusVisual(isWooCommerceActive);
+
     updateMockup();
   }
 
@@ -5071,4 +5190,119 @@ Fico no aguardo! \u{1F60A}`;
       }
     });
   });
+  // ==========================================
+  // INTEGRAÇÃO WOOCOMMERCE EVENT BINDINGS
+  // ==========================================
+
+  // Função helper
+  function updateWooCommerceStatusVisual(isActive) {
+    const container = document.getElementById('woocommerce-status-container');
+    const icon = document.getElementById('woocommerce-status-icon');
+    const text = document.getElementById('woocommerce-status-text');
+    const select = document.getElementById('woocommerce-status-select');
+
+    if (!container) return;
+
+    if (isActive) {
+      container.style.background = 'rgba(150, 88, 138, 0.15)';
+      container.style.color = '#96588a';
+      if (icon) icon.className = 'fa-solid fa-circle-check';
+      if (text) text.innerText = 'Ativo';
+      if (select) select.value = 'active';
+    } else {
+      container.style.background = 'rgba(255, 255, 255, 0.05)';
+      container.style.color = 'var(--text-muted)';
+      if (icon) icon.className = 'fa-solid fa-circle-xmark';
+      if (text) text.innerText = 'Inativo';
+      if (select) select.value = 'inactive';
+    }
+  }
+
+  window.updateWooCommerceStatusVisual = updateWooCommerceStatusVisual; // Expoe se precisar
+
+  const wooStatusSelect = document.getElementById('woocommerce-status-select');
+  if (wooStatusSelect) {
+    wooStatusSelect.addEventListener('change', async (e) => {
+      const isActive = (e.target.value === 'active');
+      themeConfig.wooCommerceActive = isActive;
+      updateWooCommerceStatusVisual(isActive);
+
+      try {
+        await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            checkout_theme_config: JSON.stringify(themeConfig)
+          })
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  }
+
+  const wooForm = document.getElementById('woocommerce-integration-form');
+  if (wooForm) {
+    wooForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const btnSave = document.getElementById('btn-save-woocommerce');
+      const originalHtml = btnSave.innerHTML;
+      btnSave.disabled = true;
+      btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+
+      let rawDomain = document.getElementById('wc-domain-prefix').value.trim();
+      let cleanDomain = rawDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+      themeConfig.wooCommerceDomain = cleanDomain;
+      document.getElementById('wc-domain-prefix').value = cleanDomain;
+
+      themeConfig.wooCommerceConsumerKey = document.getElementById('wc-consumer-key').value.trim();
+      themeConfig.wooCommerceConsumerSecret = document.getElementById('wc-consumer-secret').value.trim();
+      themeConfig.wooCommerceImportCoupons = document.getElementById('wc-import-coupons').checked;
+      
+      themeConfig.wooCommerceActive = true;
+      updateWooCommerceStatusVisual(true);
+
+      try {
+        const response = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            checkout_theme_config: JSON.stringify(themeConfig)
+          })
+        });
+
+        if (response.ok) {
+          console.log('WooCommerce config saved');
+          // Dispara a sincronização automática
+          loadWooCommerceProducts(true);
+        } else {
+          const text = await response.text();
+          alert(`Erro ao salvar configurações do WooCommerce: ${text}`);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Erro de rede ao salvar WooCommerce.');
+      } finally {
+        btnSave.disabled = false;
+        btnSave.innerHTML = originalHtml;
+      }
+    });
+  }
+
+  const btnSyncWooCommerce = document.getElementById('btn-sync-woocommerce');
+  if (btnSyncWooCommerce) {
+    btnSyncWooCommerce.addEventListener('click', async () => {
+      const icon = btnSyncWooCommerce.querySelector('i');
+      if (icon) icon.classList.add('fa-spin');
+      btnSyncWooCommerce.disabled = true;
+
+      await loadWooCommerceProducts(true);
+
+      if (icon) icon.classList.remove('fa-spin');
+      btnSyncWooCommerce.disabled = false;
+      alert('Catálogo do WooCommerce sincronizado com sucesso!');
+    });
+  }
+
 });

@@ -215,6 +215,14 @@
             </a>
           </li>
 
+          <!-- SINCRONIZAR WOOCOMMERCE TAB -->
+          <li>
+            <a class="menu-item" data-view="sincronizar-woocommerce">
+              <i class="fa-brands fa-wordpress" style="color:#96588a;"></i>
+              <span>Sincronizar WooCommerce</span>
+            </a>
+          </li>
+
           <!-- FRETE TAB -->
           <li>
             <a class="menu-item" data-view="frete">
@@ -2421,6 +2429,145 @@
           </div>
 
         </div>
+      </section>
+
+      <!-- VIEW: SINCRONIZAR WOOCOMMERCE -->
+      <section class="view-panel hide" id="view-sincronizar-woocommerce">
+        <div class="dashboard-columns">
+          
+          <!-- COLUNA ESQUERDA: FORMULÁRIO DE CONFIGURAÇÃO -->
+          <div class="dashboard-block" style="padding: 2rem; border-radius: 20px; display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- Box informativo superior -->
+            <div style="background: rgba(150, 88, 138, 0.08); border: 1px solid rgba(150, 88, 138, 0.2); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: #96588a; margin: 0;">Olá!</h3>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+                Vamos integrar sua loja WooCommerce para sincronizar produtos e cupons automaticamente.
+              </p>
+            </div>
+
+            <!-- Formulário -->
+            <form id="woocommerce-integration-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+              
+              <!-- Campo: Domínio WooCommerce -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Domínio da Loja WooCommerce
+                </label>
+                <div style="display: flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden;">
+                  <span style="background: rgba(255,255,255,0.05); padding: 0.75rem 1rem; color: var(--text-muted); font-size: 0.9rem; border-right: 1px solid var(--panel-border);">https://</span>
+                  <input type="text" id="wc-domain-prefix" placeholder="nacional-brasil.store" style="flex: 1; background: transparent; border: none; padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.9rem; outline: none;">
+                </div>
+              </div>
+
+              <!-- Campo: Consumer Key -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Consumer Key (ck_...)
+                </label>
+                <input type="text" id="wc-consumer-key" placeholder="ck_12345abcdef" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;">
+              </div>
+
+              <!-- Campo: Consumer Secret -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Consumer Secret (cs_...)
+                </label>
+                <div style="position: relative;">
+                  <input type="password" id="wc-consumer-secret" placeholder="cs_12345abcdef" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;">
+                </div>
+              </div>
+
+              <!-- Opção: Importar Cupons -->
+              <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.75rem; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--panel-border); margin-top: 0.5rem;">
+                <input type="checkbox" id="wc-import-coupons" style="width: 18px; height: 18px; accent-color: #96588a;">
+                <span style="font-size: 0.9rem; color: var(--text-main); font-weight: 500;">Validar Cupons no WooCommerce (Complementar)</span>
+              </label>
+
+              <!-- Botão Salvar -->
+              <div style="margin-top: 1rem;">
+                <button type="submit" id="btn-save-woocommerce" style="background: #96588a; color: #fff; border: none; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit;">
+                  Salvar Configurações
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- COLUNA DIREITA: STATUS & SINCRONIZAÇÃO -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- Card 1: Status da integração -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px;">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem 0;">
+                Status da integração
+              </h3>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <!-- Seletor Interativo -->
+                <div style="position: relative;">
+                  <select id="woocommerce-status-select" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.65rem 1rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 2.5rem; font-weight: 600;">
+                    <option value="active" style="background: #111827; color: #fff;">Ativar Integração</option>
+                    <option value="inactive" style="background: #111827; color: #fff;">Desativar Integração</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); opacity: 0.6; pointer-events: none;"></i>
+                </div>
+
+                <!-- Indicador Visual de Status -->
+                <div id="woocommerce-status-container" style="border-radius: 8px; padding: 0.65rem 1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease;">
+                  <i id="woocommerce-status-icon" class="fa-solid fa-circle-check"></i>
+                  <span id="woocommerce-status-text">Ativo</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Sincronização Manual -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(150, 88, 138, 0.15); background: rgba(150, 88, 138, 0.02);">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">
+                Sincronização Manual
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                Puxe manualmente os produtos e cupons mais recentes do seu WooCommerce.
+              </p>
+              
+              <button type="button" id="btn-sync-woocommerce" style="background: rgba(150, 88, 138, 0.1); border: 1px solid rgba(150, 88, 138, 0.3); color: #96588a; padding: 0.75rem 1.25rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <i class="fa-solid fa-rotate"></i> Sincronizar Agora
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- TABELA DE PRODUTOS WOOCOMMERCE -->
+        <div class="dashboard-block" style="margin-top: 1.5rem; border-radius: 20px;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem 0; display:flex; align-items:center; gap:0.5rem;">
+            <i class="fa-solid fa-box-open" style="color:#96588a;"></i> Produtos Sincronizados
+          </h3>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Img</th>
+                  <th>Produto</th>
+                  <th>SKU</th>
+                  <th>Preço</th>
+                  <th>Estoque</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="wc-products-tbody">
+                <tr>
+                  <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                    Salve suas credenciais para carregar os produtos.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </section>
 
     </main>

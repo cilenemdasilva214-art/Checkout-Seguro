@@ -1913,6 +1913,35 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
             throw new Error('Cupom inativo.');
           }
         } else {
+          // Fallback: Verificar no WooCommerce se configurado
+          if (config && config.wooCommerceActive && config.wooCommerceImportCoupons) {
+            try {
+              const wcRes = await fetch(`/api/woocommerce?action=validate_coupon&code=${encodeURIComponent(code)}`);
+              if (wcRes.ok) {
+                const wcData = await wcRes.json();
+                if (wcData.valid) {
+                  activeCoupon = {
+                    id: `wc_${wcData.code}`,
+                    code: wcData.code.toUpperCase(),
+                    discount_type: wcData.discount_type === 'percent' ? 'percentage' : 'fixed',
+                    discount_value: parseFloat(wcData.amount) || 0
+                  };
+                  couponMessage.textContent = 'Cupom aplicado com sucesso!';
+                  couponMessage.className = 'coupon-message success';
+                  couponMessage.style.display = 'block';
+
+                  calculateTotals();
+                  updateCompletedSummaries();
+                  btnApplyCoupon.disabled = false;
+                  btnApplyCoupon.textContent = 'Aplicar';
+                  return; // Sai do fluxo normal
+                }
+              }
+            } catch(e) {
+              console.error('Erro ao validar cupom no WooCommerce:', e);
+            }
+          }
+          
           throw new Error('Cupom inválido.');
         }
       } catch (err) {
