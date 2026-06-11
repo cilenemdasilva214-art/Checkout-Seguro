@@ -702,8 +702,21 @@ Fico no aguardo! \u{1F60A}`;
   // ==========================================
   async function loadInitialData() {
     try {
-      // 1. Carregar Configurações Globais (Pixel / Ads)
-      const configRes = await fetch('/api/config');
+      // Exibe indicadores de carregamento nas tabelas se existirem
+      const loaders = document.querySelectorAll('tbody');
+      loaders.forEach(tbody => {
+        if(tbody.innerHTML.trim() === '') {
+           tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:1rem; display:block;"></i>Carregando dados...</td></tr>`;
+        }
+      });
+
+      // 1. Carregar Configurações Globais e Pedidos PARALELAMENTE para ficar muito mais rápido
+      const [configRes, ordersRes] = await Promise.all([
+        fetch('/api/config'),
+        fetch('/api/orders?limit=100')
+      ]);
+
+      // --- PROCESSAR CONFIGURAÇÕES ---
       if (configRes.ok) {
         const configData = await configRes.json();
         facebookPixelId = configData.facebook_pixel_id || '';
@@ -820,8 +833,7 @@ Fico no aguardo! \u{1F60A}`;
         }
       }
 
-      // 2. Carregar Pedidos (Otimizado para carregar apenas os últimos 100)
-      const ordersRes = await fetch('/api/orders?limit=100');
+      // --- PROCESSAR PEDIDOS ---
       if (ordersRes.ok) {
         allTransactions = await ordersRes.json();
         populateDomainFilter(allTransactions);
