@@ -2007,7 +2007,12 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
         
         // Remove "Tabela de Medidas" ghost products that sometimes come from Shopify themes/apps
         if (Array.isArray(shopifyCartItems)) {
-          shopifyCartItems = shopifyCartItems.filter(item => {
+          shopifyCartItems = shopifyCartItems.map(item => {
+            if (!item.title && item.name) {
+              item.title = item.name;
+            }
+            return item;
+          }).filter(item => {
             const title = item.title ? item.title.toLowerCase() : '';
             return !title.includes('tabela de medidas');
           });
