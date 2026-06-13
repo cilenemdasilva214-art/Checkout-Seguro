@@ -90,7 +90,9 @@ exports.handler = async (event, context) => {
         paguex_public_key: '',
         paguex_secret_key: '',
         hypercash_public_key: '',
-        hypercash_secret_key: ''
+        hypercash_secret_key: '',
+        payshark_public_key: '',
+        payshark_secret_key: ''
       };
  
       configs.forEach(c => {
@@ -119,6 +121,8 @@ exports.handler = async (event, context) => {
         if (c.key === 'paguex_secret_key') result.paguex_secret_key = c.value;
         if (c.key === 'hypercash_public_key') result.hypercash_public_key = c.value;
         if (c.key === 'hypercash_secret_key') result.hypercash_secret_key = c.value;
+        if (c.key === 'payshark_public_key') result.payshark_public_key = c.value;
+        if (c.key === 'payshark_secret_key') result.payshark_secret_key = c.value;
       });
 
       return {
@@ -156,7 +160,9 @@ exports.handler = async (event, context) => {
         paguex_public_key,
         paguex_secret_key,
         hypercash_public_key,
-        hypercash_secret_key
+        hypercash_secret_key,
+        payshark_public_key,
+        payshark_secret_key
       } = data;
  
       const payloads = [];
@@ -187,6 +193,8 @@ exports.handler = async (event, context) => {
       if (paguex_secret_key !== undefined) payloads.push({ key: 'paguex_secret_key', value: (paguex_secret_key || '').trim() });
       if (hypercash_public_key !== undefined) payloads.push({ key: 'hypercash_public_key', value: (hypercash_public_key || '').trim() });
       if (hypercash_secret_key !== undefined) payloads.push({ key: 'hypercash_secret_key', value: (hypercash_secret_key || '').trim() });
+      if (payshark_public_key !== undefined) payloads.push({ key: 'payshark_public_key', value: (payshark_public_key || '').trim() });
+      if (payshark_secret_key !== undefined) payloads.push({ key: 'payshark_secret_key', value: (payshark_secret_key || '').trim() });
 
       // Salva ou atualiza usando upsert por Postgrest REST API
       const response = await fetch(targetUrl, {
