@@ -173,7 +173,7 @@ exports.handler = async (event, context) => {
               name: data.customer_name || 'Cliente',
               email: data.customer_email || 'email@example.com',
               document: {
-                type: 'CPF',
+                type: 'cpf',
                 number: data.customer_cpf ? data.customer_cpf.replace(/\D/g, '') : '00000000000'
               }
             },
