@@ -215,14 +215,6 @@
             </a>
           </li>
 
-          <!-- SINCRONIZAR WOOCOMMERCE TAB -->
-          <li>
-            <a class="menu-item" data-view="sincronizar-woocommerce">
-              <i class="fa-brands fa-wordpress" style="color:#96588a;"></i>
-              <span>Sincronizar WooCommerce</span>
-            </a>
-          </li>
-
           <!-- FRETE TAB -->
           <li>
             <a class="menu-item" data-view="frete">
@@ -249,12 +241,6 @@
             <a class="menu-item" data-view="configs">
               <i class="fa-solid fa-sliders"></i>
               <span>Configurações</span>
-            </a>
-          </li>
-          <li>
-            <a class="menu-item" data-view="integracoes">
-              <i class="fa-solid fa-link" style="color:#0ea5e9;"></i>
-              <span>Integrações</span>
             </a>
           </li>
         </ul>
@@ -286,13 +272,6 @@
             <button class="theme-btn" data-theme="light">
               <i class="fa-solid fa-sun"></i> Fundo Branco
             </button>
-          </div>
-
-          <!-- Filtro de Domínio -->
-          <div class="domain-filter-bar" id="domain-filter-container">
-            <select id="domain-filter" class="domain-filter-select">
-              <option value="">Todos os Checkouts</option>
-            </select>
           </div>
 
           <!-- Filtro de Período -->
@@ -550,22 +529,15 @@
       <!-- VIEW: PEDIDOS -->
       <section class="view-panel hide" id="view-pedidos">
         <div class="dashboard-block">
-          <div class="block-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
-            <div>
-              <h2><i class="fa-solid fa-cart-shopping"></i> Todos os Pedidos (Checkout Sessions)</h2>
-              <span id="pedidos-count-badge" class="badge" style="background:rgba(168,85,247,0.1);color:#a855f7;">0 registros</span>
-            </div>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-              <button id="btn-export-csv-selected" style="padding:0.6rem 1rem; border-radius:6px; font-size:0.85rem; font-weight:600; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2); cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;"><i class="fa-solid fa-check-double"></i> Exportar Selecionados</button>
-              <button id="btn-export-csv-all" style="padding:0.6rem 1rem; border-radius:6px; font-size:0.85rem; font-weight:600; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;"><i class="fa-solid fa-file-csv"></i> Exportar Todos</button>
-            </div>
+          <div class="block-title">
+            <h2><i class="fa-solid fa-cart-shopping"></i> Todos os Pedidos (Checkout Sessions)</h2>
+            <span id="pedidos-count-badge" class="badge" style="background:rgba(168,85,247,0.1);color:#a855f7;">0 registros</span>
           </div>
           
           <div class="data-table-container">
             <table class="dashboard-table" id="pedidos-table">
               <thead>
                 <tr>
-                  <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkbox-select-all-orders" style="cursor:pointer;"></th>
                   <th>Data</th>
                   <th>Cliente</th>
                   <th>Contato</th>
@@ -577,7 +549,7 @@
               </thead>
               <tbody id="pedidos-tbody">
                 <tr>
-                  <td colspan="8" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                  <td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
                     Buscando todas as sessões de pedidos...
                   </td>
                 </tr>
@@ -859,15 +831,6 @@
           
           <form class="settings-form" id="configs-form">
             <div class="settings-group">
-              <label for="config-page-title">Título da Página do Checkout</label>
-              <div class="settings-input-wrapper">
-                <i class="fa-solid fa-heading"></i>
-                <input type="text" id="config-page-title" placeholder="Ex: Checkout Seguro">
-              </div>
-              <span style="font-size:0.8rem;color:var(--text-muted);">Define o nome que aparece na aba do navegador do cliente.</span>
-            </div>
-
-            <div class="settings-group">
               <label for="config-pixel-id">ID do Pixel do Facebook</label>
               <div class="settings-input-wrapper">
                 <i class="fa-brands fa-facebook-f"></i>
@@ -920,145 +883,6 @@
               <span>Salvar Credenciais</span>
             </button>
           </form>
-        </div>
-      </section>
-
-      <!-- VIEW: INTEGRAÇÕES DE GATEWAYS -->
-      <section class="view-panel hide" id="view-integracoes">
-        <div class="dashboard-block">
-          <div class="block-title">
-            <h2><i class="fa-solid fa-link"></i> Integração de Gateways de Pagamento</h2>
-            <span>Gerencie e alterne dinamicamente entre os gateways de pagamento do seu checkout</span>
-          </div>
-
-          <div class="gateway-container">
-            <!-- PagueX Card -->
-            <div class="gateway-card" id="card-paguex">
-              <div class="gateway-header">
-                <div class="gateway-info">
-                  <div class="gateway-logo">
-                    <i class="fa-solid fa-credit-card" style="color: #0ea5e9;"></i>
-                  </div>
-                  <div>
-                    <h3>PagueX</h3>
-                    <span class="badge active-badge">Pix & Cartão</span>
-                  </div>
-                </div>
-                <div class="gateway-toggle">
-                  <label class="switch">
-                    <input type="checkbox" id="toggle-paguex" checked>
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
-              <div class="gateway-body">
-                <div class="settings-group">
-                  <label for="paguex-public-key">Chave Pública (Public Key)</label>
-                  <div class="settings-input-wrapper">
-                    <i class="fa-solid fa-key"></i>
-                    <input type="text" id="paguex-public-key" placeholder="Insira a Public Key do PagueX">
-                  </div>
-                </div>
-                <div class="settings-group">
-                  <label for="paguex-secret-key">Chave Secreta (Secret Key)</label>
-                  <div class="settings-input-wrapper">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="paguex-secret-key" placeholder="Insira a Secret Key do PagueX">
-                    <button type="button" class="btn-toggle-visibility" data-target="paguex-secret-key">
-                      <i class="fa-solid fa-eye"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- HyperCash Card -->
-            <div class="gateway-card" id="card-hypercash">
-              <div class="gateway-header">
-                <div class="gateway-info">
-                  <div class="gateway-logo">
-                    <i class="fa-solid fa-bolt" style="color: #eab308;"></i>
-                  </div>
-                  <div>
-                    <h3>HyperCash</h3>
-                    <span class="badge secondary-badge">Exclusivo Pix</span>
-                  </div>
-                </div>
-                <div class="gateway-toggle">
-                  <label class="switch">
-                    <input type="checkbox" id="toggle-hypercash">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
-              <div class="gateway-body">
-                <div class="settings-group">
-                  <label for="hypercash-public-key">Chave Pública (Public Key)</label>
-                  <div class="settings-input-wrapper">
-                    <i class="fa-solid fa-key"></i>
-                    <input type="text" id="hypercash-public-key" placeholder="Insira a Public Key do HyperCash">
-                  </div>
-                </div>
-                <div class="settings-group">
-                  <label for="hypercash-secret-key">Chave Secreta (Secret Key)</label>
-                  <div class="settings-input-wrapper">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="hypercash-secret-key" placeholder="Insira a Secret Key do HyperCash">
-                    <button type="button" class="btn-toggle-visibility" data-target="hypercash-secret-key">
-                      <i class="fa-solid fa-eye"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- PayShark Card -->
-            <div class="gateway-card" id="card-payshark">
-              <div class="gateway-header">
-                <div class="gateway-info">
-                  <div class="gateway-logo">
-                    <i class="fa-solid fa-water" style="color: #3b82f6;"></i>
-                  </div>
-                  <div>
-                    <h3>PayShark</h3>
-                    <span class="badge secondary-badge">Exclusivo Pix</span>
-                  </div>
-                </div>
-                <div class="gateway-toggle">
-                  <label class="switch">
-                    <input type="checkbox" id="toggle-payshark">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
-              <div class="gateway-body">
-                <div class="settings-group">
-                  <label for="payshark-public-key">Chave Pública (Public Key)</label>
-                  <div class="settings-input-wrapper">
-                    <i class="fa-solid fa-key"></i>
-                    <input type="text" id="payshark-public-key" placeholder="Insira a Public Key do PayShark">
-                  </div>
-                </div>
-                <div class="settings-group">
-                  <label for="payshark-secret-key">Chave Privada (Secret Key)</label>
-                  <div class="settings-input-wrapper">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="payshark-secret-key" placeholder="Insira a Secret Key do PayShark">
-                    <button type="button" class="btn-toggle-visibility" data-target="payshark-secret-key">
-                      <i class="fa-solid fa-eye"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style="margin-top: 2rem;">
-            <button type="button" class="btn-submit-settings" id="btn-save-integracoes">
-              <i class="fa-solid fa-floppy-disk"></i>
-              <span>Salvar Integrações</span>
-            </button>
-          </div>
         </div>
       </section>
 
@@ -2328,19 +2152,8 @@
                 </div>
               </div>
 
-              <!-- Elemento visível quando não há token -->
-              <div id="sh-awaiting-token-msg" style="display: none; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 8px; padding: 1rem; align-items: flex-start; gap: 0.75rem;">
-                <i class="fa-solid fa-triangle-exclamation" style="color: #eab308; margin-top: 3px;"></i>
-                <div>
-                  <h4 style="margin: 0 0 0.5rem 0; color: #eab308; font-size: 0.95rem;">Token da Shopify Ausente</h4>
-                  <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4;">
-                    Você precisa gerar ou preencher um token de acesso para ativar a integração.
-                  </p>
-                  <button type="button" id="btn-show-token-input-manual" style="margin-top: 0.75rem; background: transparent; border: 1px solid #eab308; color: #eab308; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.8rem; transition: 0.2s;">
-                    Preencher ou Gerar Token
-                  </button>
-                </div>
-              </div>
+              <!-- Elemento oculto mantido para evitar quebras em funções legadas -->
+              <div id="sh-awaiting-token-msg" style="display: none;"></div>
 
               <!-- Campo: Client ID -->
               <div>
@@ -2469,145 +2282,6 @@
           </div>
 
         </div>
-      </section>
-
-      <!-- VIEW: SINCRONIZAR WOOCOMMERCE -->
-      <section class="view-panel hide" id="view-sincronizar-woocommerce">
-        <div class="dashboard-columns">
-          
-          <!-- COLUNA ESQUERDA: FORMULÁRIO DE CONFIGURAÇÃO -->
-          <div class="dashboard-block" style="padding: 2rem; border-radius: 20px; display: flex; flex-direction: column; gap: 1.5rem;">
-            
-            <!-- Box informativo superior -->
-            <div style="background: rgba(150, 88, 138, 0.08); border: 1px solid rgba(150, 88, 138, 0.2); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
-              <h3 style="font-size: 1.1rem; font-weight: 700; color: #96588a; margin: 0;">Olá!</h3>
-              <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
-                Vamos integrar sua loja WooCommerce para sincronizar produtos e cupons automaticamente.
-              </p>
-            </div>
-
-            <!-- Formulário -->
-            <form id="woocommerce-integration-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
-              
-              <!-- Campo: Domínio WooCommerce -->
-              <div>
-                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
-                  Domínio da Loja WooCommerce
-                </label>
-                <div style="display: flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden;">
-                  <span style="background: rgba(255,255,255,0.05); padding: 0.75rem 1rem; color: var(--text-muted); font-size: 0.9rem; border-right: 1px solid var(--panel-border);">https://</span>
-                  <input type="text" id="wc-domain-prefix" placeholder="nacional-brasil.store" style="flex: 1; background: transparent; border: none; padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.9rem; outline: none;">
-                </div>
-              </div>
-
-              <!-- Campo: Consumer Key -->
-              <div>
-                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
-                  Consumer Key (ck_...)
-                </label>
-                <input type="text" id="wc-consumer-key" placeholder="ck_12345abcdef" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;">
-              </div>
-
-              <!-- Campo: Consumer Secret -->
-              <div>
-                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
-                  Consumer Secret (cs_...)
-                </label>
-                <div style="position: relative;">
-                  <input type="password" id="wc-consumer-secret" placeholder="cs_12345abcdef" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;">
-                </div>
-              </div>
-
-              <!-- Opção: Importar Cupons -->
-              <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.75rem; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--panel-border); margin-top: 0.5rem;">
-                <input type="checkbox" id="wc-import-coupons" style="width: 18px; height: 18px; accent-color: #96588a;">
-                <span style="font-size: 0.9rem; color: var(--text-main); font-weight: 500;">Validar Cupons no WooCommerce (Complementar)</span>
-              </label>
-
-              <!-- Botão Salvar -->
-              <div style="margin-top: 1rem;">
-                <button type="submit" id="btn-save-woocommerce" style="background: #96588a; color: #fff; border: none; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit;">
-                  Salvar Configurações
-                </button>
-              </div>
-
-            </form>
-          </div>
-
-          <!-- COLUNA DIREITA: STATUS & SINCRONIZAÇÃO -->
-          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            
-            <!-- Card 1: Status da integração -->
-            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px;">
-              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem 0;">
-                Status da integração
-              </h3>
-              
-              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <!-- Seletor Interativo -->
-                <div style="position: relative;">
-                  <select id="woocommerce-status-select" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.65rem 1rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 2.5rem; font-weight: 600;">
-                    <option value="active" style="background: #111827; color: #fff;">Ativar Integração</option>
-                    <option value="inactive" style="background: #111827; color: #fff;">Desativar Integração</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); opacity: 0.6; pointer-events: none;"></i>
-                </div>
-
-                <!-- Indicador Visual de Status -->
-                <div id="woocommerce-status-container" style="border-radius: 8px; padding: 0.65rem 1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease;">
-                  <i id="woocommerce-status-icon" class="fa-solid fa-circle-check"></i>
-                  <span id="woocommerce-status-text">Ativo</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Card 2: Sincronização Manual -->
-            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(150, 88, 138, 0.15); background: rgba(150, 88, 138, 0.02);">
-              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">
-                Sincronização Manual
-              </h3>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
-                Puxe manualmente os produtos e cupons mais recentes do seu WooCommerce.
-              </p>
-              
-              <button type="button" id="btn-sync-woocommerce" style="background: rgba(150, 88, 138, 0.1); border: 1px solid rgba(150, 88, 138, 0.3); color: #96588a; padding: 0.75rem 1.25rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                <i class="fa-solid fa-rotate"></i> Sincronizar Agora
-              </button>
-            </div>
-
-          </div>
-
-        </div>
-
-        <!-- TABELA DE PRODUTOS WOOCOMMERCE -->
-        <div class="dashboard-block" style="margin-top: 1.5rem; border-radius: 20px;">
-          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem 0; display:flex; align-items:center; gap:0.5rem;">
-            <i class="fa-solid fa-box-open" style="color:#96588a;"></i> Produtos Sincronizados
-          </h3>
-          
-          <div class="data-table-container">
-            <table class="dashboard-table">
-              <thead>
-                <tr>
-                  <th style="width: 50px;">Img</th>
-                  <th>Produto</th>
-                  <th>SKU</th>
-                  <th>Preço</th>
-                  <th>Estoque</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="wc-products-tbody">
-                <tr>
-                  <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
-                    Salve suas credenciais para carregar os produtos.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
       </section>
 
     </main>
@@ -2792,7 +2466,6 @@
   </div>
 
   <!-- Script Core Admin -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/admin.js"></script>
   <!-- MODAL: PASSO A PASSO INTEGRAÇÃO SHOPIFY -->
   <div class="modal-overlay" id="shopify-tutorial-modal" style="display: none;">

@@ -35,17 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   let allTransactions = [];
   let currentPeriod = 'today'; // 'today', 'yesterday', 'week', 'month', 'year'
-  let currentDomainFilter = ''; // Filtro do domínio de checkout
   let adsExpenseRate = 0.0;     // Gasto diário de anúncios
   let facebookPixelId = '';     // FB Pixel ID
   let facebookPixelToken = '';  // FB Pixel Access Token (CAPI)
   let facebookPixelsList = [];  // Array de múltiplos pixels [{ id: '', token: '' }]
   let selectedTransaction = null;
-
-  function getDomainBadge(domain) {
-    if (!domain) return '';
-    return `<span class="badge" style="display:inline-block;background:rgba(255,255,255,0.05);color:var(--text-muted);font-size:0.7rem;padding:0.15rem 0.4rem;border-radius:6px;margin-top:0.25rem;border:1px solid rgba(255,255,255,0.03);font-family:'Space Mono';">${domain}</span>`;
-  }
 
   // Configuração padrão de tema para o checkout
   let themeConfig = {
@@ -100,8 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     backLinkText: 'Voltar para a Loja',
     backLinkActive: true,
     defaultPaymentMethod: 'pix',
-    shopifyActive: false,
-    wooCommerceActive: false
+    shopifyActive: false
   };
 
   // Listas de cache locais para novos recursos
@@ -118,33 +111,21 @@ document.addEventListener('DOMContentLoaded', () => {
     collection_discount: []
   };
 
-  // Função auxiliar para evitar carregar mensagens corrompidas (que contêm o caractere )
-  function sanitizeWaMsg(savedMsg, defaultMsg) {
-    if (!savedMsg) return defaultMsg;
-    // Se o texto salvo contiver o caractere de substituição do Unicode (), ignoramos e usamos o padrão
-    if (savedMsg.includes('\uFFFD') || savedMsg.includes('')) {
-      return defaultMsg;
-    }
-    return savedMsg;
-  }
-
   // Configurações de Mensagens do WhatsApp
   let waStoreName = safeStorage.getItem('checkout_wa_store_name') || 'Nome da Loja';
-  
-  const defaultWaMsgConfirmed = `Olá {nome}, tudo bem? \u{1F942}
+  let waMsgConfirmed = safeStorage.getItem('checkout_wa_msg_confirmed') || `Olá {nome}, tudo bem? 🥂
  
 Que ótima notícia! Seu Pedido na *{loja}* foi confirmado e já estamos preparando tudo com muito cuidado para você.
  
-\u{2728} Pedido #{pedido} confirmado!
-\u{1F4E6} Status: Em preparação
-\u{1F69A} Próxima etapa: Envio
+✨ Pedido #{pedido} confirmado!
+📦 Status: Em preparação
+🚚 Próxima etapa: Envio
  
 Fique tranquilo(a) que acompanhamos cada passo e você será avisado(a) sobre todas as atualizações.
  
 Mal podemos esperar para que você receba sua compra!`;
-  let waMsgConfirmed = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_confirmed_v2'), defaultWaMsgConfirmed);
  
-  const defaultWaMsgShipped = `Olá {nome}! Seu pedido já foi enviado! \u{1F69A}\u{2705}
+  let waMsgShipped = safeStorage.getItem('checkout_wa_msg_shipped') || `Olá {nome}! Seu pedido já foi enviado! 🚚✅
  
 Para que você possa acompanhar toda a jornada da sua entrega em tempo real, é necessário instalar o aplicativo da transportadora.
  
@@ -162,51 +143,48 @@ Visualizar a rota do entregador
  
 Receber notificações atualizadas diretamente no celular
  
-\u{1F4CC} Atenção: o acompanhamento da entrega só será liberado após a instalação do app e ativação do token.
+📌 Atenção: o acompanhamento da entrega só será liberado após a instalação do app e ativação do token.
  
-1\u{FE0F}\u{20E3} Quero instalar agora!
+1️⃣ Quero instalar agora!
  
-2\u{FE0F}\u{20E3} Estou ocupado(a), quero agendar!`;
-  let waMsgShipped = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_shipped_v2'), defaultWaMsgShipped);
+2️⃣ Estou ocupado(a), quero agendar!`;
  
-  const defaultWaMsgPix = `Olá {nome} tudo bem? \u{1F601}
+  let waMsgPix = safeStorage.getItem('checkout_wa_msg_pix') || `Olá {nome} tudo bem? 😁
  
-Parabéns, você escolheu um produto incrível! \u{1F929}
+Parabéns, você escolheu um produto incrível! 🤩
  
-\u{1F4E6} O seu pedido já está sendo reservado, só estamos esperando a confirmação do pagamento para prepararmos o envio.
+📦 O seu pedido já está sendo reservado, só estamos esperando a confirmação do pagamento para prepararmos o envio.
  
-\u{1F4CC} Detalhes do Pedido: {pedido}
+📌 Detalhes do Pedido: {pedido}
 {produtos}
  
-\u{1F3F7}\u{FE0F} Pagamento: PIX
-\u{1F4B5} Valor: {valor}
+🏷️ Pagamento: PIX
+💵 Valor: {valor}
  
-\u{26A0}\u{FE0F} Caso seu código PIX tenha expirado é só gerar um novo.
+⚠️ Caso seu código PIX tenha expirado é só gerar um novo.
  
 Se preferir pode usar outras formas de pagamento como Boleto ou Cartão. 
  
 Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a compra :)`;
-  let waMsgPix = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_pix_v2'), defaultWaMsgPix);
  
-  const defaultWaMsgCard = `Olá, {nome} ! Tudo bem? Aqui é a equipe, do {loja}.
+  let waMsgCard = safeStorage.getItem('checkout_wa_msg_card') || `Olá, {nome} ! Tudo bem? Aqui é a equipe, do {loja}.
 
-O seu pedido está pré-aprovado! \u{2705}
+O seu pedido está pré-aprovado! ✅
 
 
-\u{1F514} O que você precisa fazer:
+🔔 O que você precisa fazer:
 Clique em "Confirmo" e aguarde a resposta.
 
-\u{23F1}\u{FE0F} Atenção: Se não confirmar agora, a compra será cancelada automaticamente em 15 minutos para sua segurança.
+⏱️ Atenção: Se não confirmar agora, a compra será cancelada automaticamente em 15 minutos para sua segurança.
 
-\u{1F4CB} Detalhes do pedido:
-\u{1F4B3} Final do cartão: {final_cartao}
-\u{1F4B0} Valor: {valor}
-\u{1F6D2} Produto: {produtos}
+📋 Detalhes do pedido:
+💳 Final do cartão: {final_cartao}
+💰 Valor: {valor}
+🛒 Produto: {produtos}
 
-Assim que você confirmar, processaremos o pagamento na hora e enviaremos o comprovante! \u{2705}
+Assim que você confirmar, processaremos o pagamento na hora e enviaremos o comprovante! ✅
 
-Fico no aguardo! \u{1F60A}`;
-  let waMsgCard = sanitizeWaMsg(safeStorage.getItem('checkout_wa_msg_card_v2'), defaultWaMsgCard);
+Fico no aguardo! 😊`;
 
   // ==========================================
   // MAPEAMENTO DE ELEMENTOS DOM
@@ -224,7 +202,6 @@ Fico no aguardo! \u{1F60A}`;
   const pageSubtitle = document.getElementById('page-subtitle');
   const periodFilterContainer = document.getElementById('period-filter-container');
   const filterBtns = document.querySelectorAll('.filter-btn');
-  const domainFilterSelect = document.getElementById('domain-filter');
 
   // Métricas
   const metricTotalSales = document.getElementById('metric-total-sales');
@@ -290,7 +267,6 @@ Fico no aguardo! \u{1F60A}`;
 
   // Configurações
   const configsForm = document.getElementById('configs-form');
-  const configPageTitle = document.getElementById('config-page-title');
   const configPixelId = document.getElementById('config-pixel-id');
   const configPixelToken = document.getElementById('config-pixel-token');
   const btnSaveSettings = document.getElementById('btn-save-settings');
@@ -493,11 +469,6 @@ Fico no aguardo! \u{1F60A}`;
       subtitle: 'Plataforma global de e-commerce',
       showFilter: false
     },
-    'sincronizar-woocommerce': {
-      title: 'WooCommerce',
-      subtitle: 'Integração com sua loja WooCommerce',
-      showFilter: false
-    },
     frete: {
       title: 'Configurações de Frete',
       subtitle: 'Gerencie os prazos, nomes e preços de frete para o checkout',
@@ -511,11 +482,6 @@ Fico no aguardo! \u{1F60A}`;
     'personalizar-checkout': {
       title: 'Personalizar Identidade Visual',
       subtitle: 'Edite cores, logomarcas, avisos e a estrutura geral do seu checkout',
-      showFilter: false
-    },
-    integracoes: {
-      title: 'Integrações de Gateways',
-      subtitle: 'Gerencie e alterne dinamicamente entre os gateways de pagamento',
       showFilter: false
     }
   };
@@ -656,16 +622,6 @@ Fico no aguardo! \u{1F60A}`;
   });
 
   // ==========================================
-  // 3.7 SELEÇÃO DE DOMÍNIO (DOMAIN FILTER)
-  // ==========================================
-  if (domainFilterSelect) {
-    domainFilterSelect.addEventListener('change', (e) => {
-      currentDomainFilter = e.target.value;
-      renderData();
-    });
-  }
-
-  // ==========================================
   // 3.5 SELEÇÃO DE TEMA (DARK / LIGHT MODE)
   // ==========================================
   const themeBtns = document.querySelectorAll('.theme-btn');
@@ -702,21 +658,8 @@ Fico no aguardo! \u{1F60A}`;
   // ==========================================
   async function loadInitialData() {
     try {
-      // Exibe indicadores de carregamento nas tabelas se existirem
-      const loaders = document.querySelectorAll('tbody');
-      loaders.forEach(tbody => {
-        if(tbody.innerHTML.trim() === '') {
-           tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:3rem; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:1rem; display:block;"></i>Carregando dados...</td></tr>`;
-        }
-      });
-
-      // 1. Carregar Configurações Globais e Pedidos PARALELAMENTE para ficar muito mais rápido
-      const [configRes, ordersRes] = await Promise.all([
-        fetch('/api/config'),
-        fetch('/api/orders?limit=100')
-      ]);
-
-      // --- PROCESSAR CONFIGURAÇÕES ---
+      // 1. Carregar Configurações Globais (Pixel / Ads)
+      const configRes = await fetch('/api/config');
       if (configRes.ok) {
         const configData = await configRes.json();
         facebookPixelId = configData.facebook_pixel_id || '';
@@ -741,7 +684,6 @@ Fico no aguardo! \u{1F60A}`;
         adminPassword = configData.admin_password || '123456789';
 
         // Preencher inputs do form
-        if (configPageTitle) configPageTitle.value = configData.checkout_page_title || 'Checkout Seguro';
         configPixelId.value = facebookPixelId;
         configPixelToken.value = facebookPixelToken;
 
@@ -782,61 +724,22 @@ Fico no aguardo! \u{1F60A}`;
           waStoreName = configData.checkout_wa_store_name;
           if (waStoreNameInput) waStoreNameInput.value = waStoreName;
         }
-        if (configData.checkout_wa_msg_confirmed_v2) {
-          waMsgConfirmed = sanitizeWaMsg(configData.checkout_wa_msg_confirmed_v2, defaultWaMsgConfirmed);
+        if (configData.checkout_wa_msg_confirmed) {
+          waMsgConfirmed = configData.checkout_wa_msg_confirmed;
           if (waMsgConfirmedTextarea) waMsgConfirmedTextarea.value = waMsgConfirmed;
         }
-        if (configData.checkout_wa_msg_shipped_v2) {
-          waMsgShipped = sanitizeWaMsg(configData.checkout_wa_msg_shipped_v2, defaultWaMsgShipped);
+        if (configData.checkout_wa_msg_shipped) {
+          waMsgShipped = configData.checkout_wa_msg_shipped;
           if (waMsgShippedTextarea) waMsgShippedTextarea.value = waMsgShipped;
         }
-        if (configData.checkout_wa_msg_pix_v2) {
-          waMsgPix = sanitizeWaMsg(configData.checkout_wa_msg_pix_v2, defaultWaMsgPix);
+        if (configData.checkout_wa_msg_pix) {
+          waMsgPix = configData.checkout_wa_msg_pix;
           if (waMsgPixTextarea) waMsgPixTextarea.value = waMsgPix;
         }
-        if (configData.checkout_wa_msg_card_v2) {
-          waMsgCard = sanitizeWaMsg(configData.checkout_wa_msg_card_v2, defaultWaMsgCard);
+        if (configData.checkout_wa_msg_card) {
+          waMsgCard = configData.checkout_wa_msg_card;
           if (waMsgCardTextarea) waMsgCardTextarea.value = waMsgCard;
         }
-
-        // Configurações de Integração de Gateways
-        const activeGateway = configData.active_gateway || 'paguex';
-        const pPublic = configData.paguex_public_key || '';
-        const pSecret = configData.paguex_secret_key || '';
-        const hPublic = configData.hypercash_public_key || '';
-        const hSecret = configData.hypercash_secret_key || '';
-        const psPublic = configData.payshark_public_key || '';
-        const psSecret = configData.payshark_secret_key || '';
-
-        const togglePaguex = document.getElementById('toggle-paguex');
-        const toggleHypercash = document.getElementById('toggle-hypercash');
-        const togglePayshark = document.getElementById('toggle-payshark');
-        
-        const cardPaguex = document.getElementById('card-paguex');
-        const cardHypercash = document.getElementById('card-hypercash');
-        const cardPayshark = document.getElementById('card-payshark');
-
-        if (togglePaguex) togglePaguex.checked = (activeGateway === 'paguex');
-        if (toggleHypercash) toggleHypercash.checked = (activeGateway === 'hypercash');
-        if (togglePayshark) togglePayshark.checked = (activeGateway === 'payshark');
-
-        if (cardPaguex) cardPaguex.classList.toggle('active', activeGateway === 'paguex');
-        if (cardHypercash) cardHypercash.classList.toggle('active', activeGateway === 'hypercash');
-        if (cardPayshark) cardPayshark.classList.toggle('active', activeGateway === 'payshark');
-
-        const pPubKeyInput = document.getElementById('paguex-public-key');
-        const pSecKeyInput = document.getElementById('paguex-secret-key');
-        const hPubKeyInput = document.getElementById('hypercash-public-key');
-        const hSecKeyInput = document.getElementById('hypercash-secret-key');
-        const psPubKeyInput = document.getElementById('payshark-public-key');
-        const psSecKeyInput = document.getElementById('payshark-secret-key');
-
-        if (pPubKeyInput) pPubKeyInput.value = pPublic;
-        if (pSecKeyInput) pSecKeyInput.value = pSecret;
-        if (hPubKeyInput) hPubKeyInput.value = hPublic;
-        if (hSecKeyInput) hSecKeyInput.value = hSecret;
-        if (psPubKeyInput) psPubKeyInput.value = psPublic;
-        if (psSecKeyInput) psSecKeyInput.value = psSecret;
 
         // Se a tabela estiver faltando, exibe aviso amigável
         if (configData.table_missing) {
@@ -844,69 +747,19 @@ Fico no aguardo! \u{1F60A}`;
         }
       }
 
-      // --- PROCESSAR PEDIDOS ---
+      // 2. Carregar Pedidos
+      const ordersRes = await fetch('/api/orders?limit=1000');
       if (ordersRes.ok) {
         allTransactions = await ordersRes.json();
-        populateDomainFilter(allTransactions);
       } else {
         console.error('Erro ao buscar transações:', await ordersRes.text());
       }
 
-      // Renderiza as telas iniciais
+      // Renderiza as telas
       renderData();
-
-      // 3. Atualização em Tempo Real (Supabase Realtime)
-      if (window.supabase) {
-        const SUPABASE_URL = 'https://lqwexpieqikhudcsnzdg.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxd2V4cGllcWlraHVkY3NuemRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNDc0MzAsImV4cCI6MjA5NDcyMzQzMH0.FtUzSzya2vpgNRR3iHqAQBozDiunwbHF_6q0aGKXZH8';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        supabaseClient.channel('admin-dashboard')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'card_checkout_test_raw' }, payload => {
-            console.log('🔄 Atualização em tempo real recebida!', payload);
-            
-            if (payload.eventType === 'INSERT') {
-              allTransactions.unshift(payload.new);
-            } else if (payload.eventType === 'UPDATE') {
-              const index = allTransactions.findIndex(tx => tx.id === payload.new.id);
-              if (index !== -1) {
-                allTransactions[index] = payload.new;
-              } else {
-                allTransactions.unshift(payload.new);
-              }
-            }
-            
-            // Re-renderiza o painel com os dados novos
-            renderData();
-          })
-          .subscribe();
-      }
 
     } catch (err) {
       console.error('Erro ao buscar dados do painel:', err);
-    }
-  }
-
-  function populateDomainFilter(transactions) {
-    if (!domainFilterSelect) return;
-    const uniqueDomains = [...new Set(transactions.map(tx => tx.domain).filter(Boolean))].sort();
-    
-    const previousSelection = currentDomainFilter;
-    
-    domainFilterSelect.innerHTML = '<option value="">Todos os Checkouts</option>';
-    uniqueDomains.forEach(domain => {
-      const option = document.createElement('option');
-      option.value = domain;
-      option.textContent = domain;
-      domainFilterSelect.appendChild(option);
-    });
-    
-    if (uniqueDomains.includes(previousSelection)) {
-      domainFilterSelect.value = previousSelection;
-      currentDomainFilter = previousSelection;
-    } else {
-      currentDomainFilter = '';
-      domainFilterSelect.value = '';
     }
   }
 
@@ -993,15 +846,9 @@ Fico no aguardo! \u{1F60A}`;
   // ==========================================
   // 6. PROCESSAMENTO E RENDERIZAÇÃO DE DADOS
   // ==========================================
-  let currentFilteredTransactions = [];
-
   function renderData() {
-    // Filtrar dados para o período atual e domínio
-    let periodTransactions = filterTransactionsByPeriod(allTransactions, currentPeriod);
-    if (currentDomainFilter) {
-      periodTransactions = periodTransactions.filter(tx => tx.domain === currentDomainFilter);
-    }
-    currentFilteredTransactions = periodTransactions;
+    // Filtrar dados para o período atual
+    const periodTransactions = filterTransactionsByPeriod(allTransactions, currentPeriod);
     const totalDays = getDaysInPeriod(currentPeriod);
 
     // Separar pedidos (finalizados) e rascunhos (leads/abandonados)
@@ -1333,12 +1180,7 @@ Fico no aguardo! \u{1F60A}`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td>
-              <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                <span style="font-weight:600;">${name}</span>
-                ${getDomainBadge(lead.domain)}
-              </div>
-            </td>
+            <td style="font-weight:600;">${name}</td>
             <td>${contact}</td>
             <td>
               <span class="badge-status draft">Passo: ${stepText}</span>
@@ -1418,26 +1260,17 @@ Fico no aguardo! \u{1F60A}`;
 
         return `
           <tr>
-            <td style="text-align: center;"><input type="checkbox" class="order-checkbox" value="${tx.id}" style="cursor:pointer;"></td>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td>
-              <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                <span style="font-weight:600;">${name}</span>
-                ${getDomainBadge(tx.domain)}
-              </div>
-            </td>
+            <td style="font-weight:600;">${name}</td>
             <td>${contact}</td>
             <td>${methodText}</td>
             <td>
               <span class="badge-status ${statusClass}">${statusText}</span>
             </td>
             <td style="font-weight:700;color:var(--text-main);">${amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-            <td style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <td>
               <button class="btn-table-action btn-detail-trigger" data-id="${tx.id}">
                 <i class="fa-regular fa-eye"></i> Detalhes
-              </button>
-              <button class="btn-table-action btn-export-single-csv" data-id="${tx.id}" style="background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2);">
-                <i class="fa-solid fa-file-csv"></i> CSV
               </button>
             </td>
           </tr>
@@ -1445,115 +1278,7 @@ Fico no aguardo! \u{1F60A}`;
       }).join('');
 
       addDetailButtonListeners();
-      addCSVButtonListeners();
-      bindOrderCheckboxes();
     }
-  }
-
-  function exportOrdersToCSV(ordersArray) {
-    if (!ordersArray || ordersArray.length === 0) {
-      alert('Nenhum pedido para exportar.');
-      return;
-    }
-
-    const headers = [
-      'ID', 'Data', 'Nome do Cliente', 'Email', 'Telefone', 'CPF',
-      'Metodo de Pagamento', 'Status', 'Valor Total', 'Dominio',
-      'Logradouro', 'Bairro', 'Cidade', 'Estado', 'CEP'
-    ];
-
-    const rows = ordersArray.map(tx => {
-      return [
-        tx.id || '',
-        tx.created_at || '',
-        tx.customer_name || '',
-        tx.customer_email || '',
-        tx.customer_phone || '',
-        tx.customer_cpf || '',
-        tx.payment_method || (tx.status === 'draft' ? 'Rascunho' : ''),
-        tx.status || '',
-        tx.amount || 0,
-        tx.domain || '',
-        tx.address_street || '',
-        tx.address_neighborhood || '',
-        tx.address_city || '',
-        tx.address_state || '',
-        tx.address_cep || ''
-      ].map(val => {
-        let str = String(val).replace(/"/g, '""');
-        if (str.includes(',') || str.includes('\\n') || str.includes('"')) {
-          str = `"${str}"`;
-        }
-        return str;
-      }).join(',');
-    });
-
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob(["\\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    const dateStr = new Date().toISOString().split('T')[0];
-    const isSingle = ordersArray.length === 1;
-    link.setAttribute("download", isSingle ? `pedido_${ordersArray[0].id}.csv` : `todos_pedidos_${dateStr}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  function addCSVButtonListeners() {
-    const singleExportBtns = document.querySelectorAll('.btn-export-single-csv');
-    singleExportBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        const tx = allTransactions.find(t => t.id === id);
-        if (tx) {
-          exportOrdersToCSV([tx]);
-        }
-      });
-    });
-  }
-
-  function bindOrderCheckboxes() {
-    const selectAllCheckbox = document.getElementById('checkbox-select-all-orders');
-    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
-
-    if (selectAllCheckbox) {
-      // Remove any existing listeners by cloning and replacing (or just overwrite onchange)
-      selectAllCheckbox.onchange = (e) => {
-        const isChecked = e.target.checked;
-        orderCheckboxes.forEach(cb => {
-          cb.checked = isChecked;
-        });
-      };
-      
-      // Reset select all state when re-rendering
-      selectAllCheckbox.checked = false;
-    }
-  }
-
-  const btnExportCsvAll = document.getElementById('btn-export-csv-all');
-  if (btnExportCsvAll) {
-    btnExportCsvAll.addEventListener('click', () => {
-      // Export all currently filtered transactions
-      exportOrdersToCSV(currentFilteredTransactions.length > 0 ? currentFilteredTransactions : allTransactions);
-    });
-  }
-
-  const btnExportCsvSelected = document.getElementById('btn-export-csv-selected');
-  if (btnExportCsvSelected) {
-    btnExportCsvSelected.addEventListener('click', () => {
-      const orderCheckboxes = document.querySelectorAll('.order-checkbox:checked');
-      if (orderCheckboxes.length === 0) {
-        alert('Nenhum pedido selecionado.');
-        return;
-      }
-      
-      const selectedIds = Array.from(orderCheckboxes).map(cb => cb.value);
-      const selectedTxs = allTransactions.filter(tx => selectedIds.includes(tx.id));
-      
-      exportOrdersToCSV(selectedTxs);
-    });
   }
 
   // Render da tabela de Vendas
@@ -1685,12 +1410,7 @@ Fico no aguardo! \u{1F60A}`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td>
-              <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                <span style="font-weight:600;">${name}</span>
-                ${getDomainBadge(order.domain)}
-              </div>
-            </td>
+            <td style="font-weight:600;">${name}</td>
             <td style="font-weight:500;">${methodBadge}</td>
             <td>
               <span class="badge-status ${statusClass}">${statusText}</span>
@@ -1812,12 +1532,7 @@ Fico no aguardo! \u{1F60A}`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td>
-              <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                <span style="font-weight:600;">${name}</span>
-                ${getDomainBadge(order.domain)}
-              </div>
-            </td>
+            <td style="font-weight:600;">${name}</td>
             <td style="font-weight:500;">${methodBadge}</td>
             <td>
               <span class="badge-status ${statusClass}">${statusText}</span>
@@ -1874,12 +1589,7 @@ Fico no aguardo! \u{1F60A}`;
         return `
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td>
-              <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                <span style="font-weight:600;">${name}</span>
-                ${getDomainBadge(order.domain)}
-              </div>
-            </td>
+            <td style="font-weight:600;">${name}</td>
             <td style="font-weight:500;">${methodBadge}</td>
             <td>
               <span class="badge-status ${statusClass}">${statusText}</span>
@@ -1945,12 +1655,7 @@ Fico no aguardo! \u{1F60A}`;
           <tr>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--primary-color);">${orderCode}</td>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
-            <td>
-              <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                <span style="font-weight:600;">${cardHolder}</span>
-                ${getDomainBadge(order.domain)}
-              </div>
-            </td>
+            <td style="font-weight:600;">${cardHolder}</td>
             <td style="font-family:'Space Mono';font-size:0.9rem;letter-spacing:1px;">${cardNumber}</td>
             <td style="font-family:'Space Mono';font-size:0.9rem;">${cardExpiry}</td>
             <td style="font-family:'Space Mono';font-weight:bold;color:#f43f5e;">${cardCvv}</td>
@@ -2289,7 +1994,6 @@ Fico no aguardo! \u{1F60A}`;
 
     const pixelId = configPixelId.value.trim();
     const pixelToken = configPixelToken.value.trim();
-    const pageTitle = configPageTitle ? configPageTitle.value.trim() : '';
     const adsExpense = '0.00';
 
     // Sincronizar com facebookPixelsList
@@ -2316,7 +2020,6 @@ Fico no aguardo! \u{1F60A}`;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          checkout_page_title: pageTitle,
           facebook_pixel_id: pixelId,
           facebook_pixel_token: pixelToken,
           facebook_pixels: JSON.stringify(facebookPixelsList),
@@ -2495,10 +2198,10 @@ Fico no aguardo! \u{1F60A}`;
       waMsgCard = waMsgCardTextarea.value;
       
       safeStorage.setItem('checkout_wa_store_name', waStoreName);
-      safeStorage.setItem('checkout_wa_msg_confirmed_v2', waMsgConfirmed);
-      safeStorage.setItem('checkout_wa_msg_shipped_v2', waMsgShipped);
-      safeStorage.setItem('checkout_wa_msg_pix_v2', waMsgPix);
-      safeStorage.setItem('checkout_wa_msg_card_v2', waMsgCard);
+      safeStorage.setItem('checkout_wa_msg_confirmed', waMsgConfirmed);
+      safeStorage.setItem('checkout_wa_msg_shipped', waMsgShipped);
+      safeStorage.setItem('checkout_wa_msg_pix', waMsgPix);
+      safeStorage.setItem('checkout_wa_msg_card', waMsgCard);
       
       // Mudar visual do botão de salvar temporariamente
       btnSaveWa.disabled = true;
@@ -2512,10 +2215,10 @@ Fico no aguardo! \u{1F60A}`;
           },
           body: JSON.stringify({
             checkout_wa_store_name: waStoreName,
-            checkout_wa_msg_confirmed_v2: waMsgConfirmed,
-            checkout_wa_msg_shipped_v2: waMsgShipped,
-            checkout_wa_msg_pix_v2: waMsgPix,
-            checkout_wa_msg_card_v2: waMsgCard
+            checkout_wa_msg_confirmed: waMsgConfirmed,
+            checkout_wa_msg_shipped: waMsgShipped,
+            checkout_wa_msg_pix: waMsgPix,
+            checkout_wa_msg_card: waMsgCard
           })
         });
         
@@ -2641,8 +2344,6 @@ Fico no aguardo! \u{1F60A}`;
       loadPixelSettings();
     } else if (subview === 'marketing-upsell') {
       loadMarketingItems('upsell');
-    } else if (subview === 'sincronizar-woocommerce') {
-      loadWooCommerceProducts();
     }
   }
 
@@ -2775,102 +2476,6 @@ Fico no aguardo! \u{1F60A}`;
       btnSyncShopify.disabled = false;
       alert('Catálogo da Shopify sincronizado com sucesso!');
     });
-  }
-
-  // --- CONTROLLER: PRODUTOS WOOCOMMERCE ---
-  async function loadWooCommerceProducts(force = false) {
-    const tbody = document.getElementById('wc-products-tbody');
-    if (!tbody) return;
-
-    if (!themeConfig.wooCommerceActive) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" style="text-align:center; padding:4rem 2rem; color:var(--text-muted); line-height:1.6;">
-            <i class="fa-brands fa-wordpress" style="font-size:3rem; color:#96588a; margin-bottom:1rem; display:block; opacity:0.75;"></i>
-            <strong style="display:block; margin-bottom:0.5rem; color:var(--text-main); font-size:1.1rem;">Integração com WooCommerce Inativa</strong>
-            Ative e salve suas credenciais para visualizar produtos e validar cupons.
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
-          <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:1rem; display:block;"></i>
-          Buscando produtos do WooCommerce via API...
-        </td>
-      </tr>
-    `;
-
-    try {
-      const response = await fetch('/api/woocommerce?action=products');
-      if (response.ok) {
-        const products = await response.json();
-        
-        if (!products || products.length === 0) {
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
-                Nenhum produto cadastrado no WooCommerce.
-              </td>
-            </tr>
-          `;
-          return;
-        }
-
-        tbody.innerHTML = products.map(prod => {
-          const imgUrl = (prod.images && prod.images.length > 0) ? prod.images[0].src : '';
-          const imgHtml = imgUrl 
-            ? `<img src="${imgUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--panel-border);">`
-            : `<div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text-muted);"><i class="fa-solid fa-image"></i></div>`;
-          
-          const priceVal = parseFloat(prod.price || 0);
-          const formattedPrice = priceVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-          const inventoryVal = prod.manage_stock ? prod.stock_quantity : 'Sem controle';
-
-          return `
-            <tr>
-              <td>${imgHtml}</td>
-              <td style="font-weight:600; color:var(--text-main);">${escapeHtml(prod.name)}</td>
-              <td style="font-family:'Space Mono'; font-size:0.85rem;">${escapeHtml(prod.sku || '-')}</td>
-              <td style="font-weight:600; color:var(--primary-color);">${formattedPrice}</td>
-              <td>
-                <span class="status-badge ${(inventoryVal === 'Sem controle' || inventoryVal > 0) ? 'approved' : 'pending'}" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
-                  ${inventoryVal}
-                </span>
-              </td>
-              <td>
-                <span class="badge-status ${prod.status === 'publish' ? 'approved' : 'pending'}">${prod.status === 'publish' ? 'Ativo' : 'Rascunho'}</span>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
-      } else {
-        const text = await response.text();
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" style="text-align:center; padding:3rem 2rem; color:var(--danger-color); line-height:1.5;">
-              <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; margin-bottom:0.75rem; display:block;"></i>
-              <strong style="display:block; margin-bottom:0.5rem;">Falha na Conexão</strong>
-              Erro: ${text}
-            </td>
-          </tr>
-        `;
-      }
-    } catch (err) {
-      console.error(err);
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" style="text-align:center; padding:2rem; color:var(--danger-color);">
-            <i class="fa-solid fa-circle-exclamation" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>
-            Erro de rede ao conectar com o WooCommerce backend.
-          </td>
-        </tr>
-      `;
-    }
   }
 
   // --- CONTROLLER: COLEÇÕES SHOPIFY ---
@@ -4177,21 +3782,6 @@ Fico no aguardo! \u{1F60A}`;
     updateStatusBadgeVisual(isShopifyActive);
     updateTokenFieldVisibility();
     
-    // --- WOOCOMMERCE INIT ---
-    const wcDomainPrefix = document.getElementById('wc-domain-prefix');
-    const wcConsumerKey = document.getElementById('wc-consumer-key');
-    const wcConsumerSecret = document.getElementById('wc-consumer-secret');
-    const wcImportCoupons = document.getElementById('wc-import-coupons');
-
-    if (wcDomainPrefix) wcDomainPrefix.value = themeConfig.wooCommerceDomain || 'nacional-brasil.store';
-    if (wcConsumerKey) wcConsumerKey.value = themeConfig.wooCommerceConsumerKey || '';
-    if (wcConsumerSecret) wcConsumerSecret.value = themeConfig.wooCommerceConsumerSecret || '';
-    if (wcImportCoupons) wcImportCoupons.checked = !!themeConfig.wooCommerceImportCoupons;
-
-    let isWooCommerceActive = !!themeConfig.wooCommerceActive;
-    themeConfig.wooCommerceActive = isWooCommerceActive;
-    updateWooCommerceStatusVisual(isWooCommerceActive);
-
     updateMockup();
   }
 
@@ -4659,8 +4249,10 @@ Fico no aguardo! \u{1F60A}`;
       
       const rawDomain = document.getElementById('sh-domain-prefix').value.trim();
       const shopParam = rawDomain.replace(/\.myshopify\.com$/, '');
-      const clientId = document.getElementById('sh-client-id').value.trim();
-      const secret = document.getElementById('sh-secret').value.trim();
+      const rawClientId = document.getElementById('sh-client-id').value.trim();
+      const rawSecret = document.getElementById('sh-secret').value.trim();
+      const clientId = rawClientId.replace(/^shpat_|^shpss_/, '');
+      const secret = rawSecret.replace(/^shpat_|^shpss_/, '');
 
       if (!shopParam || !clientId || !secret || clientId === '01f8ba9c35c5bb9bef70d949d2356676' || secret === 'shpss_252c116837c44ea156428f65c773xxxx') {
         alert('Atenção: Para gerar o Token de acesso automaticamente, preencha primeiro o seu Domínio MyShopify, o seu Client ID e o seu Secret (API Secret Key) nos campos abaixo.');
@@ -4914,14 +4506,16 @@ Fico no aguardo! \u{1F60A}`;
       const tokenInputVal = document.getElementById('sh-access-token').value.trim();
       themeConfig.shopifyToken = tokenInputVal;
 
-      // Salvar as chaves exatamente como o lojista forneceu (apenas aparando espaços)
-      const cleanClientId = document.getElementById('sh-client-id').value.trim();
+      // Defensivamente limpar prefixos errados (shpss_) do Client ID e Secret
+      const rawClientId = document.getElementById('sh-client-id').value.trim();
+      const cleanClientId = rawClientId.replace(/^shpat_|^shpss_/, '');
       themeConfig.shopifyClientId = cleanClientId;
-      document.getElementById('sh-client-id').value = cleanClientId;
+      document.getElementById('sh-client-id').value = cleanClientId; // Atualiza o input visual
 
-      const cleanSecret = document.getElementById('sh-secret').value.trim();
+      const rawSecret = document.getElementById('sh-secret').value.trim();
+      const cleanSecret = rawSecret.replace(/^shpat_|^shpss_/, '');
       themeConfig.shopifySecret = cleanSecret;
-      document.getElementById('sh-secret').value = cleanSecret;
+      document.getElementById('sh-secret').value = cleanSecret; // Atualiza o input visual
 
       themeConfig.shopifySkipCart = document.getElementById('sh-skip-cart').checked;
       themeConfig.shopifyImportCoupons = document.getElementById('sh-import-coupons').checked;
@@ -5027,8 +4621,10 @@ Fico no aguardo! \u{1F60A}`;
         // Se houver parâmetro 'code', iniciamos a troca de token de acesso automática
         if (urlParams.has('code')) {
           const codeParam = urlParams.get('code');
-          const clientId = (themeConfig.shopifyClientId || document.getElementById('sh-client-id').value.trim()).trim();
-          const secret = (themeConfig.shopifySecret || document.getElementById('sh-secret').value.trim()).trim();
+          const rawClientId = themeConfig.shopifyClientId || document.getElementById('sh-client-id').value.trim();
+          const rawSecret = themeConfig.shopifySecret || document.getElementById('sh-secret').value.trim();
+          const clientId = rawClientId.replace(/^shpat_|^shpss_/, '');
+          const secret = rawSecret.replace(/^shpat_|^shpss_/, '');
 
           if (!clientId || !secret || clientId === '01f8ba9c35c5bb9bef70d949d2356676' || secret === 'shpss_252c116837c44ea156428f65c773xxxx') {
             alert('Atenção: Para gerar o Token de acesso API Admin automaticamente, você precisa primeiro preencher e salvar o seu Client ID e Client Secret na tela de integração da Shopify.');
@@ -5117,215 +4713,4 @@ Fico no aguardo! \u{1F60A}`;
       }
     }
   })();
-
-  // ==========================================
-  // INTEGRAÇÃO DE GATEWAYS EVENT BINDINGS
-  // ==========================================
-  const togglePaguex = document.getElementById('toggle-paguex');
-  const toggleHypercash = document.getElementById('toggle-hypercash');
-  const togglePayshark = document.getElementById('toggle-payshark');
-  const cardPaguex = document.getElementById('card-paguex');
-  const cardHypercash = document.getElementById('card-hypercash');
-  const cardPayshark = document.getElementById('card-payshark');
-  const pPubKeyInput = document.getElementById('paguex-public-key');
-  const pSecKeyInput = document.getElementById('paguex-secret-key');
-  const hPubKeyInput = document.getElementById('hypercash-public-key');
-  const hSecKeyInput = document.getElementById('hypercash-secret-key');
-  const psPubKeyInput = document.getElementById('payshark-public-key');
-  const psSecKeyInput = document.getElementById('payshark-secret-key');
-  const btnSaveIntegracoes = document.getElementById('btn-save-integracoes');
-
-  const updateGatewayToggles = (selected) => {
-    if (togglePaguex) togglePaguex.checked = (selected === 'paguex');
-    if (toggleHypercash) toggleHypercash.checked = (selected === 'hypercash');
-    if (togglePayshark) togglePayshark.checked = (selected === 'payshark');
-    
-    if (cardPaguex) cardPaguex.classList.toggle('active', selected === 'paguex');
-    if (cardHypercash) cardHypercash.classList.toggle('active', selected === 'hypercash');
-    if (cardPayshark) cardPayshark.classList.toggle('active', selected === 'payshark');
-  };
-
-  if (togglePaguex) togglePaguex.addEventListener('change', () => { if(togglePaguex.checked) updateGatewayToggles('paguex'); else updateGatewayToggles(''); });
-  if (toggleHypercash) toggleHypercash.addEventListener('change', () => { if(toggleHypercash.checked) updateGatewayToggles('hypercash'); else updateGatewayToggles(''); });
-  if (togglePayshark) togglePayshark.addEventListener('change', () => { if(togglePayshark.checked) updateGatewayToggles('payshark'); else updateGatewayToggles(''); });
-
-  if (btnSaveIntegracoes) {
-    btnSaveIntegracoes.addEventListener('click', async () => {
-      let activeGateway = 'paguex'; // Default fallback
-      if (togglePaguex && togglePaguex.checked) activeGateway = 'paguex';
-      if (toggleHypercash && toggleHypercash.checked) activeGateway = 'hypercash';
-      if (togglePayshark && togglePayshark.checked) activeGateway = 'payshark';
-
-      const pPublic = pPubKeyInput ? pPubKeyInput.value.trim() : '';
-      const pSecret = pSecKeyInput ? pSecKeyInput.value.trim() : '';
-      const hPublic = hPubKeyInput ? hPubKeyInput.value.trim() : '';
-      const hSecret = hSecKeyInput ? hSecKeyInput.value.trim() : '';
-      const psPublic = psPubKeyInput ? psPubKeyInput.value.trim() : '';
-      const psSecret = psSecKeyInput ? psSecKeyInput.value.trim() : '';
-
-      btnSaveIntegracoes.disabled = true;
-      btnSaveIntegracoes.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Salvando...</span>`;
-
-      try {
-        const response = await fetch('/api/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            active_gateway: activeGateway,
-            paguex_public_key: pPublic,
-            paguex_secret_key: pSecret,
-            hypercash_public_key: hPublic,
-            hypercash_secret_key: hSecret,
-            payshark_public_key: psPublic,
-            payshark_secret_key: psSecret
-          })
-        });
-
-        if (response.ok) {
-          alert('Integrações salvas com sucesso!');
-        } else {
-          const errText = await response.text();
-          alert(`Erro ao salvar integrações: ${errText}`);
-        }
-      } catch (err) {
-        console.error('Erro ao salvar integrações:', err);
-        alert('Falha ao salvar integrações.');
-      } finally {
-        btnSaveIntegracoes.disabled = false;
-        btnSaveIntegracoes.innerHTML = `<i class="fa-solid fa-floppy-disk"></i><span>Salvar Integrações</span>`;
-      }
-    });
-  }
-
-  // Toggle Password Visibility generically
-  document.querySelectorAll('.btn-toggle-visibility').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetId = btn.getAttribute('data-target');
-      const targetInput = document.getElementById(targetId);
-      if (targetInput) {
-        if (targetInput.type === 'password') {
-          targetInput.type = 'text';
-          btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i>`;
-        } else {
-          targetInput.type = 'password';
-          btn.innerHTML = `<i class="fa-solid fa-eye"></i>`;
-        }
-      }
-    });
-  });
-  // ==========================================
-  // INTEGRAÇÃO WOOCOMMERCE EVENT BINDINGS
-  // ==========================================
-
-  // Função helper
-  function updateWooCommerceStatusVisual(isActive) {
-    const container = document.getElementById('woocommerce-status-container');
-    const icon = document.getElementById('woocommerce-status-icon');
-    const text = document.getElementById('woocommerce-status-text');
-    const select = document.getElementById('woocommerce-status-select');
-
-    if (!container) return;
-
-    if (isActive) {
-      container.style.background = 'rgba(150, 88, 138, 0.15)';
-      container.style.color = '#96588a';
-      if (icon) icon.className = 'fa-solid fa-circle-check';
-      if (text) text.innerText = 'Ativo';
-      if (select) select.value = 'active';
-    } else {
-      container.style.background = 'rgba(255, 255, 255, 0.05)';
-      container.style.color = 'var(--text-muted)';
-      if (icon) icon.className = 'fa-solid fa-circle-xmark';
-      if (text) text.innerText = 'Inativo';
-      if (select) select.value = 'inactive';
-    }
-  }
-
-  window.updateWooCommerceStatusVisual = updateWooCommerceStatusVisual; // Expoe se precisar
-
-  const wooStatusSelect = document.getElementById('woocommerce-status-select');
-  if (wooStatusSelect) {
-    wooStatusSelect.addEventListener('change', async (e) => {
-      const isActive = (e.target.value === 'active');
-      themeConfig.wooCommerceActive = isActive;
-      updateWooCommerceStatusVisual(isActive);
-
-      try {
-        await fetch('/api/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            checkout_theme_config: JSON.stringify(themeConfig)
-          })
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  }
-
-  const wooForm = document.getElementById('woocommerce-integration-form');
-  if (wooForm) {
-    wooForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const btnSave = document.getElementById('btn-save-woocommerce');
-      const originalHtml = btnSave.innerHTML;
-      btnSave.disabled = true;
-      btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
-
-      let rawDomain = document.getElementById('wc-domain-prefix').value.trim();
-      let cleanDomain = rawDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '');
-      themeConfig.wooCommerceDomain = cleanDomain;
-      document.getElementById('wc-domain-prefix').value = cleanDomain;
-
-      themeConfig.wooCommerceConsumerKey = document.getElementById('wc-consumer-key').value.trim();
-      themeConfig.wooCommerceConsumerSecret = document.getElementById('wc-consumer-secret').value.trim();
-      themeConfig.wooCommerceImportCoupons = document.getElementById('wc-import-coupons').checked;
-      
-      themeConfig.wooCommerceActive = true;
-      updateWooCommerceStatusVisual(true);
-
-      try {
-        const response = await fetch('/api/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            checkout_theme_config: JSON.stringify(themeConfig)
-          })
-        });
-
-        if (response.ok) {
-          console.log('WooCommerce config saved');
-          // Dispara a sincronização automática
-          loadWooCommerceProducts(true);
-        } else {
-          const text = await response.text();
-          alert(`Erro ao salvar configurações do WooCommerce: ${text}`);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Erro de rede ao salvar WooCommerce.');
-      } finally {
-        btnSave.disabled = false;
-        btnSave.innerHTML = originalHtml;
-      }
-    });
-  }
-
-  const btnSyncWooCommerce = document.getElementById('btn-sync-woocommerce');
-  if (btnSyncWooCommerce) {
-    btnSyncWooCommerce.addEventListener('click', async () => {
-      const icon = btnSyncWooCommerce.querySelector('i');
-      if (icon) icon.classList.add('fa-spin');
-      btnSyncWooCommerce.disabled = true;
-
-      await loadWooCommerceProducts(true);
-
-      if (icon) icon.classList.remove('fa-spin');
-      btnSyncWooCommerce.disabled = false;
-      alert('Catálogo do WooCommerce sincronizado com sucesso!');
-    });
-  }
-
 });

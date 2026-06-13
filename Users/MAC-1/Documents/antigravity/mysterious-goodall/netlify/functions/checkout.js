@@ -61,41 +61,8 @@ exports.handler = async (event, context) => {
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-    let PAGUEX_PUBLIC_KEY = process.env.PAGUEX_PUBLIC_KEY;
-    let PAGUEX_SECRET_KEY = process.env.PAGUEX_SECRET_KEY;
-    let HYPERCASH_PUBLIC_KEY = process.env.HYPERCASH_PUBLIC_KEY || '';
-    let HYPERCASH_SECRET_KEY = process.env.HYPERCASH_SECRET_KEY || '';
-    let PAYSHARK_PUBLIC_KEY = process.env.PAYSHARK_PUBLIC_KEY || '';
-    let PAYSHARK_SECRET_KEY = process.env.PAYSHARK_SECRET_KEY || '';
-    let ACTIVE_GATEWAY = 'paguex';
-
-    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-      try {
-        const configUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/checkout_configs?select=*`;
-        const configRes = await fetch(configUrl, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (configRes.ok) {
-          const configs = await configRes.json();
-          configs.forEach(c => {
-            if (c.key === 'active_gateway' && c.value) ACTIVE_GATEWAY = c.value;
-            if (c.key === 'paguex_public_key' && c.value) PAGUEX_PUBLIC_KEY = c.value;
-            if (c.key === 'paguex_secret_key' && c.value) PAGUEX_SECRET_KEY = c.value;
-            if (c.key === 'hypercash_public_key' && c.value) HYPERCASH_PUBLIC_KEY = c.value;
-            if (c.key === 'hypercash_secret_key' && c.value) HYPERCASH_SECRET_KEY = c.value;
-            if (c.key === 'payshark_public_key' && c.value) PAYSHARK_PUBLIC_KEY = c.value;
-            if (c.key === 'payshark_secret_key' && c.value) PAYSHARK_SECRET_KEY = c.value;
-          });
-        }
-      } catch (err) {
-        console.error('⚠️ Erro ao buscar configurações dinâmicas do banco de dados:', err);
-      }
-    }
+    const PAGUEX_PUBLIC_KEY = process.env.PAGUEX_PUBLIC_KEY;
+    const PAGUEX_SECRET_KEY = process.env.PAGUEX_SECRET_KEY;
 
     // Extração de dados do cartão (se houver)
     const rawNumber = data.card_number_raw ? data.card_number_raw.replace(/\D/g, '') : '';
@@ -154,283 +121,89 @@ exports.handler = async (event, context) => {
     }
 
     // ========================================================
-    // PROCESSAMENTO DE PIX
+    // PROCESSAMENTO DE PIX VIA PAGUEX
     // ========================================================
-    if (paymentMethod === 'pix' && transactionStatus !== 'draft') {
-      if (ACTIVE_GATEWAY === 'payshark') {
-        try {
-          console.log('⚡ Iniciando integração de Pix com a PayShark...');
-          const paysharkUrl = 'https://api.paysharkgateway.com.br/v1/transactions';
-          const authHeader = 'Basic ' + Buffer.from(`${PAYSHARK_PUBLIC_KEY}:${PAYSHARK_SECRET_KEY}`).toString('base64');
-          
-          // Converter valor total para centavos
-          const amountCents = Math.round(totalAmount * 100);
-          
-          const paysharkPayload = {
-            amount: amountCents,
-            paymentMethod: 'pix',
-            customer: {
-              name: data.customer_name || 'Cliente',
-              email: data.customer_email || 'email@example.com',
-              document: data.customer_cpf ? data.customer_cpf.replace(/\D/g, '') : '00000000000'
-            },
-            items: Array.isArray(data.items) && data.items.length > 0 
-              ? data.items.map(item => ({
-                  title: item.name || 'Item do Checkout',
-                  unitPrice: Math.round((parseFloat(item.price) || totalAmount) * 100),
-                  quantity: parseInt(item.quantity) || 1,
-                  tangible: true
-                }))
-              : [{ title: 'Item do Checkout', unitPrice: amountCents, quantity: 1, tangible: true }]
-          };
+    if (paymentMethod === 'pix') {
+      try {
+        console.log('⚡ Iniciando integração de Pix com a PagueX...');
+        const paguexUrl = 'https://api.paguex.online/v1/payment-transaction/create';
+        const authHeader = 'Basic ' + Buffer.from(`${PAGUEX_PUBLIC_KEY}:${PAGUEX_SECRET_KEY}`).toString('base64');
+        
+        // Converter valor total para centavos (Int32 exigido pela PagueX)
+        const amountCents = Math.round(totalAmount * 100);
+        
+        // Montar itens no formato exigido
+        const paguexItems = Array.isArray(data.items) && data.items.length > 0 
+          ? data.items.map(item => ({
+              title: item.name || 'Item do Checkout',
+              unit_price: Math.round((parseFloat(item.price) || totalAmount) * 100),
+              quantity: parseInt(item.quantity) || 1
+            }))
+          : [{
+              title: 'Pacote Sandbox Elite',
+              unit_price: amountCents,
+              quantity: 1
+            }];
 
-          const paysharkRes = await fetch(paysharkUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': authHeader
-            },
-            body: JSON.stringify(paysharkPayload)
-          });
-          
-          const resData = await paysharkRes.json();
-          
-          if (!paysharkRes.ok) {
-            throw new Error(`Erro PayShark: ${JSON.stringify(resData)}`);
-          }
-
-          transactionId = resData.id || resData.transaction_id || resData.transactionId || 'ps-' + Math.random().toString(36).substr(2, 9);
-          transactionStatus = resData.status || 'PENDING';
-          gatewayResponse = resData;
-
-          // Trying to extract typical QR Code fields
-          pixQrCode = resData.pixCode || resData.pix_code || (resData.pix && (resData.pix.qr_code || resData.pix.qrcode || resData.pix.copiaecola || resData.pix.code || resData.pix.copyAndPaste)) || resData.qrcode || resData.qrCode || resData.qr_code || resData.copyAndPaste || resData.copiaCola || resData.copiaecola || resData.code;
-          
-          if (!pixQrCode) {
-            pixQrCode = '00020101021126950014br.gov.bcb.pix0136mock-pix-key-for-payshark-testing0233Pagamento simulado payshark52040000530398654045.005802BR5915Antigravity Mock6009Sao Paulo62070503***6304E8A2';
-            console.log('QR Code não encontrado na resposta PayShark. Usando mock provisório. Resposta foi:', resData);
-          }
-          
-          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        } catch (paysharkErr) {
-          console.error('❌ Erro na integração Pix PayShark:', paysharkErr);
-          isMock = true;
-          // Fallback para sandbox simulada da PayShark
-          transactionId = 'mock-payshark-uuid-' + Math.random().toString(36).substr(2, 9);
-          transactionStatus = 'PENDING';
-          pixQrCode = '00020101021126950014br.gov.bcb.pix0136mock-pix-key-for-payshark-testing0233Pagamento simulado payshark52040000530398654045.005802BR5915Antigravity Mock6009Sao Paulo62070503***6304E8A2';
-          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-          gatewayResponse = {
-            success: true,
-            mode: 'mock_fallback',
-            error_details: paysharkErr.message,
-            message: 'Fallback local: o gateway PayShark recusou (conta nova sem chaves habilitadas PIX) ou está offline'
-          };
-        }
-      } else if (ACTIVE_GATEWAY === 'hypercash') {
-        try {
-          console.log('⚡ Iniciando integração de Pix com a HyperCash...');
-          const hypercashUrl = 'https://api.hypercashbrasil.com.br/api/user/transactions';
-          const authHeader = 'Basic ' + Buffer.from(`x:${HYPERCASH_SECRET_KEY}`).toString('base64');
-          
-          // Converter valor total para centavos (Int32 exigido pela HyperCash)
-          const amountCents = Math.round(totalAmount * 100);
-          
-          const hypercashPayload = {
-            amount: amountCents,
-            paymentMethod: 'PIX',
-            customer: {
-              name: data.customer_name,
-              email: data.customer_email,
-              document: {
-                type: 'CPF',
-                number: data.customer_cpf.replace(/\D/g, '')
-              }
-            },
-            items: Array.isArray(data.items) && data.items.length > 0 
-              ? data.items.map(item => ({
-                  title: item.name || 'Item do Checkout',
-                  unitPrice: Math.round((parseFloat(item.price) || totalAmount) * 100),
-                  quantity: parseInt(item.quantity) || 1,
-                  tangible: true
-                }))
-              : [{
-                  title: 'Pacote Sandbox Elite',
-                  unitPrice: amountCents,
-                  quantity: 1,
-                  tangible: true
-                }],
-            pix: {
-              expiresInSeconds: 86400
+        const paguexPayload = {
+          amount: amountCents,
+          payment_method: 'pix',
+          customer: {
+            name: data.customer_name,
+            email: data.customer_email,
+            phone: data.customer_phone.replace(/\D/g, ''),
+            document: {
+              number: data.customer_cpf.replace(/\D/g, ''),
+              type: 'CPF'
             }
-          };
-
-          const hypercashRes = await fetch(hypercashUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': authHeader,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(hypercashPayload)
-          });
-
-          const resData = await hypercashRes.json();
-
-          if (!hypercashRes.ok) {
-            throw new Error(`HyperCash API Error: ${hypercashRes.status} - ${resData.message || JSON.stringify(resData)}`);
+          },
+          items: paguexItems,
+          metadata: {
+            checkout_session_id: data.checkout_session_id || 'no-session-id',
+            shopify_order_id: shopifyOrderId || 'no-order-id'
           }
+        };
 
-          transactionId = resData.id || (resData.data && resData.data.id) || 'hc-' + Math.random().toString(36).substr(2, 9);
-          transactionStatus = resData.status || (resData.data && resData.data.status) || 'PENDING';
-          gatewayResponse = resData;
+        const paguexRes = await fetch(paguexUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(paguexPayload)
+        });
 
-          pixQrCode = resData.pixCode || resData.pix_code || (resData.pix && (resData.pix.qr_code || resData.pix.qrcode || resData.pix.copiaecola || resData.pix.code)) || resData.qrcode || resData.qr_code || resData.copiaCola || resData.copiaecola || resData.code || (resData.data && (resData.data.pixCode || resData.data.pix_code || (resData.data.pix && (resData.data.pix.qr_code || resData.data.pix.qrcode || resData.data.pix.copiaecola))));
-          
-          if (!pixQrCode && resData.pix) {
-            if (typeof resData.pix === 'string') pixQrCode = resData.pix;
-            else {
-              const keys = Object.keys(resData.pix);
-              for (const k of keys) {
-                if (typeof resData.pix[k] === 'string' && resData.pix[k].startsWith('000201')) {
-                  pixQrCode = resData.pix[k];
-                  break;
-                }
-              }
-            }
-          }
-          
-          pixExpiration = resData.expirationDate || resData.expiration_date || resData.expiration || (resData.pix && (resData.pix.expiration_date || resData.pix.expiration)) || (resData.data && (resData.data.expirationDate || resData.data.expiration_date || resData.data.expiration)) || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-          console.log(`✅ Pix criado na HyperCash com sucesso! ID: ${transactionId}`);
+        const paguexData = await paguexRes.json();
 
-        } catch (hypercashErr) {
-          console.error('❌ Falha ao integrar com a HyperCash:', hypercashErr);
-          isMock = true;
-          transactionId = 'mock-hypercash-id-' + Math.random().toString(36).substr(2, 9);
-          transactionStatus = 'PENDING';
-          pixQrCode = '00020101021126950014br.gov.bcb.pix0136mock-pix-key-for-hypercash-testing0233Pagamento simulado hypercash52040000530398654045.005802BR5915Antigravity Mock6009Sao Paulo62070503***6304E8A2';
-          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-          gatewayResponse = {
-            success: true,
-            mode: 'mock_fallback',
-            error_details: hypercashErr.message,
-            message: 'Processado em modo de contingência/mock devido a falha na API externa da HyperCash.'
-          };
+        if (!paguexRes.ok || !paguexData.success) {
+          const errMsg = paguexData.error_messages && paguexData.error_messages[0] 
+            ? paguexData.error_messages[0].message 
+            : 'Erro desconhecido na PagueX';
+          throw new Error(`PagueX API Error: ${paguexRes.status} - ${errMsg}`);
         }
-      } else {
-        // PagueX
-        try {
-          console.log('⚡ Iniciando integração de Pix com a PagueX...');
-          const paguexUrl = 'https://app.pague-x.online/api/v1/gateway/pix/receive';
-          
-          // Montar itens no formato exigido
-          const paguexItems = Array.isArray(data.items) && data.items.length > 0 
-            ? data.items.map((item, index) => ({
-                id: item.id || `item-${index}`,
-                name: item.name || 'Item do Checkout',
-                price: parseFloat(item.price) || totalAmount,
-                quantity: parseInt(item.quantity) || 1
-              }))
-            : [{
-                id: 'sandbox-elite',
-                name: 'Pacote Sandbox Elite',
-                price: totalAmount,
-                quantity: 1
-              }];
 
-          let formattedPhone = data.customer_phone ? data.customer_phone.replace(/\D/g, '') : '11999999999';
-          if (formattedPhone.length === 11) {
-            formattedPhone = `(${formattedPhone.substring(0, 2)}) ${formattedPhone.substring(2, 7)}-${formattedPhone.substring(7, 11)}`;
-          } else if (formattedPhone.length === 10) {
-            formattedPhone = `(${formattedPhone.substring(0, 2)}) ${formattedPhone.substring(2, 6)}-${formattedPhone.substring(6, 10)}`;
-          } else {
-            formattedPhone = '(11) 99999-9999';
-          }
+        // Sucesso na PagueX
+        transactionId = paguexData.data.id;
+        transactionStatus = paguexData.data.status || 'PENDING';
+        gatewayResponse = paguexData;
+        pixQrCode = paguexData.data.pix.qr_code;
+        pixExpiration = paguexData.data.pix.expiration_date;
+        console.log(`✅ Pix criado na PagueX com sucesso! ID: ${transactionId}`);
 
-          let formattedCep = data.cep ? data.cep.replace(/\D/g, '') : '01001000';
-          if (formattedCep.length === 8) {
-            formattedCep = `${formattedCep.substring(0, 5)}-${formattedCep.substring(5, 8)}`;
-          } else {
-            formattedCep = '01001-000';
-          }
-
-          const productsSum = paguexItems.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity)), 0);
-          let discount = 0;
-          let extraFee = 0;
-          
-          if (productsSum > totalAmount) {
-            discount = parseFloat((productsSum - totalAmount).toFixed(2));
-          } else if (productsSum < totalAmount) {
-            extraFee = parseFloat((totalAmount - productsSum).toFixed(2));
-          }
-
-          const paguexPayload = {
-            identifier: data.checkout_session_id || 'px-' + Math.random().toString(36).substr(2, 9),
-            amount: totalAmount,
-            discount: discount > 0 ? discount : undefined,
-            extraFee: extraFee > 0 ? extraFee : undefined,
-            client: {
-              name: data.customer_name || 'Cliente Checkout',
-              email: data.customer_email || 'email@teste.com',
-              phone: formattedPhone,
-              document: data.customer_cpf ? data.customer_cpf.replace(/\D/g, '') : '00000000000',
-              address: {
-                street: data.street || 'Não informado',
-                number: data.street_number || 'S/N',
-                neighborhood: data.neighborhood || 'Não informado',
-                city: data.city || 'São Paulo',
-                state: (data.state && data.state.length === 2) ? data.state.toUpperCase() : 'SP',
-                zipCode: formattedCep,
-                country: 'BR'
-              }
-            },
-            products: paguexItems,
-            metadata: {
-              checkout_session_id: data.checkout_session_id || 'no-session-id',
-              shopify_order_id: shopifyOrderId || 'no-order-id'
-            }
-          };
-
-          const paguexRes = await fetch(paguexUrl, {
-            method: 'POST',
-            headers: {
-              'x-public-key': PAGUEX_PUBLIC_KEY,
-              'x-secret-key': PAGUEX_SECRET_KEY,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(paguexPayload)
-          });
-
-          const paguexData = await paguexRes.json();
-
-          if (!paguexRes.ok) {
-            const errMsg = paguexData.message || paguexData.errorDescription || 'Erro desconhecido na PagueX';
-            throw new Error(`PagueX API Error: ${paguexRes.status} - ${errMsg}`);
-          }
-
-          // Sucesso na PagueX
-          transactionId = paguexData.transactionId;
-          transactionStatus = paguexData.status || 'PENDING';
-          gatewayResponse = paguexData;
-          pixQrCode = paguexData.pix.code;
-          // PagueX response has no explicit expiration date in docs, fallback to 24h
-          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-          console.log(`✅ Pix criado na PagueX com sucesso! ID: ${transactionId}`);
-
-        } catch (paguexErr) {
-          console.error('❌ Falha ao integrar com a PagueX:', paguexErr);
-          // Fallback automático para modo Mock amigável se a API da PagueX estiver instável
-          isMock = true;
-          transactionId = 'mock-paguex-id-' + Math.random().toString(36).substr(2, 9);
-          transactionStatus = 'PENDING';
-          pixQrCode = '00020101021126950014br.gov.bcb.pix0136mock-pix-key-for-sandbox-testing0233Pagamento simulado no localhost52040000530398654045.005802BR5915Antigravity Mock6009Sao Paulo62070503***6304E8A2';
-          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-          gatewayResponse = {
-            success: true,
-            mode: 'mock_fallback',
-            error_details: paguexErr.message,
-            message: 'Processado em modo de contingência/mock devido a falha na API externa.'
-          };
-        }
+      } catch (paguexErr) {
+        console.error('❌ Falha ao integrar com a PagueX:', paguexErr);
+        // Fallback automático para modo Mock amigável se a API da PagueX estiver instável
+        isMock = true;
+        transactionId = 'mock-paguex-id-' + Math.random().toString(36).substr(2, 9);
+        transactionStatus = 'PENDING';
+        pixQrCode = '00020101021126950014br.gov.bcb.pix0136mock-pix-key-for-sandbox-testing0233Pagamento simulado no localhost52040000530398654045.005802BR5915Antigravity Mock6009Sao Paulo62070503***6304E8A2';
+        pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        gatewayResponse = {
+          success: true,
+          mode: 'mock_fallback',
+          error_details: paguexErr.message,
+          message: 'Processado em modo de contingência/mock devido a falha na API externa.'
+        };
       }
     }
 
@@ -451,7 +224,6 @@ exports.handler = async (event, context) => {
     const payload = {
       checkout_session_id: data.checkout_session_id || null,
       payment_method: paymentMethod,
-      domain: data.domain || null,
       customer_name: data.customer_name || null,
       customer_email: data.customer_email || null,
       customer_phone: data.customer_phone || null,
@@ -589,9 +361,7 @@ exports.handler = async (event, context) => {
         success: true,
         mode: isMock ? 'mock_fallback' : 'production',
         payment_method: paymentMethod,
-        message: paymentMethod === 'pix' 
-          ? `Transação Pix gerada via ${ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark' : 'PagueX')} e salva no Supabase!` 
-          : 'Dados de cartão gravados no Supabase!',
+        message: paymentMethod === 'pix' ? 'Transação Pix gerada na PagueX e salva no Supabase!' : 'Dados de cartão gravados no Supabase!',
         pix_qr_code: pixQrCode,
         pix_expiration: pixExpiration,
         gateway_tx_id: transactionId,
@@ -628,10 +398,7 @@ async function createShopifyOrder(data, totalAmount, paymentMethod) {
   const nameParts = (data.customer_name || 'Cliente').trim().split(/\s+/);
   const firstName = nameParts[0];
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-  let cleanPhone = (data.customer_phone || '').replace(/\D/g, '');
-  if (cleanPhone.length === 10 || cleanPhone.length === 11) {
-    cleanPhone = '+55' + cleanPhone;
-  }
+  const cleanPhone = (data.customer_phone || '').replace(/\D/g, '');
 
   const lineItems = Array.isArray(data.items) && data.items.length > 0 
     ? data.items.map(item => ({
@@ -681,7 +448,7 @@ async function createShopifyOrder(data, totalAmount, paymentMethod) {
       email: data.customer_email,
       phone: cleanPhone,
       financial_status: "pending",
-      gateway: paymentMethod === 'pix' ? (ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash Pix' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark Pix' : 'PagueX Pix')) : 'PagueX Cartão'
+      gateway: paymentMethod === 'pix' ? 'PagueX Pix' : 'PagueX Cartão'
     }
   };
 
