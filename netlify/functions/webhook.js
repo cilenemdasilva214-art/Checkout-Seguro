@@ -40,9 +40,10 @@ exports.handler = async (event, context) => {
       } catch(e) { console.error('Erro ao logar webhook no banco:', e); }
     }
 
-    // Suporta múltiplos formatos de payload (plano ou aninhado sob 'data')
-    const transactionId = data.id || (data.data && data.data.id) || data.transaction_id || data.transactionId || (data.metadata && data.metadata.gateway_tx_id);
-    const status = data.status || (data.data && data.data.status) || (data.data && data.data.pix && data.data.pix.status);
+    // Suporta múltiplos formatos de payload (plano ou aninhado sob 'data', 'transaction', 'payment')
+    const txObj = data.transaction || data.payment || data.data || data;
+    const transactionId = txObj.id || txObj.transaction_id || txObj.transactionId || (data.metadata && data.metadata.gateway_tx_id) || data.id;
+    const status = txObj.status || (txObj.pix && txObj.pix.status) || data.status;
 
     if (!transactionId) {
       console.warn('⚠️ ID da transação ausente no payload do webhook.');
