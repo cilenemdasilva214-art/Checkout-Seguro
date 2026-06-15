@@ -121,8 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Função auxiliar para evitar carregar mensagens corrompidas (que contêm o caractere )
   function sanitizeWaMsg(savedMsg, defaultMsg) {
     if (!savedMsg) return defaultMsg;
-    // Se o texto salvo contiver o caractere de substituição do Unicode (), ignoramos e usamos o padrão
-    if (savedMsg.includes('\uFFFD') || savedMsg.includes('')) {
+    // Se o texto salvo contiver o caractere de substituição do Unicode (), ou for vazio, usamos o padrão
+    if (savedMsg.includes('\uFFFD') || savedMsg.trim() === '') {
       return defaultMsg;
     }
     return savedMsg;
