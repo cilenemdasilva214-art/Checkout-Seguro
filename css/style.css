@@ -19,7 +19,7 @@
   --input-bg: #ffffff;
   --input-border: #d1d5db;
   --input-focus: rgba(22, 70, 32, 0.15);
-  --font-sans: 'Outfit', sans-serif;
+  --font-sans: 'Inter', sans-serif;
   --font-mono: 'Space Mono', monospace;
   --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   --border-radius: 12px;
