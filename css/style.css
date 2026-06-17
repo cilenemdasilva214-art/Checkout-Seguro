@@ -7,8 +7,8 @@
   --bg-color: #ffffff; /* Fundo geral claro - puro branco */
   --panel-bg: #ffffff; /* Fundo dos cards puro branco, como no print */
   --panel-border: #e5e7eb; /* Bordas finas cinzas */
-  --primary-color: #164620; /* Verde oliva correspondente ao rodapé/print */
-  --primary-hover: #0f3016;
+  --primary-color: #196129; /* Verde oliva correspondente ao rodapé/print */
+  --primary-hover: #12481e;
   --secondary-color: #4b5563;
   --secondary-bg: #f3f4f6;
   --success-color: #2e7d32;
@@ -2184,7 +2184,7 @@ body {
 /* Rodapé Customizável do Checkout - Alta Fidelidade com o Print */
 .checkout-footer {
   width: 100%;
-  background-color: var(--footer-bg, #164620);
+  background-color: var(--footer-bg, #196129);
   color: var(--footer-color, #ffffff);
   padding: 40px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
