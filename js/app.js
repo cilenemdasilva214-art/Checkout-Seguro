@@ -116,6 +116,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       'https://connect.facebook.net/en_US/fbevents.js');
     }
     
+    fbq('set', 'autoConfig', false, pixelId);
     fbq('init', pixelId);
     fbq('trackSingle', pixelId, 'PageView');
     console.log(`🎯 Facebook Pixel ${pixelId} inicializado com trackSingle PageView.`);
