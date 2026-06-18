@@ -368,11 +368,50 @@ Fico no aguardo! \u{1F60A}`;
     if (urlParams.has('code') && urlParams.has('shop')) {
       console.log('🔑 Auto-autenticação ativada via retorno de instalação Shopify.');
       safeStorage.setItem('admin_authenticated', 'true');
+      safeStorage.setItem('admin_login_time', Date.now().toString());
     }
 
     const isAuth = safeStorage.getItem('admin_authenticated');
+    const loginTime = safeStorage.getItem('admin_login_time');
+    
     if (isAuth === 'true') {
+      if (loginTime) {
+        const elapsed = Date.now() - parseInt(loginTime);
+        // Desconecta após 2 horas (7200000 ms)
+        if (elapsed > 2 * 60 * 60 * 1000) {
+          safeStorage.setItem('admin_authenticated', 'false');
+          safeStorage.setItem('admin_login_time', '');
+          if (lockScreen) lockScreen.classList.remove('hide');
+          alert('Sua sessão expirou por tempo limite (2 horas). Por favor, faça login novamente.');
+          return;
+        }
+      } else {
+        safeStorage.setItem('admin_login_time', Date.now().toString());
+      }
+      
       if (lockScreen) lockScreen.classList.add('hide');
+      checkGlobalLogout();
+    }
+  }
+
+  async function checkGlobalLogout() {
+    try {
+      const response = await fetch('/api/config');
+      if (response.ok) {
+        const data = await response.json();
+        const globalLogout = data.global_admin_logout_time;
+        const myLogin = safeStorage.getItem('admin_login_time');
+        
+        if (globalLogout && myLogin && parseInt(myLogin) < parseInt(globalLogout)) {
+          safeStorage.setItem('admin_authenticated', 'false');
+          safeStorage.setItem('admin_login_time', '');
+          if (lockScreen) lockScreen.classList.remove('hide');
+          alert('Sessão encerrada pelo administrador (Desconexão Global). Faça login novamente.');
+          window.location.reload();
+        }
+      }
+    } catch (e) {
+      console.error('Falha ao verificar sessões globais:', e);
     }
   }
 
@@ -382,6 +421,7 @@ Fico no aguardo! \u{1F60A}`;
 
     if (typedUser === adminUsername && typedPass === adminPassword) {
       safeStorage.setItem('admin_authenticated', 'true');
+      safeStorage.setItem('admin_login_time', Date.now().toString());
       if (lockScreen) lockScreen.classList.add('hide');
       if (loginUsernameInput) loginUsernameInput.value = '';
       if (loginPasswordInput) loginPasswordInput.value = '';
@@ -2282,8 +2322,40 @@ Fico no aguardo! \u{1F60A}`;
   }
 
   // ==========================================
-  // 8. SALVAR CONFIGURAÇÕES DE MARKETING
+  // 8. SALVAR CONFIGURAÇÕES DE MARKETING & SESSÕES
   // ==========================================
+  
+  const btnForceLogoutAll = document.getElementById('btn-force-logout-all');
+  if (btnForceLogoutAll) {
+    btnForceLogoutAll.addEventListener('click', async () => {
+      if (!confirm('Tem certeza? ISSO DESCONECTARÁ TODOS OS USUÁRIOS imediatamente (incluindo você). Todos precisarão fazer login novamente.')) return;
+      
+      const originalText = btnForceLogoutAll.innerHTML;
+      btnForceLogoutAll.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Desconectando...</span>`;
+      
+      try {
+        const response = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ global_admin_logout_time: Date.now().toString() })
+        });
+        
+        if (response.ok) {
+          alert('Todos os usuários foram desconectados com sucesso!');
+          safeStorage.setItem('admin_authenticated', 'false');
+          safeStorage.setItem('admin_login_time', '');
+          window.location.reload();
+        } else {
+          alert('Erro ao tentar desconectar usuários.');
+          btnForceLogoutAll.innerHTML = originalText;
+        }
+      } catch (err) {
+        alert('Erro ao comunicar com o servidor.');
+        btnForceLogoutAll.innerHTML = originalText;
+      }
+    });
+  }
+
   configsForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 

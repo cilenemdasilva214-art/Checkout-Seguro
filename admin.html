@@ -894,6 +894,24 @@
 
         <div class="dashboard-block" style="margin-top:2rem;">
           <div class="block-title">
+            <h2><i class="fa-solid fa-users-slash"></i> Controle de Sessões</h2>
+            <span>Gerencie o acesso de usuários conectados ao painel de administração</span>
+          </div>
+          
+          <div style="background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 1.5rem;">
+            <h4 style="color: var(--danger-color); margin-bottom: 0.5rem; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> Desconectar Todos os Usuários</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">
+              Ao clicar no botão abaixo, todas as sessões ativas (incluindo a sua) serão invalidadas. Todos os usuários precisarão fazer login novamente.
+            </p>
+            <button type="button" class="btn-submit-settings" id="btn-force-logout-all" style="background-color: var(--danger-color); border-color: var(--danger-color);">
+              <i class="fa-solid fa-power-off"></i>
+              <span>Desconectar Todos Agora</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="dashboard-block" style="margin-top:2rem;">
+          <div class="block-title">
             <h2><i class="fa-solid fa-lock"></i> Credenciais de Acesso ao Painel</h2>
             <span>Altere o nome de usuário e a senha para entrada no painel de administração</span>
           </div>
