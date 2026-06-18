@@ -2789,7 +2789,10 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
               redirectUrl += `&store_url=${encodeURIComponent(storeParam)}`;
             }
             
-            window.location.href = redirectUrl;
+            // Aguardar 800ms para garantir que o Pixel do Facebook e requests assíncronos sejam concluídos antes de sair da página
+            setTimeout(() => {
+              window.location.href = redirectUrl;
+            }, 800);
 
           } catch (err) {
             console.error('Erro ao processar transação de cartão:', err);
