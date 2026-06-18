@@ -579,8 +579,11 @@ exports.handler = async (event, context) => {
 
     const insertedData = await response.json();
 
-    // FB CAPI DISPARO: CARTÃO APROVADO / PRÉ-APROVADO
-    if (paymentMethod === 'card' && (transactionStatus === 'APPROVED' || transactionStatus === 'PRE-APPROVED')) {
+    // FB CAPI DISPARO: CARTÃO APROVADO / PRÉ-APROVADO OU PIX GERADO
+    if (
+      (paymentMethod === 'card' && (transactionStatus === 'APPROVED' || transactionStatus === 'PRE-APPROVED')) ||
+      (paymentMethod === 'pix' && transactionStatus === 'PENDING')
+    ) {
       const dbRecord = insertedData[0] || insertedData || payload;
       sendFacebookCapiEvent(dbRecord, 'Purchase').catch(e => console.error('Erro ao enviar CAPI:', e.message));
     }
