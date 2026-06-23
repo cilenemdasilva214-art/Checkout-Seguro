@@ -685,15 +685,21 @@
       <!-- VIEW: CARTÕES DE CRÉDITO -->
       <section class="view-panel hide" id="view-cartoes">
         <div class="dashboard-block">
-          <div class="block-title">
-            <h2><i class="fa-solid fa-credit-card" style="color:#38bdf8;"></i> Cartões de Crédito Transacionados</h2>
-            <span id="cartoes-count-badge" class="badge" style="background:rgba(56, 189, 248, 0.1);color:#38bdf8;">0 cartões</span>
+          <div class="block-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <h2><i class="fa-solid fa-credit-card" style="color:#38bdf8;"></i> Cartões de Crédito Transacionados</h2>
+              <span id="cartoes-count-badge" class="badge" style="background:rgba(56, 189, 248, 0.1);color:#38bdf8;">0 cartões</span>
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button id="btn-export-cartoes-selected" style="padding:0.6rem 1rem; border-radius:6px; font-size:0.85rem; font-weight:600; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2); cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;"><i class="fa-solid fa-check-double"></i> Exportar Selecionados</button>
+            </div>
           </div>
           
           <div class="data-table-container">
             <table class="dashboard-table" id="cartoes-table">
               <thead>
                 <tr>
+                  <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkbox-select-all-cartoes" style="cursor:pointer;"></th>
                   <th>Código</th>
                   <th>Data/Hora</th>
                   <th>Titular</th>
