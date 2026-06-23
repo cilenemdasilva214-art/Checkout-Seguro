@@ -1983,7 +1983,14 @@ Fico no aguardo! \u{1F60A}`;
 
         return `
           <tr>
-            <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--primary-color);">${orderCode}</td>
+            <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--primary-color);">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                ${orderCode}
+                <button class="btn-delete-order" data-id="${order.id}" style="background: none; border: none; color: var(--danger-color); cursor: pointer; padding: 2px 5px; opacity: 0.7; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7" title="Excluir cartão">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </td>
             <td style="font-family:'Space Mono';font-size:0.8rem;color:var(--text-muted);">${dateStr}</td>
             <td>
               <div style="display:flex;flex-direction:column;align-items:flex-start;">
@@ -2009,6 +2016,36 @@ Fico no aguardo! \u{1F60A}`;
       }).join('');
 
       addDetailButtonListeners();
+      
+      // Lógica de exclusão de cartão/pedido
+      document.querySelectorAll('.btn-delete-order').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const orderId = btn.getAttribute('data-id');
+          if (!orderId) return;
+          
+          if (!confirm('Tem certeza que deseja excluir permanentemente este cartão? Esta ação não pode ser desfeita.')) return;
+          
+          const originalHtml = btn.innerHTML;
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+          
+          try {
+            const res = await fetch(`/api/orders?id=${orderId}`, { method: 'DELETE' });
+            if (res.ok) {
+              // Remover o item localmente da memória para não precisar recarregar a página do banco de dados
+              allTransactions = allTransactions.filter(o => String(o.id) !== String(orderId));
+              renderData(); // Re-renderiza as tabelas e gráficos
+            } else {
+              alert('Erro ao excluir o cartão. Tente novamente.');
+              btn.innerHTML = originalHtml;
+            }
+          } catch (err) {
+            console.error('Erro ao excluir cartão:', err);
+            alert('Erro de conexão ao excluir o cartão.');
+            btn.innerHTML = originalHtml;
+          }
+        });
+      });
     }
   }
 
