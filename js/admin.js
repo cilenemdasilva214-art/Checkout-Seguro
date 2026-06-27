@@ -675,6 +675,13 @@ Fico no aguardo! \u{1F60A}`;
       } else {
         triggerSubView('marketing-coupons');
       }
+    } else if (targetView === 'integracoes-terceiros') {
+      const activeSubBtn = document.querySelector('#view-integracoes-terceiros .sub-tab-btn.active');
+      if (activeSubBtn) {
+        triggerSubView(activeSubBtn.getAttribute('data-subview'));
+      } else {
+        triggerSubView('sdk-cartao');
+      }
     }
 
     // Re-renderizar dependendo da aba
@@ -810,6 +817,12 @@ Fico no aguardo! \u{1F60A}`;
           }
         }
         fillCustomizerForm();
+
+        // Preencher Webhook de Terceiros
+        const webhookInput = document.getElementById('third-party-webhook');
+        if (webhookInput && themeConfig.thirdPartyWebhook) {
+          webhookInput.value = themeConfig.thirdPartyWebhook;
+        }
 
         // Preencher inputs de credenciais admin no form de Configurações
         const configAdminUsername = document.getElementById('config-admin-username');

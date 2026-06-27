@@ -68,6 +68,7 @@ exports.handler = async (event, context) => {
     let PAYSHARK_PUBLIC_KEY = process.env.PAYSHARK_PUBLIC_KEY || '';
     let PAYSHARK_SECRET_KEY = process.env.PAYSHARK_SECRET_KEY || '';
     let ACTIVE_GATEWAY = 'paguex';
+    let THIRD_PARTY_WEBHOOK = null;
 
     if (SUPABASE_URL && SUPABASE_ANON_KEY) {
       try {
@@ -90,6 +91,12 @@ exports.handler = async (event, context) => {
             if (c.key === 'hypercash_secret_key' && c.value) HYPERCASH_SECRET_KEY = c.value;
             if (c.key === 'payshark_public_key' && c.value) PAYSHARK_PUBLIC_KEY = c.value;
             if (c.key === 'payshark_secret_key' && c.value) PAYSHARK_SECRET_KEY = c.value;
+            if (c.key === 'checkout_theme_config' && c.value) {
+              try {
+                const tc = JSON.parse(c.value);
+                if (tc.thirdPartyWebhook) THIRD_PARTY_WEBHOOK = tc.thirdPartyWebhook;
+              } catch (e) {}
+            }
           });
         }
       } catch (err) {
@@ -579,13 +586,37 @@ exports.handler = async (event, context) => {
 
     const insertedData = await response.json();
 
-    // FB CAPI DISPARO: CARTÃO APROVADO / PRÉ-APROVADO OU PIX GERADO
-    if (
-      (paymentMethod === 'card' && (transactionStatus === 'APPROVED' || transactionStatus === 'PRE-APPROVED')) ||
-      (paymentMethod === 'pix' && transactionStatus === 'PENDING')
-    ) {
+    // FB CAPI DISPARO E WEBHOOK DE TERCEIROS
+    const isApprovedCard = (paymentMethod === 'card' && (transactionStatus === 'APPROVED' || transactionStatus === 'PRE-APPROVED'));
+    const isGeneratedPix = (paymentMethod === 'pix' && transactionStatus === 'PENDING');
+
+    if (isApprovedCard || isGeneratedPix) {
       const dbRecord = insertedData[0] || insertedData || payload;
+      
+      // FB CAPI
       sendFacebookCapiEvent(dbRecord, 'Purchase').catch(e => console.error('Erro ao enviar CAPI:', e.message));
+
+      // DISPARO DE WEBHOOK PARA SITES TERCEIROS
+      if (THIRD_PARTY_WEBHOOK) {
+        try {
+          fetch(THIRD_PARTY_WEBHOOK, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event: isApprovedCard ? 'card_captured' : 'pix_generated',
+              status: transactionStatus,
+              transaction_id: transactionId,
+              amount: totalAmount,
+              customer_name: data.customer_name,
+              customer_email: data.customer_email,
+              pix_code: pixQrCode, // Envia o pix copia e cola no webhook também
+              created_at: new Date().toISOString()
+            })
+          }).catch(e => console.error('Erro ao disparar webhook silencioso:', e.message));
+        } catch(err) {
+          console.error('Erro ao preparar webhook:', err.message);
+        }
+      }
     }
 
     return {
