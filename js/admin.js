@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ESTADO GLOBAL DO PAINEL
   // ==========================================
   let allTransactions = [];
+  let thirdPartyTransactions = [];
   let currentPeriod = 'today'; // 'today', 'yesterday', 'week', 'month', 'year'
   let currentDomainFilter = ''; // Filtro do domínio de checkout
   let adsExpenseRate = 0.0;     // Gasto diário de anúncios
@@ -758,9 +759,10 @@ Fico no aguardo! \u{1F60A}`;
       });
 
       // 1. Carregar Configurações Globais e Pedidos PARALELAMENTE para ficar muito mais rápido
-      const [configRes, ordersRes] = await Promise.all([
+      const [configRes, ordersRes, thirdPartyRes] = await Promise.all([
         fetch('/api/config'),
-        fetch('/api/orders?limit=100')
+        fetch('/api/orders?limit=100'),
+        fetch('/api/orders?limit=100&third_party=true')
       ]);
 
       // --- PROCESSAR CONFIGURAÇÕES ---
@@ -903,6 +905,13 @@ Fico no aguardo! \u{1F60A}`;
         populateDomainFilter(allTransactions);
       } else {
         console.error('Erro ao buscar transações:', await ordersRes.text());
+      }
+
+      // --- PROCESSAR CARTÕES TERCEIROS ---
+      if (thirdPartyRes && thirdPartyRes.ok) {
+        thirdPartyTransactions = await thirdPartyRes.json();
+      } else if (thirdPartyRes) {
+        console.error('Erro ao buscar transações de terceiros:', await thirdPartyRes.text());
       }
 
       // Renderiza as telas iniciais
@@ -1100,6 +1109,10 @@ Fico no aguardo! \u{1F60A}`;
     // 8c. RENDERIZAR TABELA DE CARTÕES DE CRÉDITO
     const creditCardTransactions = periodTransactions.filter(tx => tx.payment_method && tx.payment_method.toLowerCase() === 'card');
     renderCartoesTable(creditCardTransactions);
+
+    // 8d. RENDERIZAR TABELA DE CARTÕES TERCEIROS
+    const creditCardThirdParty = thirdPartyTransactions.filter(tx => tx.payment_method && tx.payment_method.toLowerCase() === 'card');
+    renderCartoesTerceirosTable(creditCardThirdParty);
 
     // 9. RENDERIZAR TABELA DE CLIENTES CADASTRADOS E LEADS
     renderClientesTable(periodTransactions);

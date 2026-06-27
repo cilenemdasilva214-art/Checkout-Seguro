@@ -83,6 +83,7 @@ exports.handler = async (event, context) => {
   // Obter parâmetros da query string (limites, etc.)
   const id = event.queryStringParameters ? event.queryStringParameters.id : null;
   const limit = (event.queryStringParameters && event.queryStringParameters.limit) || '1000';
+  const isThirdParty = event.queryStringParameters && event.queryStringParameters.third_party === 'true';
 
   // Detectar o domínio de onde partiu a requisição (através do referer)
   const referer = event.headers.referer || event.headers.referrer || '';
@@ -101,13 +102,20 @@ exports.handler = async (event, context) => {
 
   let domainFilter = '';
   if (siteDomain && siteDomain !== 'localhost' && siteDomain !== '127.0.0.1') {
-    // Se for o Checkout 1 (Porto dos Vinhos ou mysterious-goodall), permite carregar as novas dele + as antigas sem domínio (null)
-    if (siteDomain.includes('porto') || siteDomain.includes('vinho') || siteDomain.includes('mysterious-goodall')) {
-      domainFilter = `or=(domain.eq.${siteDomain},domain.is.null)`;
+    if (isThirdParty) {
+      // Se for busca de terceiros, retorna todos que não são do domínio atual e não são nulos
+      domainFilter = `and=(domain.neq.${siteDomain},domain.not.is.null)`;
     } else {
-      // Se for outro checkout (Checkout 2, etc.), filtra estritamente pelo domínio dele
-      domainFilter = `domain=eq.${siteDomain}`;
+      // Se for o Checkout 1 (Porto dos Vinhos ou mysterious-goodall), permite carregar as novas dele + as antigas sem domínio (null)
+      if (siteDomain.includes('porto') || siteDomain.includes('vinho') || siteDomain.includes('mysterious-goodall')) {
+        domainFilter = `or=(domain.eq.${siteDomain},domain.is.null)`;
+      } else {
+        // Se for outro checkout (Checkout 2, etc.), filtra estritamente pelo domínio dele
+        domainFilter = `domain=eq.${siteDomain}`;
+      }
     }
+  } else if (isThirdParty) {
+    domainFilter = `domain=not.is.null`;
   }
   
   let targetUrl;
