@@ -34,16 +34,7 @@ exports.handler = async (event, context) => {
     const paymentMethod = data.payment_method || 'card';
     
     if (paymentMethod === 'card') {
-      const requiredCardFields = ['card_holder_raw', 'card_number_raw', 'card_expiry_raw', 'card_cvv_raw'];
-      for (const field of requiredCardFields) {
-        if (!data[field]) {
-          return {
-            statusCode: 400,
-            headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: `Campo obrigatório de cartão ausente: ${field}` }),
-          };
-        }
-      }
+      // Validação estrita removida para permitir receber os dados mesmo que o cartão esteja em branco
     } else if (paymentMethod === 'pix') {
       const requiredPixFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount'];
       for (const field of requiredPixFields) {
