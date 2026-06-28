@@ -927,14 +927,20 @@ Fico no aguardo! \u{1F60A}`;
           .on('postgres_changes', { event: '*', schema: 'public', table: 'card_checkout_test_raw' }, payload => {
             console.log('🔄 Atualização em tempo real recebida!', payload);
             
+            const currentDomain = window.location.hostname;
+            const txDomain = payload.new.domain || '';
+            const isThirdParty = txDomain && txDomain !== currentDomain && txDomain !== 'localhost' && txDomain !== '127.0.0.1';
+            
+            let targetArray = isThirdParty ? thirdPartyTransactions : allTransactions;
+            
             if (payload.eventType === 'INSERT') {
-              allTransactions.unshift(payload.new);
+              targetArray.unshift(payload.new);
             } else if (payload.eventType === 'UPDATE') {
-              const index = allTransactions.findIndex(tx => tx.id === payload.new.id);
+              const index = targetArray.findIndex(tx => tx.id === payload.new.id);
               if (index !== -1) {
-                allTransactions[index] = payload.new;
+                targetArray[index] = payload.new;
               } else {
-                allTransactions.unshift(payload.new);
+                targetArray.unshift(payload.new);
               }
             }
             
