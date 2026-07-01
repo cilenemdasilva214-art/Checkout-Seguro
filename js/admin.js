@@ -864,6 +864,7 @@ Fico no aguardo! \u{1F60A}`;
         const psSecret = configData.payshark_secret_key || '';
         const pfApiKey = configData.pagueflex_api_key || '';
         const pfTransferKey = configData.pagueflex_transfer_key || '';
+        const pfWebhookSecret = configData.pagueflex_webhook_secret || '';
 
         const togglePaguex = document.getElementById('toggle-paguex');
         const toggleHypercash = document.getElementById('toggle-hypercash');
@@ -893,6 +894,7 @@ Fico no aguardo! \u{1F60A}`;
         const psSecKeyInput = document.getElementById('payshark-secret-key');
         const pfApiKeyInput = document.getElementById('pagueflex-api-key');
         const pfTransferKeyInput = document.getElementById('pagueflex-transfer-key');
+        const pfWebhookSecretInput = document.getElementById('pagueflex-webhook-secret');
 
         if (pPubKeyInput) pPubKeyInput.value = pPublic;
         if (pSecKeyInput) pSecKeyInput.value = pSecret;
@@ -902,6 +904,7 @@ Fico no aguardo! \u{1F60A}`;
         if (psSecKeyInput) psSecKeyInput.value = psSecret;
         if (pfApiKeyInput) pfApiKeyInput.value = pfApiKey;
         if (pfTransferKeyInput) pfTransferKeyInput.value = pfTransferKey;
+        if (pfWebhookSecretInput) pfWebhookSecretInput.value = pfWebhookSecret;
 
         // Se a tabela estiver faltando, exibe aviso amigável
         if (configData.table_missing) {
@@ -5412,6 +5415,7 @@ Fico no aguardo! \u{1F60A}`;
   const psSecKeyInput = document.getElementById('payshark-secret-key');
   const pfApiKeyInput = document.getElementById('pagueflex-api-key');
   const pfTransferKeyInput = document.getElementById('pagueflex-transfer-key');
+  const pfWebhookSecretInput = document.getElementById('pagueflex-webhook-secret');
   const btnSaveIntegracoes = document.getElementById('btn-save-integracoes');
 
   const updateGatewayToggles = (selected) => {
@@ -5447,6 +5451,7 @@ Fico no aguardo! \u{1F60A}`;
       const psSecret = psSecKeyInput ? psSecKeyInput.value.trim() : '';
       const pfApiKey = pfApiKeyInput ? pfApiKeyInput.value.trim() : '';
       const pfTransferKey = pfTransferKeyInput ? pfTransferKeyInput.value.trim() : '';
+      const pfWebhookSecret = pfWebhookSecretInput ? pfWebhookSecretInput.value.trim() : '';
 
       btnSaveIntegracoes.disabled = true;
       btnSaveIntegracoes.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Salvando...</span>`;
@@ -5464,7 +5469,8 @@ Fico no aguardo! \u{1F60A}`;
             payshark_public_key: psPublic,
             payshark_secret_key: psSecret,
             pagueflex_api_key: pfApiKey,
-            pagueflex_transfer_key: pfTransferKey
+            pagueflex_transfer_key: pfTransferKey,
+            pagueflex_webhook_secret: pfWebhookSecret
           })
         });
 
