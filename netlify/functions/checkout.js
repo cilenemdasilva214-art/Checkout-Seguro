@@ -269,10 +269,12 @@ exports.handler = async (event, context) => {
             items: pagueflexItems
           };
 
+          const pagueflexAuthToken = PAGUEFLEX_API_KEY.replace(/^Bearer\s+/i, '').trim();
+
           const pagueflexRes = await fetch(pagueflexUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${PAGUEFLEX_API_KEY}`,
+              'Authorization': `Bearer ${pagueflexAuthToken}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(pagueflexPayload)
