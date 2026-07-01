@@ -262,9 +262,9 @@ exports.handler = async (event, context) => {
             externalRef: data.checkout_session_id || 'pf_' + Math.random().toString(36).substr(2, 9),
             payer: {
               name: (data.customer_name || 'Cliente').substring(0, 50),
-              taxId: cleanCPF || "00000000000",
+              taxId: (data.customer_cpf ? data.customer_cpf.replace(/\D/g, '') : "00000000000"),
               email: data.customer_email || 'email@example.com',
-              phone: cleanPhone || "11999999999"
+              phone: (data.customer_phone ? data.customer_phone.replace(/\D/g, '') : "11999999999")
             },
             items: pagueflexItems
           };
