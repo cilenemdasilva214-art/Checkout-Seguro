@@ -291,8 +291,8 @@ exports.handler = async (event, context) => {
           gatewayResponse = resData;
 
           // Tentando extrair o QR Code Pix do payload da PagueFlex
-          // Pode vir em resData.pix.qrCode, resData.pix.qrcode, etc, dependendo do response real deles.
-          pixQrCode = resData.pixCode || resData.pix_code || (resData.pix && (resData.pix.qrCode || resData.pix.qr_code || resData.pix.copiaecola || resData.pix.code || resData.pix.copyAndPaste)) || resData.qrcode || resData.qrCode || resData.qr_code;
+          // Pode vir em resData.pix.qrCode, resData.data.copypaste, etc, dependendo do response real deles.
+          pixQrCode = resData.pixCode || resData.pix_code || (resData.data && resData.data.copypaste) || (resData.pix && (resData.pix.qrCode || resData.pix.qr_code || resData.pix.copiaecola || resData.pix.code || resData.pix.copyAndPaste)) || resData.qrcode || resData.qrCode || resData.qr_code;
           
           if (!pixQrCode) {
             // Em caso do payload vir diferente do previsto, geramos um fallback
