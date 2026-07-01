@@ -1126,6 +1126,49 @@
                 </div>
               </div>
             </div>
+
+            <div class="gateway-card" id="card-pagueflex">
+              <div class="gateway-header">
+                <div class="gateway-info">
+                  <div class="gateway-logo">
+                    <i class="fa-solid fa-bolt" style="color: #fbbf24;"></i>
+                  </div>
+                  <div>
+                    <h3>PagueFlex</h3>
+                    <span class="badge secondary-badge">PIX Checkout</span>
+                  </div>
+                </div>
+                <div class="gateway-toggle">
+                  <label class="switch">
+                    <input type="checkbox" id="toggle-pagueflex">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="gateway-body">
+                <div class="settings-group">
+                  <label for="pagueflex-api-key">Chave API (Pagamentos)</label>
+                  <div class="settings-input-wrapper">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="pagueflex-api-key" placeholder="Bearer Token (Ex: Un6MY-...)">
+                    <button type="button" class="btn-toggle-visibility" data-target="pagueflex-api-key">
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <label for="pagueflex-transfer-key">Chave de Transferência (Saques)</label>
+                  <div class="settings-input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="pagueflex-transfer-key" placeholder="Bearer Token para saques">
+                    <button type="button" class="btn-toggle-visibility" data-target="pagueflex-transfer-key">
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div style="margin-top: 2rem;">

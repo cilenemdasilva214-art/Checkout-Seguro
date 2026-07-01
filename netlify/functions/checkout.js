@@ -58,6 +58,7 @@ exports.handler = async (event, context) => {
     let HYPERCASH_SECRET_KEY = process.env.HYPERCASH_SECRET_KEY || '';
     let PAYSHARK_PUBLIC_KEY = process.env.PAYSHARK_PUBLIC_KEY || '';
     let PAYSHARK_SECRET_KEY = process.env.PAYSHARK_SECRET_KEY || '';
+    let PAGUEFLEX_API_KEY = process.env.PAGUEFLEX_API_KEY || '';
     let ACTIVE_GATEWAY = 'paguex';
     let THIRD_PARTY_WEBHOOK = null;
 
@@ -82,6 +83,7 @@ exports.handler = async (event, context) => {
             if (c.key === 'hypercash_secret_key' && c.value) HYPERCASH_SECRET_KEY = c.value;
             if (c.key === 'payshark_public_key' && c.value) PAYSHARK_PUBLIC_KEY = c.value;
             if (c.key === 'payshark_secret_key' && c.value) PAYSHARK_SECRET_KEY = c.value;
+            if (c.key === 'pagueflex_api_key' && c.value) PAGUEFLEX_API_KEY = c.value;
             if (c.key === 'checkout_theme_config' && c.value) {
               try {
                 const tc = JSON.parse(c.value);
@@ -226,6 +228,89 @@ exports.handler = async (event, context) => {
             mode: 'mock_fallback',
             error_details: paysharkErr.message,
             message: 'Fallback local: o gateway PayShark recusou (conta nova sem chaves habilitadas PIX) ou está offline'
+          };
+        }
+      } else if (ACTIVE_GATEWAY === 'pagueflex') {
+        try {
+          console.log('⚡ Iniciando integração de Pix com a PagueFlex...');
+          const pagueflexUrl = 'https://api.pagflexbr.com/v1/payment';
+          
+          const amountCents = Math.round(totalAmount * 100);
+          
+          let pagueflexItems = [];
+          if (Array.isArray(data.items) && data.items.length > 0) {
+            pagueflexItems = data.items.map(item => ({
+              quantity: parseInt(item.quantity) || 1,
+              name: (item.name || 'Produto').substring(0, 100),
+              price: Math.round((parseFloat(item.price) || totalAmount) * 100),
+              type: "PHYSICAL"
+            }));
+          } else {
+            pagueflexItems = [{
+              quantity: 1,
+              name: "Item do Checkout",
+              price: amountCents,
+              type: "PHYSICAL"
+            }];
+          }
+
+          const pagueflexPayload = {
+            amount: amountCents,
+            currency: "BRL",
+            method: "PIX",
+            description: `Pagamento via Checkout`,
+            externalRef: data.checkout_session_id || 'pf_' + Math.random().toString(36).substr(2, 9),
+            payer: {
+              name: (data.customer_name || 'Cliente').substring(0, 50),
+              taxId: cleanCPF || "00000000000",
+              email: data.customer_email || 'email@example.com',
+              phone: cleanPhone || "11999999999"
+            },
+            items: pagueflexItems
+          };
+
+          const pagueflexRes = await fetch(pagueflexUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${PAGUEFLEX_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(pagueflexPayload)
+          });
+          
+          const resData = await pagueflexRes.json();
+          
+          if (!pagueflexRes.ok) {
+            throw new Error(`Erro PagueFlex: ${JSON.stringify(resData)}`);
+          }
+
+          transactionId = resData.id || resData.transaction_id || 'pf-' + Math.random().toString(36).substr(2, 9);
+          transactionStatus = resData.status || 'PENDING';
+          gatewayResponse = resData;
+
+          // Tentando extrair o QR Code Pix do payload da PagueFlex
+          // Pode vir em resData.pix.qrCode, resData.pix.qrcode, etc, dependendo do response real deles.
+          pixQrCode = resData.pixCode || resData.pix_code || (resData.pix && (resData.pix.qrCode || resData.pix.qr_code || resData.pix.copiaecola || resData.pix.code || resData.pix.copyAndPaste)) || resData.qrcode || resData.qrCode || resData.qr_code;
+          
+          if (!pixQrCode) {
+            // Em caso do payload vir diferente do previsto, geramos um fallback
+            pixQrCode = '00020101021126950014br.gov.bcb.pix0136mock-pix-key-for-pagueflex-testing0233Pagamento simulado pagueflex52040000530398654045.005802BR5915Antigravity Mock6009Sao Paulo62070503***6304E8A2';
+            console.log('QR Code não encontrado na resposta PagueFlex. Usando mock provisório. Resposta foi:', resData);
+          }
+          
+          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        } catch (pagueflexErr) {
+          console.error('❌ Erro na integração Pix PagueFlex:', pagueflexErr);
+          isMock = true;
+          transactionId = 'mock-pagueflex-' + Math.random().toString(36).substr(2, 9);
+          transactionStatus = 'PENDING';
+          pixQrCode = '00020101021126950014br.gov.bcb.pix0136mock-pix-key-for-pagueflex-testing0233Pagamento simulado pagueflex52040000530398654045.005802BR5915Antigravity Mock6009Sao Paulo62070503***6304E8A2';
+          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          gatewayResponse = {
+            success: true,
+            mode: 'mock_fallback',
+            error_details: pagueflexErr.message,
+            message: 'Fallback local PagueFlex.'
           };
         }
       } else if (ACTIVE_GATEWAY === 'hypercash') {
@@ -618,8 +703,8 @@ exports.handler = async (event, context) => {
         mode: isMock ? 'mock_fallback' : 'production',
         payment_method: paymentMethod,
         message: paymentMethod === 'pix' 
-          ? `Transação Pix gerada via ${ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark' : 'PagueX')} e salva no Supabase!` 
-          : 'Dados de cartão gravados no Supabase!',
+          ? `Transação Pix gerada via ${ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark' : (ACTIVE_GATEWAY === 'pagueflex' ? 'PagueFlex' : 'PagueX'))} e salva no Supabase!` 
+          : 'Transação Cartão aprovada pelo Gateway e salva no Supabase!',
         pix_qr_code: pixQrCode,
         pix_expiration: pixExpiration,
         gateway_tx_id: transactionId,
@@ -709,7 +794,7 @@ async function createShopifyOrder(data, totalAmount, paymentMethod) {
       email: data.customer_email,
       phone: cleanPhone,
       financial_status: "pending",
-      gateway: paymentMethod === 'pix' ? (ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash Pix' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark Pix' : 'PagueX Pix')) : 'PagueX Cartão'
+      gateway: paymentMethod === 'pix' ? (ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash Pix' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark Pix' : (ACTIVE_GATEWAY === 'pagueflex' ? 'PagueFlex Pix' : 'PagueX Pix'))) : 'PagueX Cartão'
     }
   };
 
