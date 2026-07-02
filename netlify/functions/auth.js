@@ -127,10 +127,10 @@ exports.handler = async (event, context) => {
         // Falha no login: Incrementa as tentativas
         ipStatus.attempts += 1;
 
-        // Lógica de escalonamento do bloqueio:
-        // Penalty level 0: Permite até 5 erros. No 6º erro, bloqueia por 1 hora e sobe para level 1.
-        // Penalty level 1+: Permite até 2 erros (bloqueia no 3º).
-        if (ipStatus.penalty_level === 0 && ipStatus.attempts > 5) {
+        // Lógica de escalonamento do bloqueio rigoroso (3 tentativas):
+        // Permite até 2 erros. No 3º erro consecutivo, bloqueia por 1 hora (Level 1).
+        // Nos próximos níveis, se errar 3 vezes de novo, vai aumentando o tempo de bloqueio.
+        if (ipStatus.penalty_level === 0 && ipStatus.attempts >= 3) {
           ipStatus.blocked_until = now + (60 * 60 * 1000); // 1 hora
           ipStatus.penalty_level = 1;
           ipStatus.attempts = 0; // Zera para a próxima rodada
