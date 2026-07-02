@@ -355,14 +355,9 @@
         document.getElementById('order-date').textContent = formattedDate;
       }
 
-      // Configurar o redirecionamento do botão de retorno
-      const btnReturn = document.getElementById('btn-return');
-      if (storeParam) {
-        btnReturn.href = decodeURIComponent(storeParam);
-      } else {
-        // Redireciona para o checkout base
-        btnReturn.href = '/';
-      }
+        // Configurar o redirecionamento do botão de retorno
+        const btnReturn = document.getElementById('btn-return');
+        btnReturn.href = 'https://nacional-brasil.store';
     });
   </script>
 </body>

@@ -3077,40 +3077,8 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       window.pixPaymentPollInterval = null;
     }
     
-    // Redireciona para a loja de origem (Shopify ou WooCommerce)
-    let targetUrl = window.location.origin;
-    const sessionOrigin = sessionStorage.getItem('checkout_origin');
-    
-    if (sessionOrigin && sessionOrigin !== 'null' && sessionOrigin !== 'undefined') {
-      if (sessionOrigin === 'woocommerce') {
-        // Para WooCommerce, tenta extrair a URL base da loja a partir da URL da imagem do carrinho
-        try {
-          const cartDataRaw = sessionStorage.getItem('checkout_cart');
-          if (cartDataRaw) {
-            const cartItems = JSON.parse(cartDataRaw);
-            if (cartItems.length > 0 && cartItems[0].image) {
-               targetUrl = new URL(cartItems[0].image).origin;
-            } else {
-               targetUrl = 'https://nacional-brasil.store';
-            }
-          } else {
-            targetUrl = 'https://nacional-brasil.store';
-          }
-        } catch(e) {
-          targetUrl = 'https://nacional-brasil.store';
-        }
-      } else {
-        targetUrl = sessionOrigin.startsWith('http') ? sessionOrigin : 'https://' + sessionOrigin;
-      }
-    } else if (window._currentThemeConfig && window._currentThemeConfig.shopifyDomain) {
-      let domain = window._currentThemeConfig.shopifyDomain.trim();
-      if (!domain.includes('.')) {
-        domain = domain + '.myshopify.com';
-      }
-      targetUrl = 'https://' + domain;
-    }
-    
-    window.location.href = targetUrl;
+    // Redireciona para a loja
+    window.location.href = 'https://nacional-brasil.store';
   });
 
   // Reiniciar Formulário
