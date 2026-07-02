@@ -110,7 +110,9 @@ exports.handler = async (event, context) => {
             'Prefer': 'resolution=merge-duplicates'
           },
           body: JSON.stringify([
-            { key: 'admin_session_token', value: token, updated_at: new Date().toISOString() }
+            { key: 'admin_session_token', value: token, updated_at: new Date().toISOString() },
+            { key: 'last_login_ip', value: clientIp, updated_at: new Date().toISOString() },
+            { key: 'last_login_time', value: new Date().toISOString(), updated_at: new Date().toISOString() }
           ])
         });
 

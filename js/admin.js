@@ -889,6 +889,18 @@ Fico no aguardo! \u{1F60A}`;
         adminUsername = configData.admin_username || 'admin';
         adminPassword = configData.admin_password || '123456789';
 
+        // Atualiza a notificação de login
+        if (configData.last_login_ip && configData.last_login_time) {
+          const notif = document.getElementById('login-notification');
+          const notifText = document.getElementById('login-notification-text');
+          if (notif && notifText) {
+            const date = new Date(configData.last_login_time);
+            const formattedDate = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
+            notifText.innerText = 'Último acesso: ' + formattedDate + ' (IP: ' + configData.last_login_ip + ')';
+            notif.style.display = 'flex';
+          }
+        }
+
         // Preencher inputs do form
         if (configPageTitle) configPageTitle.value = configData.checkout_page_title || 'Checkout Seguro';
         configPixelId.value = facebookPixelId;
