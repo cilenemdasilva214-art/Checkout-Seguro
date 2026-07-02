@@ -50,7 +50,7 @@ exports.handler = async (event, context) => {
 
     // Configurações do Supabase & PagueX a partir das variáveis de ambiente (com fallback de chaves)
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
     let PAGUEX_PUBLIC_KEY = process.env.PAGUEX_PUBLIC_KEY;
     let PAGUEX_SECRET_KEY = process.env.PAGUEX_SECRET_KEY;
@@ -894,7 +894,7 @@ function sha256(val) {
 async function sendFacebookCapiEvent(dbRecord, eventName) {
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
 
     // Buscar configs para obter a lista de pixels
@@ -995,7 +995,7 @@ async function resolveShopifyCredentials() {
   let accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
   if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     try {
       const configUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/checkout_configs?select=*`;
