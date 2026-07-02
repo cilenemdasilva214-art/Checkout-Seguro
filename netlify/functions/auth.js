@@ -148,7 +148,7 @@ exports.handler = async (event, context) => {
         rateLimits[clientIp] = ipStatus;
 
         // Salva o novo status no banco
-        await fetch(targetUrl, {
+        const saveRateLimitRes = await fetch(targetUrl, {
           method: 'POST',
           headers: {
             'apikey': SUPABASE_ANON_KEY,
@@ -158,6 +158,9 @@ exports.handler = async (event, context) => {
           },
           body: JSON.stringify([{ key: 'login_rate_limits', value: JSON.stringify(rateLimits), updated_at: new Date().toISOString() }])
         });
+
+        // Delay artificial de 2 segundos (Tarpit) para desacelerar bruteforce automatizado
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Se o usuário acabou de ser bloqueado nesta tentativa
         if (ipStatus.blocked_until > now) {

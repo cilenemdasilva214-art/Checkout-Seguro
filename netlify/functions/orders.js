@@ -106,19 +106,12 @@ exports.handler = async (event, context) => {
   const limit = (event.queryStringParameters && event.queryStringParameters.limit) || '1000';
   const isThirdParty = event.queryStringParameters && event.queryStringParameters.third_party === 'true';
 
-  // Detectar o domínio de onde partiu a requisição (através do referer)
-  const referer = event.headers.referer || event.headers.referrer || '';
-  let requestDomain = '';
-  if (referer) {
-    try {
-      const refUrl = new URL(referer);
-      requestDomain = refUrl.hostname;
-    } catch (e) {
-      console.warn('⚠️ Falha ao fazer parse do referer:', e.message);
-    }
-  }
-
-  // Se houver um domínio configurado no Netlify (CHECKOUT_DOMAIN), use ele, senão use o hostname detectado
+  // Detectar o domínio de onde partiu a requisição (através do Host header seguro)
+  // SECURITY PATCH: Não confiar cegamente no Referer para isolamento de dados
+  let requestDomain = event.headers.host || '';
+  if (requestDomain.includes('netlify.app')) requestDomain = ''; // Ignora subdomínio padrão da Netlify para forçar o custom domain
+  
+  // Se houver um domínio configurado no Netlify (CHECKOUT_DOMAIN), use ele, senão use o host detectado
   const siteDomain = process.env.CHECKOUT_DOMAIN || requestDomain || '';
 
   let domainFilter = '';

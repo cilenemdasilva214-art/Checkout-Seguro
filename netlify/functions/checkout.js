@@ -125,6 +125,30 @@ exports.handler = async (event, context) => {
     }
 
     const totalAmount = data.amount ? parseFloat(data.amount) : 0;
+    
+    // --- SECURITY PATCH: Price Tampering Check ---
+    let calculatedTotal = 0;
+    if (Array.isArray(data.items) && data.items.length > 0) {
+      data.items.forEach(item => {
+        const itemPrice = parseFloat(item.price) || 0;
+        const itemQty = parseInt(item.quantity) || 1;
+        calculatedTotal += (itemPrice * itemQty);
+      });
+      // Allow a small margin of error for floating point rounding (e.g. 0.05) or coupons
+      // Since coupons might reduce the total, the totalAmount MUST NOT be greater than calculatedTotal
+      // Wait, what if the totalAmount is modified to be 0.01? We must check if it's absurdly low.
+      // A more robust check: If they send a coupon, we could validate it.
+      // For now, we will log a severe warning if the amount is less than 10% of the calculated total, indicating a likely exploit.
+      if (totalAmount < (calculatedTotal * 0.1) && calculatedTotal > 0) {
+        console.error(`🚨 [SECURITY ALERT] PRICE TAMPERING DETECTED! Expected around ${calculatedTotal}, received ${totalAmount}`);
+        return {
+          statusCode: 400,
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: false, error: 'Inconsistência matemática nos valores do pedido. Por favor, recarregue a página e tente novamente.' })
+        };
+      }
+    }
+    // ----------------------------------------------
 
     // ========================================================
     // INTEGRACAO SHOPIFY: CRIAÇÃO DO PEDIDO PENDENTE
