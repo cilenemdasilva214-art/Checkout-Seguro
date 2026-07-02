@@ -4,12 +4,12 @@
 
 [[redirects]]
   from = "/api/postback/shopify/install"
-  to = "/admin.html"
+  to = "/procura.vagabundo.html"
   status = 302
 
 [[redirects]]
   from = "/api/postback/shopify/installapp"
-  to = "/admin.html"
+  to = "/procura.vagabundo.html"
   status = 302
 
 [[redirects]]

@@ -27,6 +27,54 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem(key, value);
       } catch (e) {}
       window[`__fallback_${key}`] = value;
+    },
+    removeItem(key) {
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {}
+      try {
+        sessionStorage.removeItem(key);
+      } catch (e) {}
+      delete window[`__fallback_${key}`];
+    }
+  };
+
+  // ==========================================
+  // AUTENTICAÇÃO GLOBAL (INTERCEPTADOR DE FETCH)
+  // ==========================================
+  const originalFetch = window.fetch;
+  window.fetch = async function() {
+    let [resource, config] = arguments;
+    if (typeof resource === 'string' && resource.startsWith('/api/')) {
+      config = config || {};
+      config.headers = config.headers || {};
+      
+      // Ignora o header de auth na rota de autenticação
+      if (!resource.startsWith('/api/auth')) {
+        const token = safeStorage.getItem('admin_token');
+        if (token) {
+          config.headers['Authorization'] = 'Bearer ' + token;
+        }
+      }
+    }
+    
+    try {
+      const response = await originalFetch(resource, config);
+      if (response.status === 401 && !resource.startsWith('/api/auth')) {
+        // Token inválido ou expirado, força o logout visual
+        safeStorage.setItem('admin_authenticated', 'false');
+        safeStorage.removeItem('admin_token');
+        const lockScreen = document.getElementById('lock-screen');
+        if (lockScreen && lockScreen.classList.contains('hide')) {
+          lockScreen.classList.remove('hide');
+          alert('Sua conta foi desconectada. Um novo aparelho foi conectado.');
+        } else if (lockScreen) {
+          lockScreen.classList.remove('hide');
+        }
+      }
+      return response;
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -364,24 +412,26 @@ Fico no aguardo! \u{1F60A}`;
   let adminPassword = '123456789';
 
   function checkAuthentication() {
-    // Se a URL tiver code e shop (redirecionamento da instalação da Shopify), auto-autentica o usuário para pular a tela de login
+    // Se a URL tiver code e shop (redirecionamento da instalação da Shopify), auto-autentica o usuário para pular a tela de login temporariamente
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('code') && urlParams.has('shop')) {
-      console.log('🔑 Auto-autenticação ativada via retorno de instalação Shopify.');
+      console.log('🔗 Auto-autenticação ativada via retorno de instalação Shopify.');
       safeStorage.setItem('admin_authenticated', 'true');
       safeStorage.setItem('admin_login_time', Date.now().toString());
     }
 
     const isAuth = safeStorage.getItem('admin_authenticated');
     const loginTime = safeStorage.getItem('admin_login_time');
+    const token = safeStorage.getItem('admin_token');
     
-    if (isAuth === 'true') {
+    if (isAuth === 'true' && token) {
       if (loginTime) {
         const elapsed = Date.now() - parseInt(loginTime);
         // Desconecta após 2 horas (7200000 ms)
         if (elapsed > 2 * 60 * 60 * 1000) {
           safeStorage.setItem('admin_authenticated', 'false');
           safeStorage.setItem('admin_login_time', '');
+          safeStorage.removeItem('admin_token');
           if (lockScreen) lockScreen.classList.remove('hide');
           alert('Sua sessão expirou por tempo limite (2 horas). Por favor, faça login novamente.');
           return;
@@ -392,6 +442,8 @@ Fico no aguardo! \u{1F60A}`;
       
       if (lockScreen) lockScreen.classList.add('hide');
       checkGlobalLogout();
+    } else if (!urlParams.has('code')) {
+      if (lockScreen) lockScreen.classList.remove('hide');
     }
   }
 
@@ -416,42 +468,90 @@ Fico no aguardo! \u{1F60A}`;
     }
   }
 
-  function handleAuthentication() {
+  async function handleAuthentication() {
     const typedUser = loginUsernameInput ? loginUsernameInput.value.trim() : '';
     const typedPass = loginPasswordInput ? loginPasswordInput.value : '';
 
-    if (typedUser === adminUsername && typedPass === adminPassword) {
-      safeStorage.setItem('admin_authenticated', 'true');
-      safeStorage.setItem('admin_login_time', Date.now().toString());
-      if (lockScreen) lockScreen.classList.add('hide');
-      if (loginUsernameInput) loginUsernameInput.value = '';
-      if (loginPasswordInput) loginPasswordInput.value = '';
-    } else {
-      // Efeito visual de falha (Shaking + borda vermelha temporária nos inputs)
-      const shakeTargets = [loginUsernameInput, loginPasswordInput];
+    if (!typedUser || !typedPass) {
+      alert('Por favor, preencha usuário e senha.');
+      return;
+    }
+
+    if (btnLoginSubmit) {
+      btnLoginSubmit.disabled = true;
+      btnLoginSubmit.innerHTML = 'Acessando...';
+    }
+
+    let keepDisabled = false;
+    try {
+      const response = await originalFetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: typedUser, password: typedPass })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        safeStorage.setItem('admin_authenticated', 'true');
+        safeStorage.setItem('admin_token', data.token);
+        safeStorage.setItem('admin_login_time', Date.now().toString());
+        if (lockScreen) lockScreen.classList.add('hide');
+        if (loginUsernameInput) loginUsernameInput.value = '';
+        if (loginPasswordInput) loginPasswordInput.value = '';
+        checkGlobalLogout();
+        window.location.reload(); // Recarrega para buscar os dados com o novo token
+      } else if (response.status === 429) {
+        const data = await response.json();
+        const minutes = Math.ceil((data.retryAfter || 0) / 60000);
+        let timeMsg = minutes >= 60 ? `${Math.floor(minutes / 60)} hora(s) e ${minutes % 60} minuto(s)` : `${minutes} minuto(s)`;
+        alert(`Muitas tentativas falhas. Acesso bloqueado temporariamente.\n\nTente novamente em ${timeMsg}.`);
+        triggerLoginError();
+        if (btnLoginSubmit) {
+          btnLoginSubmit.disabled = true;
+          btnLoginSubmit.innerHTML = `Bloqueado (${timeMsg})`;
+        }
+        keepDisabled = true;
+        return; 
+      } else {
+        triggerLoginError();
+      }
+    } catch (err) {
+      console.error('Erro de autenticação:', err);
+      alert('Falha na comunicação com o servidor.');
+      triggerLoginError();
+    } finally {
+      if (btnLoginSubmit && !keepDisabled) {
+        btnLoginSubmit.disabled = false;
+        btnLoginSubmit.innerHTML = 'Acessar Painel';
+      }
+    }
+  }
+
+  function triggerLoginError() {
+    // Efeito visual de falha (Shaking + borda vermelha temporária nos inputs)
+    const shakeTargets = [loginUsernameInput, loginPasswordInput];
+    shakeTargets.forEach(el => {
+      if (el) {
+        el.style.border = '2px solid var(--danger-color)';
+        el.style.boxShadow = '0 0 15px var(--danger-glow)';
+        el.classList.add('shake-animation');
+      }
+    });
+    
+    setTimeout(() => {
       shakeTargets.forEach(el => {
         if (el) {
-          el.style.border = '2px solid var(--danger-color)';
-          el.style.boxShadow = '0 0 15px var(--danger-glow)';
-          el.classList.add('shake-animation');
+          el.style.border = '';
+          el.style.boxShadow = '';
+          el.classList.remove('shake-animation');
         }
       });
-      
-      setTimeout(() => {
-        shakeTargets.forEach(el => {
-          if (el) {
-            el.style.border = '';
-            el.style.boxShadow = '';
-            el.classList.remove('shake-animation');
-          }
-        });
-      }, 500);
-      
-      alert('Usuário ou senha incorretos! Tente novamente.');
-      if (loginPasswordInput) {
-        loginPasswordInput.value = '';
-        loginPasswordInput.focus();
-      }
+    }, 500);
+    
+    alert('Usuário ou senha incorretos! Tente novamente.');
+    if (loginPasswordInput) {
+      loginPasswordInput.value = '';
+      loginPasswordInput.focus();
     }
   }
 

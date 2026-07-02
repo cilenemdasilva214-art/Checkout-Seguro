@@ -286,6 +286,31 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // ====================================================
+    // VERIFICAÇÃO DE AUTENTICAÇÃO PARA ROTAS PRIVADAS DO ADMIN
+    // ====================================================
+    const privateActions = ['products', 'collections', 'product_collections', 'createProduct'];
+    if (privateActions.includes(action)) {
+      const configTargetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/checkout_configs`;
+      const authHeader = event.headers.authorization || event.headers.Authorization || '';
+      const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+      
+      if (!token) {
+        return { statusCode: 401, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Não autorizado.' }) };
+      }
+      
+      const authResponse = await fetch(`${configTargetUrl}?select=*&key=eq.admin_session_token`, {
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+      });
+      const authRows = await authResponse.json();
+      const dbToken = (authRows && authRows.length > 0) ? authRows[0].value : null;
+      
+      if (!dbToken || dbToken !== token) {
+        return { statusCode: 401, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Sessão inválida ou expirada.' }) };
+      }
+    }
+    // ====================================================
+
     // ----------------------------------------------------
     // AÇÃO: BUSCAR PRODUTOS
     // ----------------------------------------------------
