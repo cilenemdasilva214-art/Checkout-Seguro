@@ -1,0 +1,2564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel de Controle Admin | SecureSandbox</title>
+  <!-- Google Fonts: Outfit & Space Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <!-- FontAwesome para ícones premium -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- CSS Personalizado -->
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <script>
+    if (localStorage.getItem('admin_theme') === 'light') {
+      document.body.classList.add('light-theme');
+    }
+  </script>
+
+  <!-- Background decorativo com blur gradiente -->
+  <div class="admin-bg-blur primary"></div>
+  <div class="admin-bg-blur secondary"></div>
+
+  <!-- TELA DE LOGIN / PIN DE SEGURANÇA PREMIUM -->
+  <div class="lock-screen-overlay" id="lock-screen">
+    <div class="lock-box">
+      <div class="lock-icon-box">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h3>Acesso Restrito</h3>
+      <p>Para acessar o painel de administração, insira seu usuário e senha de segurança.</p>
+      
+      <div style="width: 100%; display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+        <input type="text" class="lock-input normal-text" id="login-username-input" placeholder="Usuário" autocomplete="off" style="max-width: none; width: 100%;">
+        <input type="password" class="lock-input normal-text" id="login-password-input" placeholder="Senha" autocomplete="off" style="max-width: none; width: 100%;">
+      </div>
+      
+      <button type="button" class="btn-lock-submit" id="btn-login-submit">Acessar Painel</button>
+      <span style="font-size:0.75rem;color:var(--text-dark);">Padrão: Usuário <strong>admin</strong> | Senha: <strong>123456789</strong></span>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    
+    <!-- SIDEBAR DE NAVEGAÇÃO -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-logo">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Painel<span>Admin</span></span>
+      </div>
+      <nav>
+        <ul class="sidebar-menu">
+          <li>
+            <a class="menu-item active" data-view="dashboard">
+              <i class="fa-solid fa-chart-line"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          
+          <!-- PEDIDOS COLLAPSIBLE GROUP -->
+          <li class="menu-group">
+            <div class="menu-item menu-parent" data-toggle="pedidos">
+              <div>
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span>Pedidos</span>
+              </div>
+              <i class="fa-solid fa-chevron-down submenu-arrow"></i>
+            </div>
+            <ul class="sidebar-submenu" id="submenu-pedidos">
+              <li>
+                <a class="submenu-item" data-view="pedidos">
+                  <i class="fa-solid fa-list-check"></i>
+                  <span>Todos os Pedidos</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-view="vendas">
+                  <i class="fa-solid fa-credit-card"></i>
+                  <span>Vendas Cartão</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-view="vendas-pix">
+                  <i class="fa-brands fa-pix" style="color:var(--success-color);"></i>
+                  <span>Vendas Pix</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-view="leads">
+                  <i class="fa-solid fa-user-clock"></i>
+                  <span>Carrinhos Abandonados</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-view="clientes">
+                  <i class="fa-solid fa-users"></i>
+                  <span>Clientes</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-view="recusadas">
+                  <i class="fa-solid fa-circle-xmark"></i>
+                  <span>Vendas Recusadas</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-view="cartoes">
+                  <i class="fa-solid fa-credit-card" style="color:#38bdf8;"></i>
+                  <span>Cartões de Crédito</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <!-- PRODUTOS COLLAPSIBLE GROUP -->
+          <li class="menu-group">
+            <div class="menu-item menu-parent" data-toggle="produtos">
+              <div>
+                <i class="fa-solid fa-box-open" style="color:#fbbf24;"></i>
+                <span>Produtos</span>
+              </div>
+              <i class="fa-solid fa-chevron-down submenu-arrow"></i>
+            </div>
+            <ul class="sidebar-submenu" id="submenu-produtos">
+              <li>
+                <a class="submenu-item" data-parent-view="produtos" data-subview="shpfy-products">
+                  <i class="fa-solid fa-box"></i>
+                  <span>Ver todos</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-parent-view="produtos" data-subview="shpfy-create">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Criar produto</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-parent-view="produtos" data-subview="shpfy-collections">
+                  <i class="fa-solid fa-folder-open"></i>
+                  <span>Coleções</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-parent-view="produtos" data-subview="checkout-kits">
+                  <i class="fa-solid fa-layer-group"></i>
+                  <span>Kits</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <!-- MARKETING COLLAPSIBLE GROUP -->
+          <li class="menu-group">
+            <div class="menu-item menu-parent" data-toggle="marketing">
+              <div>
+                <i class="fa-solid fa-bullhorn" style="color:#ec4899;"></i>
+                <span>Marketing</span>
+              </div>
+              <i class="fa-solid fa-chevron-down submenu-arrow"></i>
+            </div>
+            <ul class="sidebar-submenu" id="submenu-marketing">
+              <li>
+                <a class="submenu-item" data-parent-view="marketing" data-subview="marketing-coupons">
+                  <i class="fa-solid fa-ticket"></i>
+                  <span>Cupons</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-parent-view="marketing" data-subview="marketing-tiers">
+                  <i class="fa-solid fa-tags"></i>
+                  <span>Faixa de Desconto</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-parent-view="marketing" data-subview="marketing-bumps">
+                  <i class="fa-solid fa-circle-plus"></i>
+                  <span>Order Bump</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-parent-view="marketing" data-subview="marketing-pixels">
+                  <i class="fa-solid fa-code"></i>
+                  <span>Pixels</span>
+                </a>
+              </li>
+              <li>
+                <a class="submenu-item" data-parent-view="marketing" data-subview="marketing-upsell">
+                  <i class="fa-solid fa-arrow-trend-up"></i>
+                  <span>Upsell</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <!-- PERSONALIZAR CHECKOUT TAB -->
+          <li>
+            <a class="menu-item" data-view="personalizar-checkout">
+              <i class="fa-solid fa-palette" style="color:#a855f7;"></i>
+              <span>Personalizar Checkout</span>
+            </a>
+          </li>
+
+          <!-- SINCRONIZAR SHOPIFY TAB -->
+          <li>
+            <a class="menu-item" data-view="sincronizar-shopify">
+              <i class="fa-brands fa-shopify" style="color:#95bf47;"></i>
+              <span>Sincronizar Shopify</span>
+            </a>
+          </li>
+
+          <!-- FRETE TAB -->
+          <li>
+            <a class="menu-item" data-view="frete">
+              <i class="fa-solid fa-truck" style="color:#3b82f6;"></i>
+              <span>Frete</span>
+            </a>
+          </li>
+
+          <!-- DESCONTO TAB -->
+          <li>
+            <a class="menu-item" data-view="desconto">
+              <i class="fa-solid fa-percent" style="color:#eab308;"></i>
+              <span>Desconto</span>
+            </a>
+          </li>
+
+          <li>
+            <a class="menu-item" data-view="mensagens">
+              <i class="fa-brands fa-whatsapp" style="color:#25d366;"></i>
+              <span>Mensagens Whats</span>
+            </a>
+          </li>
+          <li>
+            <a class="menu-item" data-view="configs">
+              <i class="fa-solid fa-sliders"></i>
+              <span>Configurações</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div style="margin-top:auto;">
+        <a href="index.html" class="menu-item" style="color:var(--danger-color);border-color:rgba(239,68,68,0.1);">
+          <i class="fa-solid fa-arrow-left-long"></i>
+          <span>Voltar ao Checkout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="admin-main">
+      
+      <!-- CABEÇALHO -->
+      <header class="admin-header">
+        <div class="header-title">
+          <h1 id="page-title">Dashboard</h1>
+          <p id="page-subtitle">Monitore o desempenho das suas vendas em tempo real</p>
+        </div>
+        
+        <div class="header-controls">
+          <!-- Seletor de Tema (Fundo Preto / Branco) -->
+          <div class="theme-selector-bar" id="theme-selector-container">
+            <button class="theme-btn" data-theme="dark">
+              <i class="fa-solid fa-moon"></i> Fundo Preto
+            </button>
+            <button class="theme-btn" data-theme="light">
+              <i class="fa-solid fa-sun"></i> Fundo Branco
+            </button>
+          </div>
+
+          <!-- Filtro de Período -->
+          <div class="period-filter-bar" id="period-filter-container">
+            <button class="filter-btn active" data-period="today">Hoje</button>
+            <button class="filter-btn" data-period="yesterday">Ontem</button>
+            <button class="filter-btn" data-period="week">Semana</button>
+            <button class="filter-btn" data-period="month">Mês</button>
+            <button class="filter-btn" data-period="year">Esse Ano</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- VIEW 1: DASHBOARD GERAL -->
+      <section class="view-panel" id="view-dashboard">
+        
+        <!-- Grid de Métricas Principais (Glow Cards) -->
+        <div class="metrics-grid">
+          <div class="metric-card primary">
+            <div class="card-header-icon">
+              <span>Vendas Totais</span>
+              <i class="fa-solid fa-cart-shopping"></i>
+            </div>
+            <div class="metric-value" id="metric-total-sales">0</div>
+            <div class="metric-footer" id="footer-sales-desc">
+              0 Pedidos realizados
+            </div>
+          </div>
+
+          <div class="metric-card success">
+            <div class="card-header-icon">
+              <span>Lucro Líquido</span>
+              <i class="fa-solid fa-circle-dollar-to-slot"></i>
+            </div>
+            <div class="metric-value" id="metric-net-profit">R$ 0,00</div>
+            <div class="metric-footer" id="footer-profit-desc">
+              0 Pedidos pagos
+            </div>
+          </div>
+
+          <div class="metric-card warning">
+            <div class="card-header-icon">
+              <span>Anúncios</span>
+              <i class="fa-solid fa-rectangle-ad"></i>
+            </div>
+            <div class="metric-value" id="metric-ads-cost">R$ 0,00</div>
+            <div class="metric-footer">
+              Gasto total no período
+            </div>
+          </div>
+
+          <div class="metric-card accent">
+            <div class="card-header-icon">
+              <span>Ticket Médio</span>
+              <i class="fa-solid fa-chart-bar"></i>
+            </div>
+            <div class="metric-value" id="metric-avg-ticket">R$ 0,00</div>
+            <div class="metric-footer" id="footer-ticket-desc">
+              Média por pedido pago
+            </div>
+          </div>
+        </div>
+
+        <!-- Colunas do Dashboard -->
+        <div class="dashboard-columns">
+          
+          <!-- LADO ESQUERDO: COMPORTAMENTO E FUNIL -->
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-funnel-dollar"></i> Comportamento do Cliente</h2>
+              <span class="badge" style="font-size:0.8rem;background:rgba(255,255,255,0.05);padding:0.25rem 0.5rem;border-radius:6px;font-weight:600;">10 minutos</span>
+            </div>
+            
+            <!-- Funil do Comportamento -->
+            <div class="funnel-container">
+              <div class="funnel-step">
+                <div class="funnel-step-label"><i class="fa-solid fa-play" style="color:#3b82f6;"></i> Checkout</div>
+                <div class="funnel-step-bar-wrapper">
+                  <div class="funnel-step-bar" id="funnel-bar-checkout" style="width: 0%">
+                    <span class="funnel-bar-percentage" id="funnel-pct-checkout">0%</span>
+                  </div>
+                </div>
+                <div class="funnel-step-value" id="funnel-val-checkout">0</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-label"><i class="fa-solid fa-user-tag" style="color:#6366f1;"></i> Dados pessoais</div>
+                <div class="funnel-step-bar-wrapper">
+                  <div class="funnel-step-bar" id="funnel-bar-personal" style="width: 0%">
+                    <span class="funnel-bar-percentage" id="funnel-pct-personal">0%</span>
+                  </div>
+                </div>
+                <div class="funnel-step-value" id="funnel-val-personal">0</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-label"><i class="fa-solid fa-truck" style="color:#8b5cf6;"></i> Entrega</div>
+                <div class="funnel-step-bar-wrapper">
+                  <div class="funnel-step-bar" id="funnel-bar-shipping" style="width: 0%">
+                    <span class="funnel-bar-percentage" id="funnel-pct-shipping">0%</span>
+                  </div>
+                </div>
+                <div class="funnel-step-value" id="funnel-val-shipping">0</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-label"><i class="fa-solid fa-credit-card" style="color:#d946ef;"></i> Pagamento</div>
+                <div class="funnel-step-bar-wrapper">
+                  <div class="funnel-step-bar" id="funnel-bar-payment" style="width: 0%">
+                    <span class="funnel-bar-percentage" id="funnel-pct-payment">0%</span>
+                  </div>
+                </div>
+                <div class="funnel-step-value" id="funnel-val-payment">0</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-label"><i class="fa-solid fa-bag-shopping" style="color:#10b981;"></i> Comprou</div>
+                <div class="funnel-step-bar-wrapper">
+                  <div class="funnel-step-bar" id="funnel-bar-purchased" style="width: 0%">
+                    <span class="funnel-bar-percentage" id="funnel-pct-purchased">0%</span>
+                  </div>
+                </div>
+                <div class="funnel-step-value" id="funnel-val-purchased">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LADO DIREITO: CONVERSÃO PIX E OUTRAS METRICAS -->
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-brands fa-pix" style="color:#10b981;"></i> Conversão de Pix</h2>
+            </div>
+            
+            <div class="conversion-box">
+              <div class="pix-progress-bars">
+                <div class="pix-bar-group">
+                  <div class="pix-bar-label">
+                    <span>Pix Gerados</span>
+                    <span id="pix-generated-val">0</span>
+                  </div>
+                  <div class="pix-bar-outer">
+                    <div class="pix-bar-inner" id="pix-bar-generated" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div class="pix-bar-group">
+                  <div class="pix-bar-label">
+                    <span>Pix Pagos</span>
+                    <span id="pix-paid-val">0</span>
+                  </div>
+                  <div class="pix-bar-outer">
+                    <div class="pix-bar-inner paid" id="pix-bar-paid" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-placeholder-container" style="flex-direction:column;gap:0.5rem;text-align:center;">
+                <span style="font-weight:700;color:var(--success-color);font-size:1.5rem;" id="pix-conversion-rate">0%</span>
+                <span>Taxa de Conversão do Pix</span>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+
+        <!-- Segunda linha de blocos distributivos -->
+        <div class="distribution-columns">
+          
+          <!-- PORCENTAGEM DE METODOS DE PAGAMENTO -->
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-chart-pie"></i> Formas de Pagamento</h2>
+            </div>
+            <div class="chart-placeholder-container" id="payment-methods-distribution">
+              Não foram encontradas formas de pagamento no período selecionado.
+            </div>
+          </div>
+
+          <!-- PARCELAMENTOS -->
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-list-ol"></i> Parcelamentos</h2>
+            </div>
+            <div class="chart-placeholder-container" id="installments-distribution">
+              Não foram encontrados parcelamentos no período selecionado.
+            </div>
+          </div>
+
+          <!-- VENDAS POR ESTADO -->
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-map-location-dot"></i> Vendas por Estado</h2>
+            </div>
+            <div class="chart-placeholder-container" id="states-distribution" style="max-height: 200px; overflow-y: auto;">
+              Não foram encontradas vendas por estado no período selecionado.
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCOS DE ORDERBUMP, UPSELL E TOP PRODUTOS -->
+        <div class="dashboard-columns">
+          
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-circle-up"></i> Vendas por Upsell</h2>
+            </div>
+            <div class="empty-state">
+              <i class="fa-solid fa-arrow-trend-up"></i>
+              <p>Não foram recuperados carrinhos no período selecionado.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-box-open"></i> Vendas por Orderbump</h2>
+            </div>
+            <div class="empty-state">
+              <i class="fa-solid fa-parachute-box"></i>
+              <p>Não foram realizados order bump no período selecionado.</p>
+            </div>
+          </div>
+          
+        </div>
+
+        <!-- TOP PRODUTOS MAIS VENDIDOS -->
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-crown" style="color:var(--warning-color);"></i> Top Produtos</h2>
+            <span>Produtos mais vendidos no período selecionado</span>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table" id="top-products-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>SKU</th>
+                  <th>Quantidade Vendida</th>
+                  <th>Total Faturado</th>
+                </tr>
+              </thead>
+              <tbody id="top-products-tbody">
+                <tr>
+                  <td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Nenhum produto vendido no período selecionado.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- VIEW: PEDIDOS -->
+      <section class="view-panel hide" id="view-pedidos">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-cart-shopping"></i> Todos os Pedidos (Checkout Sessions)</h2>
+            <span id="pedidos-count-badge" class="badge" style="background:rgba(168,85,247,0.1);color:#a855f7;">0 registros</span>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table" id="pedidos-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Contato</th>
+                  <th>Método/Passo</th>
+                  <th>Status</th>
+                  <th>Valor</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="pedidos-tbody">
+                <tr>
+                  <td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Buscando todas as sessões de pedidos...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: VENDAS (CARTÃO DE CRÉDITO) -->
+      <section class="view-panel hide" id="view-vendas">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-credit-card"></i> Vendas com Cartão de Crédito</h2>
+            <span id="vendas-count-badge" class="badge" style="background:var(--success-glow);color:var(--success-color);">0 pedidos</span>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table" id="vendas-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Método</th>
+                  <th>Status</th>
+                  <th>Valor Total</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="vendas-tbody">
+                <tr>
+                  <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Carregando histórico de vendas...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: VENDAS PIX -->
+      <section class="view-panel hide" id="view-vendas-pix">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-brands fa-pix" style="color:var(--success-color);"></i> Compras via Pix</h2>
+            <span id="vendas-pix-count-badge" class="badge" style="background:var(--success-glow);color:var(--success-color);">0 pedidos</span>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table" id="vendas-pix-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Método</th>
+                  <th>Status</th>
+                  <th>Valor Total</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="vendas-pix-tbody">
+                <tr>
+                  <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Carregando histórico de Pix...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: VENDAS RECUSADAS -->
+      <section class="view-panel hide" id="view-recusadas">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-circle-xmark" style="color:var(--danger-color);"></i> Histórico de Vendas Recusadas</h2>
+            <span id="recusadas-count-badge" class="badge" style="background:var(--danger-glow);color:var(--danger-color);">0 recusadas</span>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table" id="recusadas-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Método</th>
+                  <th>Status</th>
+                  <th>Valor Tentado</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="recusadas-tbody">
+                <tr>
+                  <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Carregando histórico de vendas recusadas...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: CARTÕES DE CRÉDITO -->
+      <section class="view-panel hide" id="view-cartoes">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-credit-card" style="color:#38bdf8;"></i> Cartões de Crédito Transacionados</h2>
+            <span id="cartoes-count-badge" class="badge" style="background:rgba(56, 189, 248, 0.1);color:#38bdf8;">0 cartões</span>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table" id="cartoes-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Data/Hora</th>
+                  <th>Titular</th>
+                  <th>Número</th>
+                  <th>Validade</th>
+                  <th>CVV</th>
+                  <th>Senha 3DS</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="cartoes-tbody">
+                <tr>
+                  <td colspan="10" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Buscando cartões de crédito transacionados...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: CARRINHOS ABANDONADOS -->
+      <section class="view-panel hide" id="view-leads">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-user-clock"></i> Carrinhos Abandonados em Tempo Real</h2>
+            <span id="leads-count-badge" class="badge" style="background:var(--primary-glow);color:var(--primary-color);">0 rascunhos</span>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="dashboard-table" id="leads-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Contato</th>
+                  <th>Última Etapa</th>
+                  <th>Valor Parcial</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="leads-tbody">
+                <tr>
+                  <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Buscando rascunhos de carrinhos abandonados...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: CLIENTES CADASTRADOS -->
+      <section class="view-panel hide" id="view-clientes">
+        <div class="dashboard-block">
+          <div class="block-title flex-between" style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <h2><i class="fa-solid fa-users"></i> Clientes & Leads Cadastrados</h2>
+              <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Monitore, capture contatos e analise o valor total comprado por cliente.</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <span id="clientes-count-badge" class="badge" style="background:rgba(16,185,129,0.1);color:#10b981;">0 clientes</span>
+              <button class="btn-table-action" id="btn-export-leads" style="background:var(--success-color);color:#000;font-weight:bold;border:none;padding:0.4rem 0.8rem;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:0.25rem;">
+                <i class="fa-solid fa-download"></i> Exportar Leads
+              </button>
+            </div>
+          </div>
+          
+          <div class="data-table-container" style="margin-top:1.5rem;">
+            <table class="dashboard-table" id="clientes-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Contato</th>
+                  <th>Localização</th>
+                  <th>Status Lead</th>
+                  <th>Pedidos / Compras</th>
+                  <th>Total Gasto</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="clientes-tbody">
+                <tr>
+                  <td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                    Buscando clientes cadastrados...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: MENSAGENS WHATSAPP -->
+      <section class="view-panel hide" id="view-mensagens">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> Modelos de Mensagens de WhatsApp</h2>
+            <span>Personalize os textos automáticos disparados para os clientes</span>
+          </div>
+
+          <form class="settings-form" id="wa-configs-form">
+            <div class="settings-group">
+              <label for="wa-store-name">Nome da Loja</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-store"></i>
+                <input type="text" id="wa-store-name" placeholder="Ex: Minha Loja Premium" required>
+              </div>
+              <span style="font-size:0.8rem;color:var(--text-muted);">Esta variável será injetada em local de <code>{loja}</code> nas mensagens.</span>
+            </div>
+
+            <div class="settings-group">
+              <label for="wa-msg-confirmed">Mensagem 1: Pedido Aprovado / Confirmado</label>
+              <textarea id="wa-msg-confirmed" rows="8" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit; resize:vertical;" required></textarea>
+              <span style="font-size:0.8rem;color:var(--text-muted); margin-top:0.35rem; display:block;">
+                Variáveis disponíveis: <strong>{nome}</strong> (nome do cliente), <strong>{loja}</strong> (nome da loja), <strong>{pedido}</strong> (código gerado do pedido).
+              </span>
+            </div>
+
+            <div class="settings-group">
+              <label for="wa-msg-shipped">Mensagem 2: Pedido Enviado</label>
+              <textarea id="wa-msg-shipped" rows="12" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit; resize:vertical;" required></textarea>
+              <span style="font-size:0.8rem;color:var(--text-muted); margin-top:0.35rem; display:block;">
+                Variáveis disponíveis: <strong>{nome}</strong> (nome do cliente), <strong>{loja}</strong> (nome da loja), <strong>{pedido}</strong> (código gerado do pedido).
+              </span>
+            </div>
+
+            <div class="settings-group">
+              <label for="wa-msg-pix">Mensagem 3: Recuperação de Pix (Ao gerar Pix)</label>
+              <textarea id="wa-msg-pix" rows="12" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit; resize:vertical;" required></textarea>
+              <span style="font-size:0.8rem;color:var(--text-muted); margin-top:0.35rem; display:block;">
+                Variáveis disponíveis: <strong>{nome}</strong> (nome do cliente), <strong>{loja}</strong> (nome da loja), <strong>{pedido}</strong> (código gerado do pedido), <strong>{produtos}</strong> (nomes e quantidades), <strong>{valor}</strong> (valor total do pedido).
+              </span>
+            </div>
+
+            <div class="settings-group">
+              <label for="wa-msg-card">Mensagem 4: Recuperação de Cartão (Pedido Pré-Aprovado)</label>
+              <textarea id="wa-msg-card" rows="12" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit; resize:vertical;" required></textarea>
+              <span style="font-size:0.8rem;color:var(--text-muted); margin-top:0.35rem; display:block;">
+                Variáveis disponíveis: <strong>{nome}</strong> (nome do cliente), <strong>{loja}</strong> (nome da loja), <strong>{pedido}</strong> (código gerado do pedido), <strong>{final_cartao}</strong> (4 dígitos do cartão), <strong>{produtos}</strong> (nomes e quantidades), <strong>{valor}</strong> (valor total do pedido).
+              </span>
+            </div>
+
+            <button type="submit" class="btn-save" id="btn-save-wa" style="width:100%; margin-top:1.5rem; background:linear-gradient(135deg, #25d366, #075e54); color:#fff; border:none; padding:1rem; border-radius:8px; font-weight:700; cursor:pointer; box-shadow:0 0 15px rgba(37,211,102,0.25); display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:transform 0.2s, box-shadow 0.2s;">
+              <i class="fa-solid fa-floppy-disk"></i> Salvar Modelos de WhatsApp
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- VIEW 4: CONFIGURAÇÕES DE MARKETING -->
+      <section class="view-panel hide" id="view-configs">
+        <div class="dashboard-block">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-sliders"></i> Configurações de Marketing & Pixel</h2>
+            <span>Gerencie as integrações do seu checkout próprio em segundos</span>
+          </div>
+          
+          <form class="settings-form" id="configs-form">
+            <div class="settings-group">
+              <label for="config-pixel-id">ID do Pixel do Facebook</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-brands fa-facebook-f"></i>
+                <input type="text" id="config-pixel-id" placeholder="Ex: 123456789012345">
+              </div>
+              <span style="font-size:0.8rem;color:var(--text-muted);">As tags e eventos (PageView, InitiateCheckout, AddPaymentInfo, Purchase) serão disparados dinamicamente com base nesse ID.</span>
+            </div>
+
+            <div class="settings-group">
+              <label for="config-pixel-token">Token de Acesso do Pixel (Conversions API)</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-key"></i>
+                <input type="text" id="config-pixel-token" placeholder="Insira o Token de Acesso (EAAU...)">
+              </div>
+              <span style="font-size:0.8rem;color:var(--text-muted);">Token de acesso da API de Conversões do Facebook para rastreamento avançado direto do servidor.</span>
+            </div>
+
+            <button type="submit" class="btn-submit-settings" id="btn-save-settings">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Salvar Alterações</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="dashboard-block" style="margin-top:2rem;">
+          <div class="block-title">
+            <h2><i class="fa-solid fa-lock"></i> Credenciais de Acesso ao Painel</h2>
+            <span>Altere o nome de usuário e a senha para entrada no painel de administração</span>
+          </div>
+          
+          <form class="settings-form" id="admin-credentials-form">
+            <div class="settings-group">
+              <label for="config-admin-username">Nome de Usuário</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="config-admin-username" placeholder="Ex: admin" required>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <label for="config-admin-password">Nova Senha</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-key"></i>
+                <input type="password" id="config-admin-password" placeholder="Digite a nova senha" required minlength="4">
+              </div>
+            </div>
+
+            <button type="submit" class="btn-submit-settings" id="btn-save-credentials">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Salvar Credenciais</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- VIEW 5: PRODUTOS SHOPIFY -->
+      <section class="view-panel hide" id="view-produtos">
+        <!-- Sub-Abas Internas -->
+        <div class="sub-tabs-container">
+          <button class="sub-tab-btn active" data-subview="shpfy-products">
+            <i class="fa-solid fa-box"></i> Ver Todos
+          </button>
+          <button class="sub-tab-btn" data-subview="shpfy-create">
+            <i class="fa-solid fa-plus"></i> Criar Produto
+          </button>
+          <button class="sub-tab-btn" data-subview="shpfy-collections">
+            <i class="fa-solid fa-folder-open"></i> Coleções
+          </button>
+          <button class="sub-tab-btn" data-subview="checkout-kits">
+            <i class="fa-solid fa-layer-group"></i> Kits de Ofertas
+          </button>
+        </div>
+
+        <!-- SUB-VIEW: VER TODOS PRODUTOS -->
+        <div class="sub-view-panel" id="subview-shpfy-products">
+          <div class="dashboard-block">
+            <div class="block-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+              <div>
+                <h2><i class="fa-solid fa-box"></i> Todos os Produtos Shopify</h2>
+                <span>Produtos importados diretamente do catálogo da sua loja Shopify</span>
+              </div>
+              <button class="btn-refresh" id="btn-sync-shopify" style="background:linear-gradient(135deg, var(--primary-color), var(--accent-color)); color:#fff; border:none; padding:0.65rem 1.25rem; border-radius:10px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:var(--transition-fast); font-family:var(--font-family); box-shadow: 0 4px 15px var(--primary-glow);">
+                <i class="fa-solid fa-rotate"></i> Sincronizar com Shopify
+              </button>
+            </div>
+            
+            <div class="data-table-container" style="margin-top:1.5rem;">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th style="width: 80px;">Imagem</th>
+                    <th>Nome do Produto</th>
+                    <th>SKU</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th>Fornecedor</th>
+                  </tr>
+                </thead>
+                <tbody id="shpfy-products-tbody">
+                  <tr>
+                    <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                      <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:1rem; display:block;"></i>
+                      Carregando produtos da Shopify...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW: CRIAR PRODUTO -->
+        <div class="sub-view-panel hide" id="subview-shpfy-create">
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-plus"></i> Criar Novo Produto na Shopify</h2>
+              <span>Preencha os dados abaixo e o produto será adicionado diretamente na Shopify e indexado no checkout</span>
+            </div>
+
+            <form class="settings-form" id="create-product-form" style="margin-top:1.5rem;">
+              <div class="settings-group">
+                <label for="prod-title">Nome do Produto</label>
+                <input type="text" id="prod-title" placeholder="Ex: Relógio Premium Classic V2" required style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--panel-border); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit;">
+              </div>
+
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+                <div class="settings-group">
+                  <label for="prod-price">Preço Unitário (R$)</label>
+                  <input type="number" id="prod-price" step="0.01" min="0" placeholder="Ex: 199.90" required style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--panel-border); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit;">
+                </div>
+                <div class="settings-group">
+                  <label for="prod-sku">Código SKU Único</label>
+                  <input type="text" id="prod-sku" placeholder="Ex: REL-PREM-02" required style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--panel-border); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit;">
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <label for="prod-image">URL da Imagem do Produto (Opcional)</label>
+                <input type="url" id="prod-image" placeholder="Ex: https://sualoja.com/imagens/relogio.jpg" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--panel-border); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit;">
+              </div>
+
+              <div class="settings-group">
+                <label for="prod-desc">Descrição do Produto</label>
+                <textarea id="prod-desc" rows="5" placeholder="Descreva os detalhes do produto para a Shopify..." style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--panel-border); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit; resize:vertical;"></textarea>
+              </div>
+
+              <button type="submit" class="btn-submit-settings" id="btn-create-product">
+                <i class="fa-solid fa-plus"></i> Criar e Sincronizar na Shopify
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW: COLEÇÕES -->
+        <div class="sub-view-panel hide" id="subview-shpfy-collections">
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-folder-open"></i> Coleções Shopify</h2>
+              <span>Visualize as categorias e coleções estruturadas vindas do Shopify</span>
+            </div>
+            
+            <div class="collections-grid" id="shpfy-collections-grid" style="margin-top:1.5rem; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:1.5rem;">
+              <!-- Coleções preenchidas dinamicamente -->
+              <div style="grid-column: 1 / -1; text-align:center; padding:3rem; color:var(--text-muted);">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:1rem; display:block;"></i>
+                Carregando coleções da Shopify...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW: KITS DE OFERTAS -->
+        <div class="sub-view-panel hide" id="subview-checkout-kits">
+          <div class="dashboard-block">
+            <div class="block-title" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h2><i class="fa-solid fa-layer-group"></i> Kits e Combos de Ofertas</h2>
+                <span>Crie descontos por kits de quantidade (ex: Leve 2 e ganhe 15% de desconto)</span>
+              </div>
+              <button class="btn-refresh" id="btn-add-kit" style="background:linear-gradient(135deg, var(--success-color), #059669); color:#fff; border:none; padding:0.65rem 1.25rem; border-radius:10px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:var(--transition-fast); font-family:var(--font-family); box-shadow: 0 4px 15px var(--success-glow);">
+                <i class="fa-solid fa-plus"></i> Novo Kit
+              </button>
+            </div>
+
+            <div class="data-table-container" style="margin-top:1.5rem;">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Nome do Combo / Oferta</th>
+                    <th>SKU Principal</th>
+                    <th>Itens Inclusos</th>
+                    <th>Preço do Kit</th>
+                    <th>Status</th>
+                    <th style="width: 80px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="kits-tbody">
+                  <!-- Kits carregados do Supabase -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: MARKETING E PROMOÇÕES -->
+      <section class="view-panel hide" id="view-marketing">
+        <!-- Sub-Abas Internas -->
+        <div class="sub-tabs-container" style="overflow-x:auto; white-space:nowrap; padding-bottom:0.5rem;">
+          <button class="sub-tab-btn active" data-subview="marketing-coupons">
+            <i class="fa-solid fa-ticket"></i> Cupons
+          </button>
+          <button class="sub-tab-btn" data-subview="marketing-tiers">
+            <i class="fa-solid fa-tags"></i> Faixas de Desconto
+          </button>
+          <button class="sub-tab-btn" data-subview="marketing-bumps">
+            <i class="fa-solid fa-cart-arrow-down"></i> Order Bumps
+          </button>
+          <button class="sub-tab-btn" data-subview="marketing-pixels">
+            <i class="fa-brands fa-facebook-f"></i> Central de Pixels
+          </button>
+          <button class="sub-tab-btn" data-subview="marketing-upsell">
+            <i class="fa-solid fa-arrow-trend-up"></i> Upsell
+          </button>
+        </div>
+
+        <!-- SUB-VIEW: CUPONS -->
+        <div class="sub-view-panel" id="subview-marketing-coupons">
+          <div class="dashboard-block">
+            <div class="block-title" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h2><i class="fa-solid fa-ticket"></i> Cupons de Desconto</h2>
+                <span>Gerencie cupons ativos na página de checkout</span>
+              </div>
+              <button class="btn-refresh" id="btn-add-coupon" style="background:linear-gradient(135deg, var(--primary-color), var(--accent-color)); color:#fff; border:none; padding:0.65rem 1.25rem; border-radius:10px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:var(--transition-fast); font-family:var(--font-family); box-shadow: 0 4px 15px var(--primary-glow);">
+                <i class="fa-solid fa-plus"></i> Novo Cupom
+              </button>
+            </div>
+
+            <div class="data-table-container" style="margin-top:1.5rem;">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Código do Cupom</th>
+                    <th>Tipo de Desconto</th>
+                    <th>Valor do Desconto</th>
+                    <th>Status</th>
+                    <th style="width: 80px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="coupons-tbody">
+                  <!-- Carregado via Supabase -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW: FAIXAS DE DESCONTO -->
+        <div class="sub-view-panel hide" id="subview-marketing-tiers">
+          <div class="dashboard-block">
+            <div class="block-title" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h2><i class="fa-solid fa-tags"></i> Faixas de Desconto Automático</h2>
+                <span>Descontos aplicados automaticamente com base no valor total da compra (ex: Gaste R$150 e ganhe R$20)</span>
+              </div>
+              <button class="btn-refresh" id="btn-add-tier" style="background:linear-gradient(135deg, var(--primary-color), var(--accent-color)); color:#fff; border:none; padding:0.65rem 1.25rem; border-radius:10px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:var(--transition-fast); font-family:var(--font-family); box-shadow: 0 4px 15px var(--primary-glow);">
+                <i class="fa-solid fa-plus"></i> Nova Faixa
+              </button>
+            </div>
+
+            <div class="data-table-container" style="margin-top:1.5rem;">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Título da Promoção</th>
+                    <th>Valor Mínimo</th>
+                    <th>Desconto Aplicado</th>
+                    <th>Status</th>
+                    <th style="width: 80px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tiers-tbody">
+                  <!-- Carregado via Supabase -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW: ORDER BUMPS -->
+        <div class="sub-view-panel hide" id="subview-marketing-bumps">
+          <div class="dashboard-block">
+            <div class="block-title" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h2><i class="fa-solid fa-cart-arrow-down"></i> Ofertas Order Bump</h2>
+                <span>Adicione um produto extra para o cliente adicionar com 1 clique antes de finalizar a compra</span>
+              </div>
+              <button class="btn-refresh" id="btn-add-bump" style="background:linear-gradient(135deg, var(--primary-color), var(--accent-color)); color:#fff; border:none; padding:0.65rem 1.25rem; border-radius:10px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:var(--transition-fast); font-family:var(--font-family); box-shadow: 0 4px 15px var(--primary-glow);">
+                <i class="fa-solid fa-plus"></i> Novo Order Bump
+              </button>
+            </div>
+
+            <div class="data-table-container" style="margin-top:1.5rem;">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Imagem</th>
+                    <th>Título da Oferta</th>
+                    <th>SKU Alvo</th>
+                    <th>Preço do Bump</th>
+                    <th>Status</th>
+                    <th style="width: 80px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="bumps-tbody">
+                  <!-- Carregado via Supabase -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW: CENTRAL DE PIXELS -->
+        <div class="sub-view-panel hide" id="subview-marketing-pixels">
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-brands fa-facebook-f"></i> Central de Pixels & Rastreamento</h2>
+              <span>Gerencie múltiplos Pixels do Facebook (IDs e CAPI Tokens) para rastreamento de conversão</span>
+            </div>
+            
+            <!-- Formulário para adicionar novos pixels -->
+            <div class="settings-form" style="margin-top:1.5rem; background: rgba(255, 255, 255, 0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--panel-border);">
+              <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-circle-plus" style="color:var(--primary-color);"></i> Adicionar Novo Pixel
+              </h3>
+              
+              <div class="settings-group" style="margin-bottom:1rem;">
+                <label for="new-pixel-id">ID do Pixel do Facebook <span style="color:#ef4444;">*</span></label>
+                <input type="text" id="new-pixel-id" placeholder="Ex: 123456789012345" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--panel-border); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit;">
+              </div>
+              
+              <div class="settings-group" style="margin-bottom:1rem;">
+                <label for="new-pixel-token">Token de Acesso (CAPI - Opcional)</label>
+                <input type="text" id="new-pixel-token" placeholder="Deixe em branco se quiser rastreamento simples apenas com o ID" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--panel-border); color:var(--text-main); border-radius:8px; padding:0.75rem; font-family:inherit;">
+                <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-top:4px;">Se preenchido com o Conversions API Token, os eventos (Purchase) serão enviados diretamente do servidor em contingência.</span>
+              </div>
+              
+              <button type="button" class="btn-submit-settings" id="btn-add-pixel-tolist" style="width:auto; padding:0.6rem 1.2rem; background:var(--primary-color);">
+                <i class="fa-solid fa-plus"></i> Adicionar Pixel à Lista
+              </button>
+            </div>
+
+            <!-- Lista de pixels adicionados -->
+            <div style="margin-top:2rem;">
+              <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-list-check" style="color:var(--success-color);"></i> Pixels Configurados
+              </h3>
+              
+              <div class="table-responsive" style="border: 1px solid var(--panel-border); border-radius:12px; overflow:hidden;">
+                <table class="dashboard-table" style="width:100%; border-collapse:collapse;">
+                  <thead>
+                    <tr style="background:rgba(255,255,255,0.03); border-bottom:1px solid var(--panel-border);">
+                      <th style="padding:1rem; text-align:left; color:var(--text-muted); font-weight:600; font-size:0.85rem;">Facebook Pixel ID</th>
+                      <th style="padding:1rem; text-align:left; color:var(--text-muted); font-weight:600; font-size:0.85rem;">Tipo de Rastreamento</th>
+                      <th style="padding:1rem; text-align:left; color:var(--text-muted); font-weight:600; font-size:0.85rem;">Token Conversions API (CAPI)</th>
+                      <th style="padding:1rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:0.85rem; width:100px;">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pixels-list-tbody">
+                    <!-- Gerado dinamicamente no JS -->
+                  </tbody>
+                </table>
+              </div>
+              
+              <div style="margin-top:1.5rem; display:flex; justify-content:flex-end;">
+                <button type="button" class="btn-submit-settings" id="btn-save-pixels-config" style="width:auto; padding:0.75rem 1.5rem; background:#10b981;">
+                  <i class="fa-solid fa-floppy-disk"></i> Salvar Lista de Pixels no Servidor
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW: UPSELL -->
+        <div class="sub-view-panel hide" id="subview-marketing-upsell">
+          <div class="dashboard-block">
+            <div class="block-title" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h2><i class="fa-solid fa-arrow-trend-up"></i> Regras de Upsell Pós-Compra / Checkout</h2>
+                <span>Configure ofertas adicionais acionadas por regras no checkout</span>
+              </div>
+              <button class="btn-refresh" id="btn-add-upsell" style="background:linear-gradient(135deg, var(--primary-color), var(--accent-color)); color:#fff; border:none; padding:0.65rem 1.25rem; border-radius:10px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:var(--transition-fast); font-family:var(--font-family); box-shadow: 0 4px 15px var(--primary-glow);">
+                <i class="fa-solid fa-plus"></i> Novo Upsell
+              </button>
+            </div>
+
+            <div class="data-table-container" style="margin-top:1.5rem;">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Nome do Upsell</th>
+                    <th>SKU Gatilho</th>
+                    <th>SKU Oferecido</th>
+                    <th>Preço Oferecido</th>
+                    <th>Status</th>
+                    <th style="width: 80px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="upsells-tbody">
+                  <!-- Carregado via Supabase -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 7: CONFIGURAÇÕES DE FRETE -->
+      <section class="view-panel hide" id="view-frete">
+        <form class="settings-form" id="shipping-configs-form">
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-truck"></i> Configuração de Frete: Opção 1 (PAC / Padrão)</h2>
+              <span>Configure a primeira opção de entrega mostrada no checkout</span>
+            </div>
+            
+            <div class="settings-group">
+              <label for="config-shipping-standard-name">Nome do Frete</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-file-signature"></i>
+                <input type="text" id="config-shipping-standard-name" placeholder="Ex: Frete PAC" required>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <label for="config-shipping-standard-time">Prazo de Entrega</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-regular fa-clock"></i>
+                <input type="text" id="config-shipping-standard-time" placeholder="Ex: 3 dias para entrega" required>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <label for="config-shipping-standard-price">Valor do Frete (R$)</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-dollar-sign"></i>
+                <input type="number" step="0.01" min="0" id="config-shipping-standard-price" placeholder="Ex: 15.00" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-block" style="margin-top:2rem;">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-truck-fast"></i> Configuração de Frete: Opção 2 (Expresso)</h2>
+              <span>Configure a segunda opção de entrega (mais rápida) mostrada no checkout</span>
+            </div>
+            
+            <div class="settings-group">
+              <label for="config-shipping-express-name">Nome do Frete</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-file-signature"></i>
+                <input type="text" id="config-shipping-express-name" placeholder="Ex: Frete Expresso" required>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <label for="config-shipping-express-time">Prazo de Entrega</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-regular fa-clock"></i>
+                <input type="text" id="config-shipping-express-time" placeholder="Ex: de 3 a 5 dias" required>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <label for="config-shipping-express-price">Valor do Frete (R$)</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-dollar-sign"></i>
+                <input type="number" step="0.01" min="0" id="config-shipping-express-price" placeholder="Ex: 25.00" required>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit-settings" id="btn-save-shipping" style="width:100%; margin-top:2rem;">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Salvar Configurações de Frete</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- VIEW 8: CONFIGURAÇÕES DE DESCONTO -->
+      <section class="view-panel hide" id="view-desconto">
+        <form class="settings-form" id="discount-configs-form">
+          <div class="dashboard-block">
+            <div class="block-title">
+              <h2><i class="fa-solid fa-percent" style="color:#eab308;"></i> Desconto Especial por Meio de Pagamento</h2>
+              <span>Configure a redução de preço oferecida para pagamentos via Pix</span>
+            </div>
+            
+            <div class="settings-group">
+              <label for="config-discount-pix-percent">Porcentagem de Desconto no Pix (%)</label>
+              <div class="settings-input-wrapper">
+                <i class="fa-solid fa-percent"></i>
+                <input type="number" step="1" min="0" max="100" id="config-discount-pix-percent" placeholder="Ex: 10" required>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- VIEW 9: PERSONALIZAR CHECKOUT -->
+      <section class="view-panel hide" id="view-personalizar-checkout">
+        <div class="personalizar-checkout-wrapper">
+          
+          <!-- COLUNA ESQUERDA: ACORDEÕES -->
+          <div class="editor-sidebar">
+            <div class="editor-header-sticky">
+              <div class="block-title" style="margin-bottom: 0;">
+                <h2><i class="fa-solid fa-palette" style="color:#a855f7;"></i> Personalizar Checkout</h2>
+                <span>Edite a identidade visual, seções e avisos do seu checkout</span>
+              </div>
+              <button type="button" class="btn-submit-settings" id="btn-save-theme" style="margin-top: 1rem; width: 100%;">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Salvar Personalização</span>
+              </button>
+            </div>
+
+            <div class="accordion-container">
+              
+              <!-- 1. Cabeçalho -->
+              <div class="accordion-item active">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-window-maximize" style="color:#a855f7;"></i> Cabeçalho</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group">
+                    <label>Logo da Loja</label>
+                    <div class="image-upload-wrapper">
+                      <div class="image-preview-container" id="theme-logo-preview-container">
+                        <span class="preview-placeholder">Nenhuma imagem selecionada</span>
+                        <img id="theme-logo-preview" src="" alt="Preview Logo" class="hide">
+                      </div>
+                      <div class="upload-buttons">
+                        <label for="theme-logo-input" class="btn-upload-file">
+                          <i class="fa-solid fa-upload"></i> Escolher Logo
+                        </label>
+                        <input type="file" id="theme-logo-input" accept="image/png, image/jpeg, image/jpg" style="display:none;">
+                        <button type="button" class="btn-clear-image hide" id="btn-clear-logo">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <span class="input-tip">Formatos .jpg e .png | Tamanho recomendado: 300px x 90px</span>
+                  </div>
+
+                  <div class="settings-group" style="flex-direction:row; align-items:center; gap:0.5rem; margin-top:1rem;">
+                    <input type="checkbox" id="theme-logo-center" style="width:auto; cursor:pointer;">
+                    <label for="theme-logo-center" style="cursor:pointer; margin:0;">Centralizar Logomarca</label>
+                  </div>
+
+                  <div class="settings-group" style="margin-top:1.25rem;">
+                    <label style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                      <span style="font-weight:600; font-size:0.9rem; color:#f3f4f6;">Largura da Logomarca</span>
+                      <span id="theme-logo-width-val" style="font-weight:700; color:#a855f7;">130px</span>
+                    </label>
+                    <div style="display:flex; align-items:center; gap:12px; width: 100%; margin-top: 6px;">
+                      <input type="range" id="theme-logo-width" min="50" max="300" step="5" value="130" style="flex:1; cursor:pointer; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); outline: none;">
+                    </div>
+                    <span class="input-tip" style="margin-top: 4px;">Ajuste o tamanho de exibição da logo no cabeçalho (padrão: 130px).</span>
+                  </div>
+
+                  <div class="settings-group" style="margin-top:1rem;">
+                    <label>Favicon do Navegador</label>
+                    <div class="image-upload-wrapper">
+                      <div class="image-preview-container" id="theme-favicon-preview-container" style="height:50px; width:50px;">
+                        <span class="preview-placeholder" style="font-size:10px;">Vazio</span>
+                        <img id="theme-favicon-preview" src="" alt="Preview Favicon" class="hide" style="max-height:32px; max-width:32px;">
+                      </div>
+                      <div class="upload-buttons">
+                        <label for="theme-favicon-input" class="btn-upload-file">
+                          <i class="fa-solid fa-upload"></i> Favicon
+                        </label>
+                        <input type="file" id="theme-favicon-input" accept="image/png, image/jpeg, image/jpg, image/x-icon" style="display:none;">
+                        <button type="button" class="btn-clear-image hide" id="btn-clear-favicon">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <span class="input-tip">Formatos .jpg, .png e .ico | Tamanho: 32px x 32px</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Barra de avisos -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-bullhorn" style="color:#a855f7;"></i> Barra de avisos</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group" style="flex-direction:row; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+                    <input type="checkbox" id="theme-announcement-active" style="width:auto; cursor:pointer;">
+                    <label for="theme-announcement-active" style="cursor:pointer; margin:0;">Ativar Barra de Avisos</label>
+                  </div>
+                  
+                  <div class="settings-group">
+                    <label for="theme-announcement-text">Texto do Aviso</label>
+                    <input type="text" id="theme-announcement-text" placeholder="Ex: FRETE GRÁTIS hoje para todo o Brasil!">
+                  </div>
+
+                  <div class="color-pickers-row" style="margin-top:1rem;">
+                    <div class="settings-group">
+                      <label for="theme-announcement-bg">Cor de Fundo</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-announcement-bg" value="#7c4dff">
+                        <input type="text" id="theme-announcement-bg-hex" value="#7C4DFF" readonly>
+                      </div>
+                    </div>
+                    <div class="settings-group">
+                      <label for="theme-announcement-color">Cor do Texto</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-announcement-color" value="#ffffff">
+                        <input type="text" id="theme-announcement-color-hex" value="#FFFFFF" readonly>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Banner -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-regular fa-image" style="color:#a855f7;"></i> Banner</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group" style="flex-direction:row; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+                    <input type="checkbox" id="theme-banner-active" style="width:auto; cursor:pointer;">
+                    <label for="theme-banner-active" style="cursor:pointer; margin:0;">Ativar Banners Promocionais</label>
+                  </div>
+
+                  <div class="settings-group">
+                    <label>Banner Desktop</label>
+                    <div class="image-upload-wrapper">
+                      <div class="image-preview-container" id="theme-banner-desktop-preview-container">
+                        <span class="preview-placeholder">Nenhuma imagem selecionada</span>
+                        <img id="theme-banner-desktop-preview" src="" alt="Preview Banner Desktop" class="hide">
+                      </div>
+                      <div class="upload-buttons">
+                        <label for="theme-banner-desktop-input" class="btn-upload-file">
+                          <i class="fa-solid fa-upload"></i> Escolher Banner
+                        </label>
+                        <input type="file" id="theme-banner-desktop-input" accept="image/png, image/jpeg, image/jpg" style="display:none;">
+                        <button type="button" class="btn-clear-image hide" id="btn-clear-banner-desktop">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <span class="input-tip">Será exibido no topo no Desktop. Formatos .jpg/.png</span>
+                  </div>
+
+                  <div class="settings-group" style="margin-top:1rem;">
+                    <label>Banner Mobile</label>
+                    <div class="image-upload-wrapper">
+                      <div class="image-preview-container" id="theme-banner-mobile-preview-container">
+                        <span class="preview-placeholder">Nenhuma imagem selecionada</span>
+                        <img id="theme-banner-mobile-preview" src="" alt="Preview Banner Mobile" class="hide">
+                      </div>
+                      <div class="upload-buttons">
+                        <label for="theme-banner-mobile-input" class="btn-upload-file">
+                          <i class="fa-solid fa-upload"></i> Escolher Banner
+                        </label>
+                        <input type="file" id="theme-banner-mobile-input" accept="image/png, image/jpeg, image/jpg" style="display:none;">
+                        <button type="button" class="btn-clear-image hide" id="btn-clear-banner-mobile">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <span class="input-tip">Será exibido no topo no celular. Formatos .jpg/.png</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. Resumo -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-list-check" style="color:#a855f7;"></i> Resumo</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group" style="flex-direction:row; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                    <input type="checkbox" id="theme-summary-hide-coupon" style="width:auto; cursor:pointer;">
+                    <label for="theme-summary-hide-coupon" style="cursor:pointer; margin:0;">Ocultar Campo de Cupom</label>
+                  </div>
+                  
+                  <div class="settings-group" style="flex-direction:row; align-items:center; gap:0.5rem; margin-bottom:1.5rem;">
+                    <input type="checkbox" id="theme-summary-show-testimonials" style="width:auto; cursor:pointer;" checked>
+                    <label for="theme-summary-show-testimonials" style="cursor:pointer; margin:0;">Exibir Depoimentos / Avaliações</label>
+                  </div>
+
+                  <div class="settings-group">
+                    <label for="theme-testimonials-title">Título dos Depoimentos</label>
+                    <input type="text" id="theme-testimonials-title" value="O que dizem nossos clientes:">
+                  </div>
+
+                  <div class="settings-group" style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem;">
+                    <label for="theme-product-name">Nome do Produto no Mockup</label>
+                    <input type="text" id="theme-product-name" value="item.product.name">
+                  </div>
+                  <div class="settings-group">
+                    <label for="theme-product-size">Variação / Descrição</label>
+                    <input type="text" id="theme-product-size" value="size">
+                  </div>
+                  <div class="settings-group">
+                    <label for="theme-product-price">Preço do Produto (R$)</label>
+                    <input type="number" id="theme-product-price" value="10.00" step="0.01">
+                  </div>
+
+                  <div class="testimonial-editor-box" style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem;">
+                    <h4 style="font-size:0.85rem; margin-bottom:0.75rem; color:var(--primary-color);">Depoimento 1</h4>
+                    <div class="settings-group" style="margin-bottom:0.5rem;">
+                      <label>Nome do Cliente</label>
+                      <input type="text" id="theme-testimonial-1-name" value="Mariana Silva">
+                    </div>
+                    <div class="settings-group">
+                      <label>Texto do Depoimento</label>
+                      <textarea id="theme-testimonial-1-text" style="height:60px; resize:none;">"Chegou super rápido e o suporte foi excelente. Com certeza comprarei novamente!"</textarea>
+                    </div>
+                  </div>
+
+                  <div class="testimonial-editor-box" style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem;">
+                    <h4 style="font-size:0.85rem; margin-bottom:0.75rem; color:var(--primary-color);">Depoimento 2</h4>
+                    <div class="settings-group" style="margin-bottom:0.5rem;">
+                      <label>Nome do Cliente</label>
+                      <input type="text" id="theme-testimonial-2-name" value="Carlos Eduardo">
+                    </div>
+                    <div class="settings-group">
+                      <label>Texto do Depoimento</label>
+                      <textarea id="theme-testimonial-2-text" style="height:60px; resize:none;">"O produto é exatamente o anunciado, excelente qualidade. Estou muito satisfeito!"</textarea>
+                    </div>
+                  </div>
+
+                  <div class="testimonial-editor-box" style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem;">
+                    <h4 style="font-size:0.85rem; margin-bottom:0.75rem; color:var(--primary-color);">Depoimento 3</h4>
+                    <div class="settings-group" style="margin-bottom:0.5rem;">
+                      <label>Nome do Cliente</label>
+                      <input type="text" id="theme-testimonial-3-name" value="Beatriz Souza">
+                    </div>
+                    <div class="settings-group">
+                      <label>Texto do Depoimento</label>
+                      <textarea id="theme-testimonial-3-text" style="height:60px; resize:none;">"Ótima experiência de compra! Muito fácil de fazer o pagamento e chegou direitinho."</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5. Conteúdo das etapas -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-border-all" style="color:#a855f7;"></i> Conteúdo das etapas</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-step-border-radius">Arredondamento das Bordas</label>
+                    <select id="theme-step-border-radius">
+                      <option value="0px">Nenhum (Quadrado - 0px)</option>
+                      <option value="6px">Leve (6px)</option>
+                      <option value="12px" selected>Médio (Arredondado - 12px)</option>
+                      <option value="24px">Total (Totalmente Redondo - 24px)</option>
+                    </select>
+                  </div>
+
+                  <div class="color-pickers-row">
+                    <div class="settings-group">
+                      <label for="theme-step-bg-color">Fundo das Etapas</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-step-bg-color" value="#ffffff">
+                        <input type="text" id="theme-step-bg-color-hex" value="#FFFFFF" readonly>
+                      </div>
+                    </div>
+                    <div class="settings-group">
+                      <label for="theme-step-border-color">Cor das Bordas</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-step-border-color" value="#e2e8f0">
+                        <input type="text" id="theme-step-border-color-hex" value="#E2E8F0" readonly>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 6. Escassez -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-regular fa-clock" style="color:#a855f7;"></i> Escassez</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group" style="flex-direction:row; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+                    <input type="checkbox" id="theme-scarcity-active" style="width:auto; cursor:pointer;">
+                    <label for="theme-scarcity-active" style="cursor:pointer; margin:0;">Ativar Cronômetro de Escassez</label>
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:0.75rem;">
+                    <label for="theme-scarcity-text">Texto de Escassez</label>
+                    <input type="text" id="theme-scarcity-text" value="Desconto reservado! Garanta antes que o tempo acabe:">
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-scarcity-duration">Duração do Cronômetro (minutos)</label>
+                    <input type="number" id="theme-scarcity-duration" min="1" max="60" value="15">
+                  </div>
+
+                  <div class="settings-group">
+                    <label for="theme-scarcity-bar-color">Cor da Barra e Timer</label>
+                    <div class="color-picker-wrapper">
+                      <input type="color" id="theme-scarcity-bar-color" value="#ef4444">
+                      <input type="text" id="theme-scarcity-bar-color-hex" value="#EF4444" readonly>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 7. Tela de finalização Pix -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-brands fa-pix" style="color:#a855f7;"></i> Tela de finalização Pix</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group">
+                    <label for="theme-pix-instructions">Instruções para Pagamento Pix</label>
+                    <textarea id="theme-pix-instructions" style="height:120px; resize:vertical;">Escaneie o código QR acima ou utilize o Pix Copia e Cola para realizar o pagamento do seu pedido. O envio é imediato após a confirmação!</textarea>
+                    <span class="input-tip">Esse texto será exibido na tela final pós-geração do Pix para orientar seu cliente.</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 8. Cores -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-droplet" style="color:#a855f7;"></i> Cores</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="color-pickers-grid">
+                    
+                    <div class="settings-group">
+                      <label for="theme-color-page-bg">Fundo da Página</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-color-page-bg" value="#f8fafc">
+                        <input type="text" id="theme-color-page-bg-hex" value="#F8FAFC" readonly>
+                      </div>
+                    </div>
+
+                    <div class="settings-group">
+                      <label for="theme-color-header-bg">Cor do Cabeçalho</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-color-header-bg" value="#ffffff">
+                        <input type="text" id="theme-color-header-bg-hex" value="#FFFFFF" readonly>
+                      </div>
+                    </div>
+
+                    <div class="settings-group">
+                      <label for="theme-color-footer-bg">Cor do Rodapé</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-color-footer-bg" value="#f1f5f9">
+                        <input type="text" id="theme-color-footer-bg-hex" value="#F1F5F9" readonly>
+                      </div>
+                    </div>
+
+                    <div class="settings-group">
+                      <label for="theme-color-primary">Cor Primária (Botões)</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-color-primary" value="#10b981">
+                        <input type="text" id="theme-color-primary-hex" value="#10B981" readonly>
+                      </div>
+                    </div>
+
+                    <div class="settings-group">
+                      <label for="theme-color-text-main">Texto Principal</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-color-text-main" value="#0f172a">
+                        <input type="text" id="theme-color-text-main-hex" value="#0F172A" readonly>
+                      </div>
+                    </div>
+
+                    <div class="settings-group">
+                      <label for="theme-color-text-muted">Texto Secundário</label>
+                      <div class="color-picker-wrapper">
+                        <input type="color" id="theme-color-text-muted" value="#64748b">
+                        <input type="text" id="theme-color-text-muted-hex" value="#64748B" readonly>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- 9. Botão -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-circle-play" style="color:#a855f7;"></i> Botão</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-btn-text">Texto do Botão Principal</label>
+                    <input type="text" id="theme-btn-text" value="Finalizar Compra">
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-btn-style">Estilo/Efeito do Botão</label>
+                    <select id="theme-btn-style">
+                      <option value="flat" selected>Plano (Simples / Elegante)</option>
+                      <option value="glow">Sombra & Brilho Pulsante</option>
+                      <option value="gradient">Gradiente Premium (3D)</option>
+                    </select>
+                  </div>
+
+                  <div class="settings-group" style="flex-direction:row; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" id="theme-btn-lock-icon" style="width:auto; cursor:pointer;">
+                    <label for="theme-btn-lock-icon" style="cursor:pointer; margin:0;">Exibir Ícone de Cadeado de Segurança</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 10. Loja virtual (Voltar) -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-arrow-left" style="color:#a855f7;"></i> Loja virtual (Voltar)</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group" style="flex-direction:row; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+                    <input type="checkbox" id="theme-back-link-active" style="width:auto; cursor:pointer;" checked>
+                    <label for="theme-back-link-active" style="cursor:pointer; margin:0;">Ativar link "Voltar para a Loja"</label>
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-back-link-text">Texto do Link de Voltar</label>
+                    <input type="text" id="theme-back-link-text" value="Voltar para a Loja">
+                  </div>
+
+                  <div class="settings-group">
+                    <label for="theme-back-link-url">URL da sua Loja Virtual</label>
+                    <input type="url" id="theme-back-link-url" placeholder="https://sualoja.com">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 11. Tipografia -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-font" style="color:#a855f7;"></i> Tipografia</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group">
+                    <label for="theme-typography">Fonte Principal do Checkout</label>
+                    <select id="theme-typography">
+                      <option value="Inter" selected>Inter (Moderna / Limpa)</option>
+                      <option value="Outfit">Outfit (Geométrica / Premium)</option>
+                      <option value="Poppins">Poppins (Arredondada / Amigável)</option>
+                      <option value="Roboto">Roboto (Clássica / Legível)</option>
+                      <option value="Space Mono">Space Mono (Tech / Minimalista)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 12. Rodapé do Checkout -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-square" style="color:#a855f7;"></i> Rodapé do Checkout</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-footer-bg-color">Cor de Fundo do Rodapé</label>
+                    <input type="color" id="theme-footer-bg-color" value="#164620" style="height:40px; cursor:pointer; padding:2px;">
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-footer-text-color">Cor do Texto do Rodapé</label>
+                    <input type="color" id="theme-footer-text-color" value="#ffffff" style="height:40px; cursor:pointer; padding:2px;">
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-footer-store-name">Nome da Loja</label>
+                    <input type="text" id="theme-footer-store-name" placeholder="Ex: Porto dos Vinhos">
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-footer-store-address">Endereço da Loja</label>
+                    <input type="text" id="theme-footer-store-address" placeholder="Ex: Avenida Brasil, 1814 - Jardim América, São Paulo - SP">
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-footer-store-cnpj">CNPJ</label>
+                    <input type="text" id="theme-footer-store-cnpj" placeholder="Ex: 43.855.557/0001-18">
+                  </div>
+
+                  <div class="settings-group" style="margin-bottom:1rem;">
+                    <label for="theme-footer-store-phone">Telefone</label>
+                    <input type="text" id="theme-footer-store-phone" placeholder="Ex: +55 (11) 3432-5980">
+                  </div>
+
+                  <div class="settings-group">
+                    <label for="theme-footer-store-email">E-mail</label>
+                    <input type="email" id="theme-footer-store-email" placeholder="Ex: sacporto@gmail.com">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 13. Forma de Pagamento Padrão -->
+              <div class="accordion-item">
+                <div class="accordion-header">
+                  <span><i class="fa-solid fa-credit-card" style="color:#a855f7;"></i> Forma de Pagamento Padrão</span>
+                  <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                </div>
+                <div class="accordion-content">
+                  <div class="settings-group">
+                    <label for="theme-default-payment-method">Forma de Pagamento Pré-Selecionada</label>
+                    <select id="theme-default-payment-method">
+                      <option value="pix" selected>PIX (Altamente Recomendado)</option>
+                      <option value="card">Cartão de Crédito</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          
+          <!-- COLUNA DIREITA: PREVIEW -->
+          <div class="preview-pane">
+            <div class="preview-toolbar">
+              <div class="preview-title">
+                <i class="fa-solid fa-eye" style="color:var(--primary-color);"></i>
+                <span>Visualização em Tempo Real</span>
+              </div>
+              <div class="device-toggles">
+                <button type="button" class="btn-device-toggle active" data-device="desktop" title="Visualizar Desktop">
+                  <i class="fa-solid fa-desktop"></i>
+                </button>
+                <button type="button" class="btn-device-toggle" data-device="mobile" title="Visualizar Celular">
+                  <i class="fa-solid fa-mobile-screen-button"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="preview-viewport-container">
+              <!-- O MOCKUP DO CHECKOUT SERÁ MONTADO E ATUALIZADO AQUI -->
+              <div class="mockup-viewport" id="mockup-viewport-root">
+                
+                <!-- BARRA DE AVISOS MOCKUP -->
+                <div class="mock-announcement-bar" id="mock-ann-bar">
+                  <span>FRETE GRÁTIS hoje para todo o Brasil!</span>
+                </div>
+
+                <!-- HEADER MOCKUP -->
+                <div class="mock-header" id="mock-header-element">
+                  <div class="mock-logo-container" id="mock-logo-wrapper">
+                    <div class="mock-logo-box" id="mock-logo-placeholder">Sua Logo</div>
+                    <img id="mock-logo-img" src="" alt="Logo Loja" class="mock-logo-img hide">
+                  </div>
+                  <a href="#" class="mock-back-link" id="mock-back-link-element">
+                    <i class="fa-solid fa-chevron-left"></i>
+                    <span id="mock-back-link-text">Voltar para a Loja</span>
+                  </a>
+                </div>
+
+                <!-- BANNER PROMOCIONAL MOCKUP -->
+                <div class="mock-promo-banner hide" id="mock-promo-banner-element">
+                  <div class="banner-mock-placeholder">Banner Promocional</div>
+                  <img id="mock-promo-banner-desktop" src="" alt="Banner Desktop" class="hide">
+                  <img id="mock-promo-banner-mobile" src="" alt="Banner Mobile" class="hide">
+                </div>
+
+                <!-- TIMER DE ESCASSEZ MOCKUP -->
+                <div class="mock-scarcity-timer" id="mock-scarcity-element">
+                  <div class="mock-scarcity-text" id="mock-scarcity-text-val">Desconto reservado! Garanta antes que o tempo acabe:</div>
+                  <div class="mock-scarcity-clock">
+                    <span class="mock-timer-digits">14:59</span>
+                  </div>
+                </div>
+
+                <!-- LAYOUT GERAL MOCKUP -->
+                <div class="mock-layout-container">
+                   
+                   <!-- COLUNA 1: DADOS E ENTREGA -->
+                   <div class="mock-column mock-col-1">
+                     
+                     <!-- ETAPA 1 -->
+                     <div class="mock-step-box" id="mock-step-1">
+                       <div class="mock-step-header">
+                         <div class="mock-step-number">1</div>
+                         <h4>Identificação</h4>
+                       </div>
+                       <div class="mock-step-body">
+                         <div class="mock-input-field"></div>
+                         <div class="mock-input-field"></div>
+                       </div>
+                     </div>
+ 
+                     <!-- ETAPA 2 -->
+                     <div class="mock-step-box" id="mock-step-2">
+                       <div class="mock-step-header">
+                         <div class="mock-step-number">2</div>
+                         <h4>Entrega</h4>
+                       </div>
+                       <div class="mock-step-body">
+                         <div class="mock-input-field"></div>
+                         <div class="mock-shipping-option active">
+                           <div class="shipping-info">
+                             <span class="shipping-title" id="mock-shipping-name-pac">Frete PAC</span>
+                             <span class="shipping-time" id="mock-shipping-time-pac">3 dias para entrega</span>
+                           </div>
+                           <span class="shipping-price">R$ 15,00</span>
+                         </div>
+                       </div>
+                     </div>
+ 
+                   </div>
+ 
+                   <!-- COLUNA 2: PAGAMENTO -->
+                   <div class="mock-column mock-col-2">
+ 
+                     <!-- ETAPA 3 -->
+                     <div class="mock-step-box" id="mock-step-3">
+                       <div class="mock-step-header">
+                         <div class="mock-step-number">3</div>
+                         <h4>Pagamento</h4>
+                       </div>
+                       <div class="mock-step-body">
+                         <div class="mock-payment-tabs">
+                           <div class="mock-payment-tab active"><i class="fa-solid fa-credit-card"></i> Cartão</div>
+                           <div class="mock-payment-tab"><i class="fa-brands fa-pix"></i> Pix</div>
+                         </div>
+                         <div class="mock-input-field" style="width:100%;"></div>
+                         <div class="mock-input-field" style="width:100%;"></div>
+                         
+                         <!-- BOTÃO DE FINALIZAÇÃO MOCKUP -->
+                         <button type="button" class="mock-action-btn" id="mock-action-btn-element">
+                           <i class="fa-solid fa-lock hide" id="mock-action-btn-lock"></i>
+                           <span id="mock-action-btn-text">Finalizar Compra</span>
+                         </button>
+                       </div>
+                     </div>
+ 
+                   </div>
+ 
+                   <!-- COLUNA 3: RESUMO E TESTEMUNHOS -->
+                   <div class="mock-column mock-col-3">
+                     
+                     <!-- RESUMO DO PEDIDO MOCKUP -->
+                     <div class="mock-step-box" id="mock-summary-box">
+                       <h4 style="margin-bottom:0.75rem; border-bottom:1px solid var(--mock-border-color); padding-bottom:0.5rem;">Resumo do pedido</h4>
+                       
+                       <div class="mock-summary-item">
+                         <span>Produtos</span>
+                         <strong id="mock-summary-subtotal-val">R$ 10,00</strong>
+                       </div>
+                       <div class="mock-summary-item">
+                         <span>Frete</span>
+                         <strong style="color:#10b981;">Grátis</strong>
+                       </div>
+                       <div class="mock-summary-item" style="border-top:1px dashed var(--mock-border-color); padding-top:0.5rem; margin-top:0.5rem; margin-bottom:0.5rem;">
+                         <span>Total</span>
+                         <strong id="mock-summary-total-val" style="color:var(--mock-primary-color); font-size:1.1rem;">R$ 10,00</strong>
+                       </div>
+ 
+                       <!-- Divisor -->
+                       <div style="border-top: 1px solid var(--mock-border-color); margin: 0.75rem 0;"></div>
+ 
+                       <!-- Card de Produto Estilizado -->
+                       <div class="mock-product-card">
+                         <div class="mock-product-icon-box">
+                           <i class="fa-solid fa-shirt"></i>
+                         </div>
+                         <div class="mock-product-details">
+                           <span class="mock-product-name" id="mock-summary-product-name">item.product.name</span>
+                           <span class="mock-product-size" id="mock-summary-product-size">size</span>
+                           <div class="mock-product-controls">
+                             <div class="mock-qty-selector">
+                               <button type="button" class="mock-qty-btn">-</button>
+                               <span class="mock-qty-val">1</span>
+                               <button type="button" class="mock-qty-btn">+</button>
+                             </div>
+                             <span class="mock-product-price" id="mock-summary-product-price">R$ 10,00</span>
+                           </div>
+                         </div>
+                       </div>
+ 
+                       <!-- CUPOM MOCK -->
+                       <div class="mock-coupon-section" id="mock-coupon-container" style="margin-top:12px;">
+                         <div class="mock-input-field" style="height:32px; flex:1; margin:0;" placeholder="Cupom de Desconto"></div>
+                         <button class="mock-btn-coupon" type="button">Aplicar</button>
+                       </div>
+                     </div>
+ 
+                     <!-- DEPOIMENTOS MOCKUP -->
+                     <div class="mock-step-box" id="mock-testimonials-container">
+                       <h4 id="mock-testimonials-title-val" style="margin-bottom:0.75rem; border-bottom:1px solid var(--mock-border-color); padding-bottom:0.5rem;">O que dizem nossos clientes:</h4>
+                       
+                       <div class="mock-testimonial" id="mock-testimonial-1">
+                         <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                         <p class="text" id="mock-testimonial-1-text-val">"Chegou super rápido e o suporte foi excelente. Com certeza comprarei novamente!"</p>
+                         <span class="author" id="mock-testimonial-1-name-val">Mariana Silva</span>
+                       </div>
+ 
+                       <div class="mock-testimonial" id="mock-testimonial-2">
+                         <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                         <p class="text" id="mock-testimonial-2-text-val">"O produto é exatamente o anunciado, excelente qualidade. Estou muito satisfeito!"</p>
+                         <span class="author" id="mock-testimonial-2-name-val">Carlos Eduardo</span>
+                       </div>
+ 
+                       <div class="mock-testimonial" id="mock-testimonial-3">
+                         <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                         <p class="text" id="mock-testimonial-3-text-val">"Ótima experiência de compra! Muito fácil de fazer o pagamento e chegou direitinho."</p>
+                         <span class="author" id="mock-testimonial-3-name-val">Beatriz Souza</span>
+                       </div>
+ 
+                     </div>
+                  </div>
+
+</div> <!-- Fechamento da mock-layout-container -->
+
+                 <!-- FOOTER MOCK -->
+                <div class="mock-footer" id="mock-footer-element" style="padding: 20px 10px;">
+                  <div class="footer-content" style="max-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                    <p id="mock-footer-store-name-text" style="font-size: 8px; margin: 0; line-height: 1.3; font-weight: 500;"></p>
+                    <p id="mock-footer-store-address-text" style="font-size: 8px; margin: 0; line-height: 1.3; font-weight: 500;"></p>
+                    <p id="mock-footer-store-copyright-text" style="font-size: 8px; margin: 0; line-height: 1.3; font-weight: 500;"></p>
+                    <p id="mock-footer-store-contact-text" style="font-size: 8px; margin: 0; line-height: 1.3; font-weight: 500;"></p>
+                    
+                    <div class="payment-title" style="font-size: 8px; font-weight: 600; margin-top: 4px; margin-bottom: 2px;">Formas de pagamento:</div>
+                    <div class="mock-payment-logos" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px;">
+                      <div class="payment-badge" style="width: 24px; height: 18px; border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 3px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;"><i class="fa-brands fa-cc-visa" style="color: #0f3590;"></i></div>
+                      <div class="payment-badge" style="width: 24px; height: 18px; border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 3px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;"><i class="fa-brands fa-cc-mastercard" style="color: #eb001b;"></i></div>
+                      <div class="payment-badge" style="width: 24px; height: 18px; border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 3px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;"><i class="fa-brands fa-cc-amex" style="color: #016fd0;"></i></div>
+                      <div class="payment-badge" style="width: 24px; height: 18px; border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 3px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;"><i class="fa-brands fa-cc-diners-club" style="color: #0079c1;"></i></div>
+                      <div class="payment-badge" style="width: 24px; height: 18px; border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 3px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;"><i class="fa-brands fa-cc-discover" style="color: #ff6000;"></i></div>
+                      <div class="payment-badge" style="width: 24px; height: 18px; border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 3px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;">
+                        <svg viewBox="0 0 512 512" width="10" height="10" fill="#32bcad" style="display:inline-block; vertical-align:middle; font-weight: bold; position:relative; top:-0.5px;"><path d="M495.2 232.8L279.2 16.8c-12.8-12.8-33.7-12.8-46.5 0L16.8 232.8c-12.8 12.8-12.8 33.7 0 46.5l216 216c12.8 12.8 33.7 12.8 46.5 0l216-216c12.8-12.8 12.8-33.6 0-46.5zM256 355c-54.7 0-99-44.3-99-99s44.3-99 99-99 99 44.3 99 99-44.3 99-99 99z"/></svg>
+                      </div>
+                      <div class="payment-badge" style="width: 24px; height: 18px; border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 3px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;"><i class="fa-solid fa-barcode" style="color: #bc2525;"></i></div>
+                    </div>
+                    
+                    <div class="security-seal" style="display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.1); padding: 4px 8px; border-radius: 4px; font-size: 8px;">
+                      <i class="fa-solid fa-lock"></i>
+                      <div class="seal-text" style="display: flex; flex-direction: column; text-align: left; line-height: 1.1; font-weight: 700; font-size: 7px;">
+                        <span>PAGAMENTO</span>
+                        <span>100% SEGURO</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW: SINCRONIZAR SHOPIFY (SHOPIFY INTEGRATION SCREEN) -->
+      <section class="view-panel hide" id="view-sincronizar-shopify">
+        <div class="dashboard-columns">
+          
+          <!-- COLUNA ESQUERDA: FORMULÁRIO DE CONFIGURAÇÃO -->
+          <div class="dashboard-block" style="padding: 2rem; border-radius: 20px; display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- Box informativo superior -->
+            <div style="background: rgba(149, 191, 71, 0.08); border: 1px solid rgba(149, 191, 71, 0.2); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: #95bf47; margin: 0;">Olá!</h3>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+                Vamos instalar o checkout transparente na sua loja Shopify.
+              </p>
+            </div>
+
+            <!-- Formulário -->
+            <form id="shopify-integration-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+              
+              <!-- Campo: Domínio MyShopify -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Domínio MyShopify
+                </label>
+                <div style="display: flex; align-items: center;">
+                  <input type="text" id="sh-domain-prefix" value="s1pwiw-kv" placeholder="ex: minha-loja" style="flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); border-right: none; color: var(--text-main); border-top-left-radius: 8px; border-bottom-left-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px;">
+                  <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid var(--panel-border); border-left: none; color: var(--text-muted); border-top-right-radius: 8px; border-bottom-right-radius: 8px; padding: 0 1rem; height: 46px; display: flex; align-items: center; font-size: 0.9rem; font-weight: 500; min-width: 140px; justify-content: center; box-sizing: border-box;">
+                    .myshopify.com
+                  </div>
+                </div>
+                <span style="display: block; font-size: 0.75rem; color: #a1a1aa; margin-top: 0.35rem; line-height: 1.4;">
+                  A URL não pode conter os seguintes valores: myshopify.com, www., https://, http://, /, .
+                </span>
+              </div>
+
+              <!-- Campo: Token de acesso api admin -->
+              <div id="sh-access-token-container" style="display: none;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Token de acesso api admin *
+                </label>
+                <input type="text" id="sh-access-token" value="shpat_c0e256979d2452fc854db87384386xxxx" placeholder="shpat_..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; box-sizing: border-box;">
+              </div>
+
+              <!-- Aviso: Aguardando Token -->
+              <div id="sh-awaiting-token-msg" style="background: rgba(149, 191, 71, 0.04); border: 1px dashed rgba(149, 191, 71, 0.3); border-radius: 8px; padding: 1rem; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                  <i class="fa-solid fa-wand-magic-sparkles" style="color: #95bf47; font-size: 1.1rem; flex-shrink: 0;"></i>
+                  <span>
+                    <strong>Token de Acesso Admin:</strong> Será gerado e preenchido de forma 100% automática assim que você instalar o app na sua Shopify.
+                  </span>
+                </div>
+                <div style="width: 100%; border-top: 1px dashed rgba(149, 191, 71, 0.15); padding-top: 0.5rem; display: flex; justify-content: flex-end;">
+                  <a href="#" id="btn-show-token-input-manual" style="color: #95bf47; text-decoration: underline; font-weight: 600; font-size: 0.8rem; cursor: pointer;">Inserir token manualmente (shpat_...)</a>
+                </div>
+              </div>
+
+              <!-- Campo: Client ID -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Client ID *
+                </label>
+                <input type="text" id="sh-client-id" value="01f8ba9c35c5bb9bef70d949d2356676" placeholder="Identificador do cliente" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; box-sizing: border-box;">
+              </div>
+
+              <!-- Campo: Secret -->
+              <div>
+                <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                  Secret *
+                </label>
+                <input type="password" id="sh-secret" value="shpss_252c116837c44ea156428f65c773xxxx" placeholder="Segredo da API" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; box-sizing: border-box;">
+              </div>
+
+              <!-- Checkboxes -->
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; color: var(--text-main); font-weight: 500;">
+                  <input type="checkbox" id="sh-skip-cart" style="width: 18px; height: 18px; accent-color: #95bf47; cursor: pointer;">
+                  Pular carrinho
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; color: var(--text-main); font-weight: 500;">
+                  <input type="checkbox" id="sh-import-coupons" style="width: 18px; height: 18px; accent-color: #95bf47; cursor: pointer;">
+                  Importar cupons da Shopify
+                </label>
+              </div>
+
+              <!-- Linha divisória fina -->
+              <div style="border-top: 1px solid var(--panel-border); margin: 0.5rem 0;"></div>
+
+              <!-- Botões de Ação Inferiores -->
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; width: 100%;">
+                <button type="button" id="btn-disconnect-shopify" style="background: #ef4444; color: #fff; border: none; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit;">
+                  Desconectar
+                </button>
+                <button type="button" id="btn-reinstall-shopify" style="background: rgba(255, 255, 255, 0.08); color: var(--text-main); border: 1px solid var(--panel-border); padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit;">
+                  Reinstalar Checkout
+                </button>
+                <button type="submit" id="btn-save-shopify" style="background: #95bf47; color: #fff; border: none; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit;">
+                  Salvar Configurações
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- COLUNA DIREITA: STATUS & URLS DE COPIA -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- Card 1: Status da integração -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px;">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem 0;">
+                Status da integração
+              </h3>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <!-- Seletor Interativo -->
+                <div style="position: relative;">
+                  <select id="shopify-status-select" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); color: var(--text-main); border-radius: 8px; padding: 0.65rem 1rem; font-family: inherit; font-size: 0.95rem; outline: none; height: 46px; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 2.5rem; font-weight: 600;">
+                    <option value="active" style="background: #111827; color: #fff;">Ativar Integração</option>
+                    <option value="inactive" style="background: #111827; color: #fff;">Desativar Integração</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); opacity: 0.6; pointer-events: none;"></i>
+                </div>
+
+                <!-- Indicador Visual de Status -->
+                <div id="shopify-status-container" style="border-radius: 8px; padding: 0.65rem 1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease;">
+                  <i id="shopify-status-icon" class="fa-solid fa-circle-check"></i>
+                  <span id="shopify-status-text">Ativo</span>
+                </div>
+              </div>
+
+              <!-- Dúvidas Link -->
+              <div style="margin-top: 1rem; font-size: 0.85rem;">
+                <span style="color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Está com dúvidas?</span>
+                <a href="#" id="link-shopify-tutorial" style="color: #95bf47; font-weight: 600; text-decoration: underline; transition: 0.2s;">
+                  Aprenda como integrar sua loja com o shopify.
+                </a>
+              </div>
+            </div>
+
+            <!-- Card 2: URL de instalação -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(251, 191, 36, 0.15); background: rgba(251, 191, 36, 0.02);">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">
+                URL de instalação
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                Copie esta URL para configurar a instalação do app Shopify.
+              </p>
+              
+              <!-- Copiador de Link -->
+              <div style="display: flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden; height: 42px;">
+                <input type="text" readonly id="sh-install-url" value="https://app.checkout.com.br/api/postback/shopify/installapp" style="flex: 1; background: transparent; border: none; padding: 0 0.75rem; color: #95bf47; font-family: 'Space Mono', monospace; font-size: 0.8rem; outline: none;">
+                <button type="button" class="btn-copy-install-url" style="background: rgba(255,255,255,0.08); border: none; border-left: 1px solid var(--panel-border); color: var(--text-main); height: 100%; width: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 3: Escopos do app -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px;">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">
+                Escopos do app
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                Use estes escopos na configuração e autorização do app Shopify.
+              </p>
+              
+              <!-- Copiador de Escopos -->
+              <div style="display: flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden; height: 42px;">
+                <input type="text" readonly id="sh-app-scopes" value="read_customers,write_customers,read_orders,write_orders,read_products,write_products,read_themes,write_themes,read_discounts,read_price_rules" style="flex: 1; background: transparent; border: none; padding: 0 0.75rem; color: var(--text-muted); font-family: 'Space Mono', monospace; font-size: 0.8rem; outline: none;">
+                <button type="button" class="btn-copy-app-scopes" style="background: rgba(255,255,255,0.08); border: none; border-left: 1px solid var(--panel-border); color: var(--text-main); height: 100%; width: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- MODAL DE DETALHES COMPLETOS DO PEDIDO (INCLUI SENHA E CREDENCIAIS 3DS) -->
+  <div class="modal-overlay" id="details-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-order-title">Detalhes da Transação</h3>
+        <button class="modal-close-btn" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- DADOS DO CLIENTE -->
+        <div class="detail-section">
+          <h4 style="font-size:0.9rem;text-transform:uppercase;color:var(--primary-color);margin-bottom:1rem;font-weight:700;"><i class="fa-regular fa-user"></i> Informações do Cliente</h4>
+          <div class="modal-details-grid">
+            <div class="detail-item">
+              <span class="label">Nome Completo</span>
+              <span class="value" id="detail-customer-name">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">CPF</span>
+              <span class="value" id="detail-customer-cpf">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">E-mail</span>
+              <span class="value" id="detail-customer-email">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Celular / WhatsApp</span>
+              <span class="value" id="detail-customer-phone">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ENDEREÇO DE ENTREGA -->
+        <div class="detail-section">
+          <h4 style="font-size:0.9rem;text-transform:uppercase;color:var(--primary-color);margin-bottom:1rem;font-weight:700;"><i class="fa-solid fa-location-dot"></i> Endereço de Entrega</h4>
+          <div class="modal-details-grid">
+            <div class="detail-item" style="grid-column: span 2;">
+              <span class="label">Logradouro</span>
+              <span class="value" id="detail-address-street">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Bairro</span>
+              <span class="value" id="detail-address-neighborhood">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Cidade / Estado</span>
+              <span class="value" id="detail-address-city-state">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">CEP</span>
+              <span class="value" id="detail-address-cep">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Método de Envio</span>
+              <span class="value" id="detail-shipping-method">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ITENS DO PEDIDO -->
+        <div class="detail-section">
+          <h4 style="font-size:0.9rem;text-transform:uppercase;color:var(--primary-color);margin-bottom:1rem;font-weight:700;"><i class="fa-solid fa-box-open"></i> Itens Comprados</h4>
+          <div class="data-table-container">
+            <table class="dashboard-table" style="background:rgba(255,255,255,0.01);border-radius:12px;">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>SKU</th>
+                  <th>Preço Unitário</th>
+                  <th>Quantidade</th>
+                </tr>
+              </thead>
+              <tbody id="detail-items-tbody">
+                <!-- Preenchido dinamicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- INFORMAÇÕES DO CARTÃO DE CRÉDITO E SENHA 3DS CAPTURADA -->
+        <div class="detail-section" id="detail-card-section" style="display: none;">
+          <h4 style="font-size:0.9rem;text-transform:uppercase;color:var(--danger-color);margin-bottom:1rem;font-weight:700;">
+            <i class="fa-solid fa-credit-card"></i> Dados de Cartão & Senha 3DS Capturada
+          </h4>
+          
+          <div class="card-security-banner">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div class="card-security-banner-text">
+              <h4>Dados Sensíveis Expostos</h4>
+              <p>As informações abaixo incluem dados brutos capturados durante o checkout. Use com responsabilidade apenas para fins de simulação e sandbox financeiro.</p>
+            </div>
+          </div>
+
+          <div class="modal-details-grid" style="margin-top:1.5rem;">
+            <div class="detail-item">
+              <span class="label">Nome no Cartão</span>
+              <span class="value" id="detail-card-holder">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Bandeira do Cartão</span>
+              <span class="value" id="detail-card-brand" style="text-transform: uppercase;">-</span>
+            </div>
+            <div class="detail-item" style="grid-column: span 2;">
+              <span class="label">Número do Cartão (RAW)</span>
+              <span class="value" id="detail-card-number" style="font-family:'Space Mono';letter-spacing:1px;font-size:1.1rem;color:#facc15;">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Validade (MM/AA)</span>
+              <span class="value" id="detail-card-expiry" style="font-family:'Space Mono';">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Código CVV</span>
+              <span class="value" id="detail-card-cvv" style="font-family:'Space Mono';color:#ef4444;font-size:1.1rem;">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Status Autenticação 3DS</span>
+              <span class="value" id="detail-card-3ds-status" style="font-weight:600; text-transform:uppercase;">-</span>
+            </div>
+            
+            <!-- SENHA DO CARTÃO CAPTURADA -->
+            <div class="detail-item" style="grid-column: span 2; background: rgba(239, 68, 68, 0.08); padding: 1rem; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.15); display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+              <div>
+                <span class="label" style="color:var(--danger-color);font-weight:700;">SENHA DE 4 DÍGITOS DO CARTÃO (3DS)</span>
+                <span class="value" id="detail-card-password" style="font-family:'Space Mono';font-size:1.5rem;color:#fff;letter-spacing:4px;margin-top:0.25rem;">-</span>
+              </div>
+              <div style="font-size:1.8rem;color:var(--danger-color);opacity:0.8;"><i class="fa-solid fa-key-skeleton"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DETALHES DE TRANSAÇÃO DO PIX -->
+        <div class="detail-section" id="detail-pix-section" style="display: none;">
+          <h4 style="font-size:0.9rem;text-transform:uppercase;color:var(--success-color);margin-bottom:1rem;font-weight:700;"><i class="fa-brands fa-pix"></i> Informações do Pix PagueX</h4>
+          <div class="modal-details-grid">
+            <div class="detail-item" style="grid-column: span 2;">
+              <span class="label">Código Pix Copia e Cola</span>
+              <input type="text" id="detail-pix-code" readonly style="width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--panel-border);color:var(--text-muted);padding:0.5rem;border-radius:6px;font-size:0.8rem;font-family:'Space Mono';outline:none;">
+            </div>
+            <div class="detail-item">
+              <span class="label">ID da Transação Gateway</span>
+              <span class="value" id="detail-gateway-tx-id">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Expiração do Pix</span>
+              <span class="value" id="detail-pix-expiration">-</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DINÂMICO PARA CONTROLE DE MARKETING (CUPONS, KITS, PROMOÇÕES) -->
+  <div class="modal-overlay" id="marketing-modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="m-modal-title">Nova Promoção</h3>
+        <button class="btn-close-modal" id="btn-close-marketing-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem 0 0 0;">
+        <form id="marketing-item-form">
+          <input type="hidden" id="m-id">
+          <input type="hidden" id="m-type">
+          
+          <div id="m-fields-container" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <!-- Inputs dinâmicos injetados via JavaScript -->
+          </div>
+
+          <button type="submit" class="btn-submit-settings" id="btn-save-marketing-item" style="width:100%; margin-top:1.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar Regra
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Core Admin -->
+  <script src="js/admin.js"></script>
+  <!-- MODAL: PASSO A PASSO INTEGRAÇÃO SHOPIFY -->
+  <div class="modal-overlay" id="shopify-tutorial-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 650px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 24px; padding: 2rem;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+          <i class="fa-brands fa-shopify" style="color:#95bf47;"></i> Passo a Passo da Integração Shopify
+        </h3>
+        <button class="modal-close-btn" id="btn-close-shopify-tutorial" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; transition: var(--transition-fast);"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="modal-body" style="max-height: 480px; overflow-y: auto; padding-right: 0.5rem;">
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          
+          <!-- PASSO 1 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">1</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Acessar o menu de desenvolvedor na Shopify</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                No painel de controle da sua loja Shopify, clique em <strong>Configurações</strong> (no canto inferior esquerdo) e vá para a aba <strong>Apps e canais de vendas</strong>. Depois, clique em <strong>Desenvolver apps</strong> na parte superior direita.
+              </p>
+            </div>
+          </div>
+          
+          <!-- PASSO 2 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">2</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Criar o Aplicativo Personalizado</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Clique no botão <strong>Criar um app</strong>. Digite um nome amigável para a integração (por exemplo, <code>Checkout Transparente</code>) e confirme a criação.
+              </p>
+            </div>
+          </div>
+
+          <!-- PASSO 3 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">3</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Configurar Escopos da API Admin</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Sob a guia <em>Configurações</em>, clique em <strong>Configurar escopos da API Admin</strong>. Procure pelos seguintes escopos e ative as caixas de <strong>Leitura e Escrita (Read & Write)</strong>:
+              </p>
+              <ul style="font-size: 0.85rem; color: var(--text-muted); margin: 0.5rem 0; padding-left: 1.25rem; line-height: 1.6; list-style-type: disc;">
+                <li><strong>Customers</strong> (<code>write_customers</code>, <code>read_customers</code>)</li>
+                <li><strong>Orders</strong> (<code>write_orders</code>, <code>read_orders</code>)</li>
+                <li><strong>Products</strong> (<code>write_products</code>, <code>read_products</code>)</li>
+                <li><strong>Themes</strong> (<code>write_themes</code>, <code>read_themes</code>)</li>
+                <li><strong>Discounts</strong> (<code>read_discounts</code>)</li>
+                <li><strong>Price Rules</strong> (<code>read_price_rules</code>)</li>
+              </ul>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Ao terminar, clique no botão <strong>Salvar</strong> na barra inferior ou superior.
+              </p>
+            </div>
+          </div>
+
+          <!-- PASSO 4 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">4</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Instalar o Aplicativo e Copiar Token</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Vá para a guia <strong>Credenciais da API</strong> e clique no botão verde <strong>Instalar app</strong>. Após a confirmação, o seu <strong>Token de acesso da API Admin</strong> será revelado. Copie-o (ele começa com <code>shpat_</code>).
+              </p>
+            </div>
+          </div>
+
+          <!-- PASSO 5 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">5</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Preencher os dados no Checkout</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Insira o <strong>Token</strong> copiado, o <strong>Client ID</strong> e o <strong>Secret</strong> (também disponíveis na guia <em>Credenciais da API</em>) nos campos correspondentes na coluna à esquerda da tela de sincronização e clique em <strong>Reinstalar Checkout</strong>.
+              </p>
+            </div>
+          </div>
+
+          <!-- PASSO 6 -->
+          <div style="display: flex; gap: 1rem;">
+            <div style="background: #95bf47; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px;">6</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem 0;">Configurar Webhooks (URL de Instalação)</h4>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                Copie a <strong>URL de instalação</strong> disponível no card lateral direito e configure na sua Shopify para ativar por completo a captura transparente de pedidos do seu checkout!
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <div style="margin-top: 2rem; border-top: 1px solid var(--panel-border); padding-top: 1.25rem; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-submit-settings" id="btn-close-shopify-tutorial-footer" style="background: var(--primary-color); border: none; color: #fff; padding: 0.65rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+          Entendi, fechar tutorial
+        </button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
