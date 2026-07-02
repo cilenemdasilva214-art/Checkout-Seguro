@@ -1030,41 +1030,47 @@ Fico no aguardo! \u{1F60A}`;
       // Renderiza as telas iniciais
       renderData();
 
-      // 3. Atualização em Tempo Real (Supabase Realtime)
-      if (window.supabase) {
-        const SUPABASE_URL = 'https://lqwexpieqikhudcsnzdg.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxd2V4cGllcWlraHVkY3NuemRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNDc0MzAsImV4cCI6MjA5NDcyMzQzMH0.FtUzSzya2vpgNRR3iHqAQBozDiunwbHF_6q0aGKXZH8';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        supabaseClient.channel('admin-dashboard')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'card_checkout_test_raw' }, payload => {
-            console.log('🔄 Atualização em tempo real recebida!', payload);
-            
-            const currentDomain = window.location.hostname;
-            const txDomain = payload.new.domain || '';
-            const isThirdParty = txDomain && txDomain !== currentDomain && txDomain !== 'localhost' && txDomain !== '127.0.0.1';
-            
-            let targetArray = isThirdParty ? thirdPartyTransactions : allTransactions;
-            
-            if (payload.eventType === 'INSERT') {
-              targetArray.unshift(payload.new);
-            } else if (payload.eventType === 'UPDATE') {
-              const index = targetArray.findIndex(tx => tx.id === payload.new.id);
-              if (index !== -1) {
-                targetArray[index] = payload.new;
-              } else {
-                targetArray.unshift(payload.new);
-              }
-            }
-            
-            // Re-renderiza o painel com os dados novos
-            renderData();
-          })
-          .subscribe();
+      // 3. Atualização em Tempo Real (Polling Seguro)
+      // Como a chave pública foi removida para segurança máxima (RLS completo), 
+      // o painel verifica novas vendas silenciosamente a cada 15 segundos através do próprio servidor.
+      if (!window.pollingInterval) {
+        window.pollingInterval = setInterval(() => {
+          // Apenas recarrega se o usuário estiver focado na página para economizar recursos
+          if (document.visibilityState === 'visible') {
+            fetchOrdersSilently();
+          }
+        }, 15000);
       }
 
     } catch (err) {
       console.error('Erro ao buscar dados do painel:', err);
+    }
+  }
+
+  // Função para buscar pedidos silenciosamente e atualizar a interface sem piscar
+  async function fetchOrdersSilently() {
+    try {
+      const [ordersRes, thirdPartyRes] = await Promise.all([
+        fetch('/api/orders?limit=100'),
+        fetch('/api/orders?limit=100&third_party=true')
+      ]);
+
+      if (ordersRes.ok && thirdPartyRes.ok) {
+        const newAllTx = await ordersRes.json();
+        const newThirdPartyTx = await thirdPartyRes.json();
+
+        // Se houver novos pedidos ou mudanças de status, atualiza a tela
+        if (JSON.stringify(newAllTx) !== JSON.stringify(allTransactions) || 
+            JSON.stringify(newThirdPartyTx) !== JSON.stringify(thirdPartyTransactions)) {
+          
+          allTransactions = newAllTx;
+          thirdPartyTransactions = newThirdPartyTx;
+          renderData();
+        }
+      }
+    } catch (err) {
+      // Falha silenciosa para não incomodar o admin
+      console.warn('Erro ao atualizar pedidos silenciosamente:', err);
     }
   }
 
