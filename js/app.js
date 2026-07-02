@@ -3034,7 +3034,7 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
       statusIconBox.classList.add('error');
       statusIcon.classList.add('fa-xmark');
       statusTitle.textContent = 'Falha no Processamento';
-      statusSubtitle.textContent = 'Houve um erro ao processar a requisição.';
+      statusSubtitle.textContent = responseData && responseData.error ? responseData.error : 'Houve um erro ao processar a requisição.';
       
       btnCloseModal.style.display = 'inline-flex';
       responseMode.textContent = 'ERRO';
