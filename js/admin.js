@@ -2485,12 +2485,26 @@ Fico no aguardo! \u{1F60A}`;
   }
 
   // Adiciona evento de clique para exibir detalhes no modal
-  function addDetailButtonListeners() {
+    function addDetailButtonListeners() {
     const detailButtons = document.querySelectorAll('.btn-detail-trigger');
     detailButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const txId = btn.getAttribute('data-id');
         openTransactionDetails(txId);
+      });
+    });
+
+    const editButtons = document.querySelectorAll('.btn-edit-trigger');
+    editButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const txId = btn.getAttribute('data-id');
+        if (typeof window.openEditOrderModal === 'function') {
+          window.openEditOrderModal(txId);
+        } else {
+          console.error('window.openEditOrderModal is missing');
+        }
       });
     });
   }
