@@ -2843,6 +2843,70 @@
     </div>
   </div>
 
+  <!-- MODAL DE EDICAO DE PEDIDO -->
+  <div class="modal-overlay" id="edit-order-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>Editar Pedido</h3>
+        <button class="modal-close-btn" id="btn-close-edit-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem 0 0 0;">
+        <form id="edit-order-form">
+          <input type="hidden" id="edit-order-id">
+          
+          <div class="settings-group">
+            <label>Status do Pedido</label>
+            <div class="settings-input-wrapper">
+              <i class="fa-solid fa-tags"></i>
+              <select id="edit-order-status" required style="width: 100%; border: none; outline: none; background: transparent; padding-left: 0.5rem; color: var(--text-main); cursor: pointer;">
+                <option value="PENDING">PENDING (Aguardando Pagamento)</option>
+                <option value="PAID">PAID (Pago/Aprovado)</option>
+                <option value="REFUSED">REFUSED (Recusado)</option>
+                <option value="CANCELLED">CANCELLED (Cancelado)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <label>Nome do Cliente</label>
+            <div class="settings-input-wrapper">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" id="edit-order-name" required>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <label>E-mail</label>
+            <div class="settings-input-wrapper">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="edit-order-email">
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <label>Telefone</label>
+            <div class="settings-input-wrapper">
+              <i class="fa-solid fa-phone"></i>
+              <input type="text" id="edit-order-phone">
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <label>CPF</label>
+            <div class="settings-input-wrapper">
+              <i class="fa-solid fa-id-card"></i>
+              <input type="text" id="edit-order-cpf">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit-settings" style="width:100%; justify-content:center; margin-top:1rem;">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar Alterações
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL DINÂMICO PARA CONTROLE DE MARKETING (CUPONS, KITS, PROMOÇÕES) -->
   <div class="modal-overlay" id="marketing-modal">
     <div class="modal-content" style="max-width: 500px;">

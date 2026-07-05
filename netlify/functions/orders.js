@@ -6,20 +6,20 @@ exports.handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'GET, DELETE, OPTIONS',
-      },
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
+          'Access-Control-Allow-Methods': 'GET, DELETE, PATCH, OPTIONS',
+        },
       body: JSON.stringify({ message: 'Successful preflight' }),
     };
   }
 
-  if (event.httpMethod !== 'GET' && event.httpMethod !== 'DELETE') {
+  if (event.httpMethod !== 'GET' && event.httpMethod !== 'DELETE' && event.httpMethod !== 'PATCH') {
     return {
       statusCode: 405,
       headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Método não permitido. Use GET ou DELETE.' }),
+      body: JSON.stringify({ error: 'Método não permitido. Use GET, DELETE ou PATCH.' }),
     };
   }
 
@@ -49,12 +49,12 @@ exports.handler = async (event, context) => {
   });
   const authRows = await authResponse.json();
   const dbToken = (authRows && authRows.length > 0) ? authRows[0].value : null;
-  
+
   if (!dbToken || dbToken !== token) {
     return { statusCode: 401, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Sessão inválida ou expirada.' }) };
   }
   // ====================
-
+  // 1. DELETE
   if (event.httpMethod === 'DELETE') {
     const idToDelete = event.queryStringParameters ? event.queryStringParameters.id : null;
     if (!idToDelete) {

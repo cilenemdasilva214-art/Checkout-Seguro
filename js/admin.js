@@ -1984,6 +1984,9 @@ Fico no aguardo! \u{1F60A}`;
                 <button class="btn-table-action btn-detail-trigger" data-id="${order.id}">
                   <i class="fa-regular fa-eye"></i> Detalhes
                 </button>
+                <button class="btn-table-action btn-edit-trigger" data-id="${order.id}" style="background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.2);">
+                  <i class="fa-solid fa-pen"></i> Editar
+                </button>
                 ${waButtons}
               </div>
             </td>
@@ -2111,6 +2114,9 @@ Fico no aguardo! \u{1F60A}`;
                 <button class="btn-table-action btn-detail-trigger" data-id="${order.id}">
                   <i class="fa-regular fa-eye"></i> Detalhes
                 </button>
+                <button class="btn-table-action btn-edit-trigger" data-id="${order.id}" style="background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.2);">
+                  <i class="fa-solid fa-pen"></i> Editar
+                </button>
                 ${waButtons}
               </div>
             </td>
@@ -2172,6 +2178,9 @@ Fico no aguardo! \u{1F60A}`;
               <button class="btn-table-action btn-detail-trigger" data-id="${order.id}">
                 <i class="fa-regular fa-eye"></i> Detalhes
               </button>
+                <button class="btn-table-action btn-edit-trigger" data-id="${order.id}" style="background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.2);">
+                  <i class="fa-solid fa-pen"></i> Editar
+                </button>
             </td>
           </tr>
         `;
@@ -2256,6 +2265,9 @@ Fico no aguardo! \u{1F60A}`;
               <button class="btn-table-action btn-detail-trigger" data-id="${order.id}">
                 <i class="fa-regular fa-eye"></i> Detalhes
               </button>
+                <button class="btn-table-action btn-edit-trigger" data-id="${order.id}" style="background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.2);">
+                  <i class="fa-solid fa-pen"></i> Editar
+                </button>
             </td>
           </tr>
         `;
@@ -5740,3 +5752,96 @@ Fico no aguardo! \u{1F60A}`;
   }
 
 });
+
+  // ==========================================
+  // LÓGICA DO MODAL DE EDIÇÃO DE PEDIDOS
+  // ==========================================
+  const editOrderModal = document.getElementById('edit-order-modal');
+  const btnCloseEditModal = document.getElementById('btn-close-edit-modal');
+  const editOrderForm = document.getElementById('edit-order-form');
+
+  if (btnCloseEditModal) {
+    btnCloseEditModal.addEventListener('click', () => {
+      editOrderModal.style.display = 'none';
+    });
+  }
+
+  // Abre o modal de edição e preenche com os dados atuais
+  window.openEditOrderModal = function(orderId) {
+    const order = window.allTransactions.find(t => t.id === orderId);
+    if (!order) return;
+
+    document.getElementById('edit-order-id').value = order.id;
+    document.getElementById('edit-order-status').value = order.status ? order.status.toUpperCase() : 'PENDING';
+    document.getElementById('edit-order-name').value = order.customer_name || '';
+    document.getElementById('edit-order-email').value = order.customer_email || '';
+    document.getElementById('edit-order-phone').value = order.customer_phone || '';
+    document.getElementById('edit-order-cpf').value = order.customer_cpf || '';
+
+    editOrderModal.style.display = 'flex';
+  };
+
+  // Submissão do formulário de edição
+  if (editOrderForm) {
+    editOrderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btnSubmit = editOrderForm.querySelector('button[type="submit"]');
+      const originalText = btnSubmit.innerHTML;
+      
+      try {
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+        btnSubmit.disabled = true;
+
+        const orderId = document.getElementById('edit-order-id').value;
+        const payload = {
+          status: document.getElementById('edit-order-status').value,
+          customer_name: document.getElementById('edit-order-name').value,
+          customer_email: document.getElementById('edit-order-email').value,
+          customer_phone: document.getElementById('edit-order-phone').value,
+          customer_cpf: document.getElementById('edit-order-cpf').value
+        };
+
+        const response = await fetch(`/api/orders?id=${orderId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionStorage.getItem('admin_session_token')}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Pedido atualizado com sucesso!');
+          editOrderModal.style.display = 'none';
+          
+          // Atualiza o array local para refletir na UI instantaneamente
+          const orderIndex = window.allTransactions.findIndex(t => t.id === orderId);
+          if (orderIndex !== -1) {
+            window.allTransactions[orderIndex] = { ...window.allTransactions[orderIndex], ...payload };
+            applyFilters(); // Re-renderiza a tabela atual
+          }
+        } else {
+          alert('Erro ao atualizar pedido: ' + (data.error || 'Erro desconhecido'));
+        }
+      } catch (err) {
+        console.error('Erro ao editar pedido:', err);
+        alert('Erro ao salvar as alterações.');
+      } finally {
+        btnSubmit.innerHTML = originalText;
+        btnSubmit.disabled = false;
+      }
+    });
+  }
+
+  // Delegar o evento de clique do botão "Editar"
+  document.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.btn-edit-trigger');
+    if (editBtn) {
+      const orderId = editBtn.getAttribute('data-id');
+      if (orderId) {
+        window.openEditOrderModal(orderId);
+      }
+    }
+  });
