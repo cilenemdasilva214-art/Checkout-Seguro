@@ -5751,7 +5751,7 @@ Fico no aguardo! \u{1F60A}`;
     });
   }
 
-});
+
 
   // ==========================================
   // LÓGICA DO MODAL DE EDIÇÃO DE PEDIDOS
@@ -5845,4 +5845,4 @@ Fico no aguardo! \u{1F60A}`;
       }
     }
   });
-\n});\n
+});
