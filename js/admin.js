@@ -5776,7 +5776,8 @@ Fico no aguardo! \u{1F60A}`;
 
   if (btnCloseEditModal) {
     btnCloseEditModal.addEventListener('click', () => {
-      editOrderModal.style.display = 'none';
+      editOrderModal.classList.remove('open');
+      setTimeout(() => { editOrderModal.style.display = 'none'; }, 300);
     });
   }
 
@@ -5793,6 +5794,8 @@ Fico no aguardo! \u{1F60A}`;
     document.getElementById('edit-order-cpf').value = order.customer_cpf || '';
 
     editOrderModal.style.display = 'flex';
+    void editOrderModal.offsetWidth; // Force reflow
+    editOrderModal.classList.add('open');
   };
 
   // Submissão do formulário de edição
@@ -5828,7 +5831,8 @@ Fico no aguardo! \u{1F60A}`;
 
         if (response.ok) {
           alert('Pedido atualizado com sucesso!');
-          editOrderModal.style.display = 'none';
+          editOrderModal.classList.remove('open');
+          setTimeout(() => { editOrderModal.style.display = 'none'; }, 300);
           
           // Atualiza o array local para refletir na UI instantaneamente
           const orderIndex = allTransactions.findIndex(t => String(t.id) === String(orderId));
