@@ -101,7 +101,68 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // Obter parâmetros da query string (limites, etc.)
+  // 2. PATCH (Update order)
+  if (event.httpMethod === 'PATCH') {
+    const idToUpdate = event.queryStringParameters ? event.queryStringParameters.id : null;
+    if (!idToUpdate) {
+      return {
+        statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'ID é obrigatório para atualização' }),
+      };
+    }
+    
+    let payload;
+    try {
+      payload = JSON.parse(event.body);
+    } catch (e) {
+      return {
+        statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Body inválido (esperado JSON)' }),
+      };
+    }
+
+    const targetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw?id=eq.${idToUpdate}`;
+    
+    try {
+      const response = await fetch(targetUrl, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Erro ao atualizar pedido no Supabase: ${response.status} - ${errText}`);
+      }
+
+      const updatedData = await response.json();
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ success: true, data: updatedData }),
+      };
+    } catch (error) {
+      console.error('❌ Erro no PATCH de orders:', error);
+      return {
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, error: error.message }),
+      };
+    }
+  }
+
+  // Obter parâmetros da query string (limites, etc.) para o GET
   const id = event.queryStringParameters ? event.queryStringParameters.id : null;
   const limit = (event.queryStringParameters && event.queryStringParameters.limit) || '1000';
   const isThirdParty = event.queryStringParameters && event.queryStringParameters.third_party === 'true';
