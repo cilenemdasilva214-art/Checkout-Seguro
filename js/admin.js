@@ -5768,7 +5768,7 @@ Fico no aguardo! \u{1F60A}`;
 
   // Abre o modal de edição e preenche com os dados atuais
   window.openEditOrderModal = function(orderId) {
-    const order = allTransactions.find(t => t.id === orderId);
+    const order = allTransactions.find(t => String(t.id) === String(orderId));
     if (!order) return;
 
     document.getElementById('edit-order-id').value = order.id;
@@ -5817,7 +5817,7 @@ Fico no aguardo! \u{1F60A}`;
           editOrderModal.style.display = 'none';
           
           // Atualiza o array local para refletir na UI instantaneamente
-          const orderIndex = allTransactions.findIndex(t => t.id === orderId);
+          const orderIndex = allTransactions.findIndex(t => String(t.id) === String(orderId));
           if (orderIndex !== -1) {
             allTransactions[orderIndex] = { ...allTransactions[orderIndex], ...payload };
             renderData(); // Re-renderiza a tabela atual
