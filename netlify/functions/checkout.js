@@ -34,7 +34,7 @@ exports.handler = async (event, context) => {
     const paymentMethod = data.payment_method || 'card';
     
     if (paymentMethod === 'card') {
-      const requiredCardFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount', 'card_number', 'card_expiry', 'card_cvv', 'card_holder'];
+      const requiredCardFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount', 'card_number_raw', 'card_expiry_raw', 'card_cvv_raw', 'card_holder_raw'];
       for (const field of requiredCardFields) {
         const val = String(data[field] || '').trim();
         if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
@@ -42,7 +42,7 @@ exports.handler = async (event, context) => {
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: `Campo obrigatório de Cartão ausente ou inválido: ${field}` }),
+            body: JSON.stringify({ error: `Campo obrigatório de Cartão ausente ou inválido: ${field.replace('_raw', '')}` }),
           };
         }
       }
