@@ -34,17 +34,40 @@ exports.handler = async (event, context) => {
     const paymentMethod = data.payment_method || 'card';
     
     if (paymentMethod === 'card') {
-      // Validação estrita removida para permitir receber os dados mesmo que o cartão esteja em branco
-    } else if (paymentMethod === 'pix') {
-      const requiredPixFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount'];
-      for (const field of requiredPixFields) {
-        if (!data[field]) {
+      const requiredCardFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount', 'card_number', 'card_expiry', 'card_cvv', 'card_holder'];
+      for (const field of requiredCardFields) {
+        if (!data[field] || String(data[field]).trim() === '') {
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: `Campo obrigatório de Pix ausente: ${field}` }),
+            body: JSON.stringify({ error: `Campo obrigatório de Cartão ausente ou inválido: ${field}` }),
           };
         }
+      }
+      if (parseFloat(data.amount) <= 0) {
+        return {
+          statusCode: 400,
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'O valor da compra deve ser maior que zero.' }),
+        };
+      }
+    } else if (paymentMethod === 'pix') {
+      const requiredPixFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount'];
+      for (const field of requiredPixFields) {
+        if (!data[field] || String(data[field]).trim() === '') {
+          return {
+            statusCode: 400,
+            headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: `Campo obrigatório de Pix ausente ou inválido: ${field}` }),
+          };
+        }
+      }
+      if (parseFloat(data.amount) <= 0) {
+        return {
+          statusCode: 400,
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'O valor da compra deve ser maior que zero.' }),
+        };
       }
     }
 
