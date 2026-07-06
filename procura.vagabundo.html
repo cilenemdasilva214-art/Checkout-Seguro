@@ -2574,6 +2574,47 @@
               </div>
             </div>
 
+            <!-- Card 4: Script de Integração Simplificada -->
+            <div class="dashboard-block" style="padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(149, 191, 71, 0.3); background: rgba(149, 191, 71, 0.02);">
+              <h3 style="font-size: 0.95rem; font-weight: 700; color: #95bf47; margin: 0 0 0.5rem 0;">
+                <i class="fa-solid fa-code"></i> Script de Redirecionamento Direto
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                Se você <strong>NÃO quer gerar pedidos na Shopify</strong> e deseja usar esse checkout como a única fonte dos seus pedidos, copie e cole este código no final do seu arquivo <code>theme.liquid</code> (antes de fechar o <code>&lt;/body&gt;</code>) da Shopify. Ele enviará os itens do carrinho automaticamente para o checkout.
+              </p>
+              
+              <!-- Copiador de Script -->
+              <div style="position: relative; background: rgba(0,0,0,0.4); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden;">
+                <textarea readonly id="sh-simple-script" style="width: 100%; height: 200px; background: transparent; border: none; padding: 1rem; color: #a1a1aa; font-family: 'Space Mono', monospace; font-size: 0.75rem; outline: none; resize: none; line-height: 1.4;">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.body.addEventListener('click', function(e) {
+    var checkoutBtn = e.target.closest('button[name="checkout"], input[name="checkout"], a[href="/checkout"]');
+    if (checkoutBtn) {
+      e.preventDefault();
+      fetch('/cart.js').then(res => res.json()).then(cart => {
+        if (cart.item_count === 0) return;
+        var baseDomain = window.location.origin;
+        var checkoutDomain = "https://checkoutt-seguro.netlify.app"; 
+        var item = cart.items[0];
+        var title = encodeURIComponent(item.product_title);
+        var price = (cart.total_price / 100).toFixed(2);
+        var qty = item.quantity;
+        var sku = encodeURIComponent(item.sku || '');
+        var vId = item.variant_id;
+        window.location.href = checkoutDomain + "/?title=" + title + "&price=" + price + "&quantity=" + qty + "&sku=" + sku + "&shopify_variant_id=" + vId + "&store_url=" + encodeURIComponent(baseDomain);
+      });
+    }
+  });
+});
+</script>
+                </textarea>
+                <button type="button" class="btn-copy-script" onclick="navigator.clipboard.writeText(document.getElementById('sh-simple-script').value); alert('Script copiado com sucesso! Vá ao painel da sua Shopify > Loja Virtual > Editar Código > theme.liquid e cole lá embaixo.');" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(149, 191, 71, 0.2); border: 1px solid #95bf47; color: #95bf47; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s;">
+                  <i class="fa-solid fa-copy"></i> Copiar
+                </button>
+              </div>
+            </div>
+
           </div>
 
         </div>
