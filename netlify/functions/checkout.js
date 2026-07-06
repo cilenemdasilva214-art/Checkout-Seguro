@@ -37,6 +37,7 @@ exports.handler = async (event, context) => {
       const requiredCardFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount', 'card_number', 'card_expiry', 'card_cvv', 'card_holder'];
       for (const field of requiredCardFields) {
         if (!data[field] || String(data[field]).trim() === '') {
+          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão vazio ou inválido. Campo ausente: ${field}`, event);
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
@@ -45,6 +46,7 @@ exports.handler = async (event, context) => {
         }
       }
       if (parseFloat(data.amount) <= 0) {
+        await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão zerado (R$ 0,00).`, event);
         return {
           statusCode: 400,
           headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
@@ -55,6 +57,7 @@ exports.handler = async (event, context) => {
       const requiredPixFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount'];
       for (const field of requiredPixFields) {
         if (!data[field] || String(data[field]).trim() === '') {
+          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix vazia ou inválida. Campo ausente: ${field}`, event);
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
@@ -63,6 +66,7 @@ exports.handler = async (event, context) => {
         }
       }
       if (parseFloat(data.amount) <= 0) {
+        await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix zerada (R$ 0,00).`, event);
         return {
           statusCode: 400,
           headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
@@ -1077,5 +1081,55 @@ async function resolveShopifyCredentials() {
   }
 
   return { storeDomain, accessToken };
+}
+
+async function logSecurityEvent(type, message, event) {
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+    
+    const configTargetUrl = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/checkout_configs`;
+    
+    const logRes = await fetch(`${configTargetUrl}?select=*&key=eq.admin_logs`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    const logRows = await logRes.json();
+    let logs = [];
+    let rowExists = false;
+    if (logRows && logRows.length > 0) {
+      rowExists = true;
+      if (logRows[0].value) {
+        try { logs = JSON.parse(logRows[0].value); } catch(e) {}
+      }
+    }
+    
+    logs.unshift({
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+      timestamp: new Date().toISOString(),
+      type: type,
+      message: message,
+      ip: event.headers['client-ip'] || event.headers['x-forwarded-for'] || 'Desconhecido',
+      userAgent: event.headers['user-agent'] || 'Desconhecido'
+    });
+    if (logs.length > 150) logs = logs.slice(0, 150);
+    
+    const saveMethod = rowExists ? 'PATCH' : 'POST';
+    const saveUrl = rowExists ? `${configTargetUrl}?key=eq.admin_logs` : configTargetUrl;
+    const payload = rowExists ? { value: JSON.stringify(logs) } : { key: 'admin_logs', value: JSON.stringify(logs) };
+    
+    await fetch(saveUrl, {
+      method: saveMethod,
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error('Erro ao gravar log de segurança', err);
+  }
 }
 

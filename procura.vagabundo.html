@@ -63,6 +63,14 @@
             </a>
           </li>
           
+          <li>
+            <a class="menu-item" data-view="notificacoes">
+              <i class="fa-solid fa-bell"></i>
+              <span>Notificações</span>
+              <span id="notificacoes-badge" class="badge hide">0</span>
+            </a>
+          </li>
+          
           <!-- PEDIDOS COLLAPSIBLE GROUP -->
           <li class="menu-group">
             <div class="menu-item menu-parent" data-toggle="pedidos">
@@ -312,6 +320,30 @@
           </div>
         </div>
       </header>
+
+      <!-- ==============================================
+           NOTIFICAÇÕES VIEW
+      =============================================== -->
+      <section class="view-panel hide" id="view-notificacoes">
+        <div class="table-container fade-in" style="margin-top: 1rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Data / Hora</th>
+                <th>Tipo</th>
+                <th>Mensagem</th>
+                <th>IP / Dispositivo</th>
+              </tr>
+            </thead>
+            <tbody id="notificacoes-table-body">
+              <!-- Renderizado via JS -->
+            </tbody>
+          </table>
+          <div id="notificacoes-empty" class="hide" style="padding: 2rem; text-align: center; color: var(--text-muted);">
+            Nenhuma notificação registrada.
+          </div>
+        </div>
+      </section>
 
       <!-- VIEW 1: DASHBOARD GERAL -->
       <section class="view-panel" id="view-dashboard">

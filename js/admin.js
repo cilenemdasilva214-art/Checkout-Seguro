@@ -495,6 +495,16 @@ Fico no aguardo! \u{1F60A}`;
         safeStorage.setItem('admin_authenticated', 'true');
         safeStorage.setItem('admin_token', data.token);
         safeStorage.setItem('admin_login_time', Date.now().toString());
+        
+        // Log the successful login
+        try {
+          await originalFetch('/api/logs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.token}` },
+            body: JSON.stringify({ type: 'info', message: `Login realizado com sucesso no painel administrativo pelo usuário: ${typedUser}` })
+          });
+        } catch (e) { console.error('Falha ao registrar log de login', e); }
+
         if (lockScreen) lockScreen.classList.add('hide');
         if (loginUsernameInput) loginUsernameInput.value = '';
         if (loginPasswordInput) loginPasswordInput.value = '';
@@ -578,6 +588,11 @@ Fico no aguardo! \u{1F60A}`;
       title: 'Dashboard',
       subtitle: 'Monitore o desempenho das suas vendas em tempo real',
       showFilter: true
+    },
+    notificacoes: {
+      title: 'Notificações de Segurança',
+      subtitle: 'Histórico de acessos e tentativas de ataque bloqueadas',
+      showFilter: false
     },
     pedidos: {
       title: 'Todos os Pedidos',
@@ -759,6 +774,10 @@ Fico no aguardo! \u{1F60A}`;
       } else {
         periodFilterContainer.style.display = 'none';
       }
+    }
+
+    if (targetView === 'notificacoes') {
+      fetchAndRenderLogs();
     }
 
     // Trata carga das sub-abas caso produtos ou marketing
@@ -5863,4 +5882,73 @@ Fico no aguardo! \u{1F60A}`;
       }
     }
   });
+
+  // Função para buscar e renderizar os logs de notificações
+  async function fetchAndRenderLogs() {
+    const tbody = document.getElementById('notificacoes-table-body');
+    const emptyMsg = document.getElementById('notificacoes-empty');
+    const badge = document.getElementById('notificacoes-badge');
+    
+    if (!tbody || !emptyMsg) return;
+
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Carregando logs...</td></tr>';
+    emptyMsg.classList.add('hide');
+
+    try {
+      const token = safeStorage.getItem('admin_token');
+      const res = await originalFetch('/api/logs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Falha ao buscar logs');
+      
+      const data = await res.json();
+      const logs = data.logs || [];
+
+      if (badge) {
+        const count = logs.filter(l => l.type === 'danger').length;
+        if (count > 0) {
+          badge.textContent = count;
+          badge.classList.remove('hide');
+        } else {
+          badge.classList.add('hide');
+        }
+      }
+
+      tbody.innerHTML = '';
+      if (logs.length === 0) {
+        emptyMsg.classList.remove('hide');
+      } else {
+        logs.forEach(log => {
+          const tr = document.createElement('tr');
+          const dt = new Date(log.timestamp);
+          const formattedDate = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR');
+          
+          let color = 'var(--text-main)';
+          let icon = '<i class="fa-solid fa-circle-info" style="color:var(--primary-color)"></i>';
+          if (log.type === 'warning') {
+            color = '#eab308';
+            icon = '<i class="fa-solid fa-triangle-exclamation" style="color:#eab308"></i>';
+          } else if (log.type === 'danger') {
+            color = '#ef4444';
+            icon = '<i class="fa-solid fa-shield-halved" style="color:#ef4444"></i>';
+          }
+
+          tr.innerHTML = `
+            <td style="font-size:0.85rem; color:var(--text-muted);">${formattedDate}</td>
+            <td style="color:${color}; font-weight:600;">${icon} ${log.type.toUpperCase()}</td>
+            <td>${log.message}</td>
+            <td style="font-size:0.8rem; color:var(--text-muted);">${log.ip || '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    } catch (e) {
+      console.error('Erro ao buscar logs', e);
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ef4444;">Erro ao carregar notificações.</td></tr>';
+    }
+  }
+
+  // Tornar a função globalmente acessível se necessário, ou apenas deixar interna ao carregamento da view
+  window.fetchAndRenderLogs = fetchAndRenderLogs;
+
 });
