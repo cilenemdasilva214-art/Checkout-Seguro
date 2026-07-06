@@ -77,6 +77,13 @@ exports.handler = async (event, context) => {
           body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
         };
       }
+    } else {
+      await logSecurityEvent('danger', `Bloqueio: Método de pagamento inválido (${paymentMethod}).`, event);
+      return {
+        statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Método de pagamento não suportado ou inválido.' }),
+      };
     }
 
     // Configurações do Supabase & PagueX a partir das variáveis de ambiente (com fallback de chaves)
