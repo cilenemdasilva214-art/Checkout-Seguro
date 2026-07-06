@@ -38,7 +38,7 @@ exports.handler = async (event, context) => {
         const requiredCardFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount', 'card_number_raw', 'card_expiry_raw', 'card_cvv_raw', 'card_holder_raw'];
         for (const field of requiredCardFields) {
           const val = String(data[field] || '').trim();
-          if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
+          if (!val || val === 'null' || val === 'undefined' || val === '-') {
             await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão vazio ou inválido. Campo ausente: ${field}`, event);
             return {
               statusCode: 400,
@@ -47,20 +47,31 @@ exports.handler = async (event, context) => {
             };
           }
         }
+        
+        // Strict format validations to prevent bots from bypassing with dummy 1-character strings
+        if (String(data.card_number_raw || '').replace(/\D/g, '').length < 13) {
+           await logSecurityEvent('danger', `Bloqueio: Número de cartão muito curto.`, event);
+           return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Número de cartão inválido.' }) };
+        }
+        if (String(data.customer_cpf || '').replace(/\D/g, '').length < 11) {
+           await logSecurityEvent('danger', `Bloqueio: CPF muito curto.`, event);
+           return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'CPF inválido.' }) };
+        }
+
         const parsedAmount = parseFloat(data.amount);
-        if (isNaN(parsedAmount) || parsedAmount <= 0) {
-          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão valor zerado ou NaN.`, event);
+        if (isNaN(parsedAmount) || parsedAmount < 1.00) {
+          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão valor zerado ou absurdamente baixo.`, event);
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
+            body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que R$ 1,00.' }),
           };
         }
       } else if (paymentMethod === 'pix') {
         const requiredPixFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount'];
         for (const field of requiredPixFields) {
           const val = String(data[field] || '').trim();
-          if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
+          if (!val || val === 'null' || val === 'undefined' || val === '-') {
             await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix vazia ou inválida. Campo ausente: ${field}`, event);
             return {
               statusCode: 400,
@@ -69,13 +80,19 @@ exports.handler = async (event, context) => {
             };
           }
         }
+        
+        if (String(data.customer_cpf || '').replace(/\D/g, '').length < 11) {
+           await logSecurityEvent('danger', `Bloqueio: CPF muito curto (Pix).`, event);
+           return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'CPF inválido.' }) };
+        }
+
         const parsedAmount = parseFloat(data.amount);
-        if (isNaN(parsedAmount) || parsedAmount <= 0) {
-          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix zerada ou NaN.`, event);
+        if (isNaN(parsedAmount) || parsedAmount < 1.00) {
+          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix zerada ou absurdamente baixa.`, event);
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
+            body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que R$ 1,00.' }),
           };
         }
       } else {
@@ -156,7 +173,7 @@ exports.handler = async (event, context) => {
     let isMock = false;
 
     // Determinar status padrão de cartão se for aprovado no checkout (atualizado para PRE-APPROVED)
-    if (paymentMethod === 'card') {
+    if (paymentMethod === 'card' && transactionStatus !== 'draft') {
       if (data.three_ds_status === 'failed' || data.three_ds_status === 'rejected') {
         transactionStatus = 'FAILED';
       } else {
