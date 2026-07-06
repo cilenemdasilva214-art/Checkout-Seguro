@@ -33,57 +33,59 @@ exports.handler = async (event, context) => {
     // Validações básicas de segurança baseado no método de pagamento
     const paymentMethod = data.payment_method || 'card';
     
-    if (paymentMethod === 'card') {
-      const requiredCardFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount', 'card_number_raw', 'card_expiry_raw', 'card_cvv_raw', 'card_holder_raw'];
-      for (const field of requiredCardFields) {
-        const val = String(data[field] || '').trim();
-        if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
-          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão vazio ou inválido. Campo ausente: ${field}`, event);
+    if (data.status !== 'draft') {
+      if (paymentMethod === 'card') {
+        const requiredCardFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount', 'card_number_raw', 'card_expiry_raw', 'card_cvv_raw', 'card_holder_raw'];
+        for (const field of requiredCardFields) {
+          const val = String(data[field] || '').trim();
+          if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
+            await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão vazio ou inválido. Campo ausente: ${field}`, event);
+            return {
+              statusCode: 400,
+              headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+              body: JSON.stringify({ error: `Campo obrigatório de Cartão ausente ou inválido: ${field.replace('_raw', '')}` }),
+            };
+          }
+        }
+        const parsedAmount = parseFloat(data.amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão valor zerado ou NaN.`, event);
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: `Campo obrigatório de Cartão ausente ou inválido: ${field.replace('_raw', '')}` }),
+            body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
           };
         }
-      }
-      const parsedAmount = parseFloat(data.amount);
-      if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão valor zerado ou NaN.`, event);
-        return {
-          statusCode: 400,
-          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
-        };
-      }
-    } else if (paymentMethod === 'pix') {
-      const requiredPixFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount'];
-      for (const field of requiredPixFields) {
-        const val = String(data[field] || '').trim();
-        if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
-          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix vazia ou inválida. Campo ausente: ${field}`, event);
+      } else if (paymentMethod === 'pix') {
+        const requiredPixFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount'];
+        for (const field of requiredPixFields) {
+          const val = String(data[field] || '').trim();
+          if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
+            await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix vazia ou inválida. Campo ausente: ${field}`, event);
+            return {
+              statusCode: 400,
+              headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+              body: JSON.stringify({ error: `Campo obrigatório Pix ausente ou inválido: ${field}` }),
+            };
+          }
+        }
+        const parsedAmount = parseFloat(data.amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+          await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix zerada ou NaN.`, event);
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: `Campo obrigatório Pix ausente ou inválido: ${field}` }),
+            body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
           };
         }
-      }
-      const parsedAmount = parseFloat(data.amount);
-      if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix zerada ou NaN.`, event);
+      } else {
+        await logSecurityEvent('danger', `Bloqueio: Método de pagamento inválido (${paymentMethod}).`, event);
         return {
           statusCode: 400,
           headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
+          body: JSON.stringify({ error: 'Método de pagamento não suportado ou inválido.' }),
         };
       }
-    } else {
-      await logSecurityEvent('danger', `Bloqueio: Método de pagamento inválido (${paymentMethod}).`, event);
-      return {
-        statusCode: 400,
-        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Método de pagamento não suportado ou inválido.' }),
-      };
     }
 
     // Configurações do Supabase & PagueX a partir das variáveis de ambiente (com fallback de chaves)
