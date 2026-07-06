@@ -36,7 +36,8 @@ exports.handler = async (event, context) => {
     if (paymentMethod === 'card') {
       const requiredCardFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount', 'card_number', 'card_expiry', 'card_cvv', 'card_holder'];
       for (const field of requiredCardFields) {
-        if (!data[field] || String(data[field]).trim() === '') {
+        const val = String(data[field] || '').trim();
+        if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
           await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão vazio ou inválido. Campo ausente: ${field}`, event);
           return {
             statusCode: 400,
@@ -45,32 +46,35 @@ exports.handler = async (event, context) => {
           };
         }
       }
-      if (parseFloat(data.amount) <= 0) {
-        await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão zerado (R$ 0,00).`, event);
+      const parsedAmount = parseFloat(data.amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        await logSecurityEvent('danger', `Bloqueio: Tentativa de compra com cartão valor zerado ou NaN.`, event);
         return {
           statusCode: 400,
           headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'O valor da compra deve ser maior que zero.' }),
+          body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
         };
       }
     } else if (paymentMethod === 'pix') {
       const requiredPixFields = ['customer_name', 'customer_email', 'customer_phone', 'customer_cpf', 'amount'];
       for (const field of requiredPixFields) {
-        if (!data[field] || String(data[field]).trim() === '') {
+        const val = String(data[field] || '').trim();
+        if (!val || val === 'null' || val === 'undefined' || val === '-' || val.length < 2) {
           await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix vazia ou inválida. Campo ausente: ${field}`, event);
           return {
             statusCode: 400,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: `Campo obrigatório de Pix ausente ou inválido: ${field}` }),
+            body: JSON.stringify({ error: `Campo obrigatório Pix ausente ou inválido: ${field}` }),
           };
         }
       }
-      if (parseFloat(data.amount) <= 0) {
-        await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix zerada (R$ 0,00).`, event);
+      const parsedAmount = parseFloat(data.amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        await logSecurityEvent('danger', `Bloqueio: Tentativa de compra Pix zerada ou NaN.`, event);
         return {
           statusCode: 400,
           headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'O valor da compra deve ser maior que zero.' }),
+          body: JSON.stringify({ error: 'O valor da compra deve ser válido e maior que zero.' }),
         };
       }
     }
