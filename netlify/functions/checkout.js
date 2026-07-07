@@ -929,7 +929,7 @@ async function createShopifyOrder(data, totalAmount, paymentMethod) {
       email: data.customer_email,
       phone: cleanPhone,
       financial_status: "pending",
-      gateway: paymentMethod === 'pix' ? (ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash Pix' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark Pix' : (ACTIVE_GATEWAY === 'payshark_v2' ? 'PayShark V2 Pix' : (ACTIVE_GATEWAY === 'pagueflex' ? 'PagueFlex Pix' : 'PagueX Pix'))) : 'PagueX Cartão'
+      gateway: paymentMethod === 'pix' ? (ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash Pix' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark Pix' : (ACTIVE_GATEWAY === 'payshark_v2' ? 'PayShark V2 Pix' : (ACTIVE_GATEWAY === 'pagueflex' ? 'PagueFlex Pix' : 'PagueX Pix')))) : 'PagueX Cartão'
     }
   };
 
