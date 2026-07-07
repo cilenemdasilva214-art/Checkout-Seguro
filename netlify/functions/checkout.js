@@ -354,7 +354,7 @@ exports.handler = async (event, context) => {
 
           transactionId = resData.id || resData.transactionId || resData.transaction_id || 'ps2-' + Date.now();
           transactionStatus = 'PENDING';
-          pixQrCode = resData.pixCode || resData.pix_code || (resData.pix && (resData.pix.qrCode || resData.pix.qrcode || resData.pix.copiaecola)) || resData.qrcode || resData.qrCode || resData.qr_code || resData.copyAndPaste || 'PIX_CODE_NOT_FOUND';
+          pixQrCode = (resData.data && resData.data.copypaste) || resData.pixCode || resData.pix_code || (resData.pix && (resData.pix.qrCode || resData.pix.qrcode || resData.pix.copiaecola)) || resData.qrcode || resData.qrCode || resData.qr_code || resData.copyAndPaste || 'PIX_CODE_NOT_FOUND';
           pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
           
         } catch (err) {
