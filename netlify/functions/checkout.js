@@ -337,8 +337,8 @@ exports.handler = async (event, context) => {
               quantity: parseInt(i.quantity) || 1,
               name: i.name || 'Produto',
               price: i.price ? Math.round(parseFloat(i.price) * 100) : amountCents,
-              type: "VIRTUAL"
-            })) : [{ quantity: 1, name: 'Produto Checkout', price: amountCents, type: 'VIRTUAL' }]
+              type: "DIGITAL"
+            })) : [{ quantity: 1, name: 'Produto Checkout', price: amountCents, type: 'DIGITAL' }]
           };
           
           const ps2Res = await fetch(payshark2Url, {
