@@ -192,6 +192,8 @@ exports.handler = async (event, context) => {
         hypercash_secret_key,
         payshark_public_key,
         payshark_secret_key,
+        payshark_v2_api_key,
+        payshark_v2_webhook_secret,
         pagueflex_api_key,
         pagueflex_transfer_key,
         pagueflex_webhook_secret
