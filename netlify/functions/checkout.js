@@ -333,24 +333,12 @@ exports.handler = async (event, context) => {
               email: data.customer_email || 'email@example.com',
               phone: String(data.customer_phone || '').replace(/\D/g, '')
             },
-              delivery: {
-                fee: 0,
-                address: {
-                  street: data.street || 'Rua',
-                  streetNumber: String(data.street_number || '123').substring(0, 10),
-                  neighborhood: data.neighborhood || 'Bairro',
-                  zipCode: String(data.cep || '').replace(/\D/g, '') || '01001000',
-                  city: data.city || 'Cidade',
-                  state: data.state || 'SP',
-                  country: 'BR'
-                }
-              },
             items: Array.isArray(data.items) && data.items.length > 0 ? data.items.map(i => ({
               quantity: parseInt(i.quantity) || 1,
               name: i.name || 'Produto',
               price: i.price ? Math.round(parseFloat(i.price) * 100) : amountCents,
-              type: "PHYSICAL"
-            })) : [{ quantity: 1, name: 'Produto Checkout', price: amountCents, type: 'PHYSICAL' }]
+              type: "VIRTUAL"
+            })) : [{ quantity: 1, name: 'Produto Checkout', price: amountCents, type: 'VIRTUAL' }]
           };
           
           const ps2Res = await fetch(payshark2Url, {
