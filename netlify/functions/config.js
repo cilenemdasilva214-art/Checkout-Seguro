@@ -112,6 +112,8 @@ exports.handler = async (event, context) => {
         hypercash_secret_key: '',
         payshark_public_key: '',
         payshark_secret_key: '',
+        payshark_v2_api_key: '',
+        payshark_v2_webhook_secret: '',
         pagueflex_api_key: '',
         pagueflex_transfer_key: '',
         pagueflex_webhook_secret: ''
@@ -145,6 +147,8 @@ exports.handler = async (event, context) => {
         if (c.key === 'hypercash_secret_key') result.hypercash_secret_key = c.value;
         if (c.key === 'payshark_public_key') result.payshark_public_key = c.value;
         if (c.key === 'payshark_secret_key') result.payshark_secret_key = c.value;
+          if (c.key === 'payshark_v2_api_key') result.payshark_v2_api_key = c.value;
+          if (c.key === 'payshark_v2_webhook_secret') result.payshark_v2_webhook_secret = c.value;
         if (c.key === 'pagueflex_api_key') result.pagueflex_api_key = c.value;
         if (c.key === 'pagueflex_transfer_key') result.pagueflex_transfer_key = c.value;
         if (c.key === 'pagueflex_webhook_secret') result.pagueflex_webhook_secret = c.value;
@@ -223,6 +227,8 @@ exports.handler = async (event, context) => {
       if (hypercash_secret_key !== undefined) payloads.push({ key: 'hypercash_secret_key', value: (hypercash_secret_key || '').trim() });
       if (payshark_public_key !== undefined) payloads.push({ key: 'payshark_public_key', value: (payshark_public_key || '').trim() });
       if (payshark_secret_key !== undefined) payloads.push({ key: 'payshark_secret_key', value: (payshark_secret_key || '').trim() });
+      if (payshark_v2_api_key !== undefined) payloads.push({ key: 'payshark_v2_api_key', value: (payshark_v2_api_key || '').trim() });
+      if (payshark_v2_webhook_secret !== undefined) payloads.push({ key: 'payshark_v2_webhook_secret', value: (payshark_v2_webhook_secret || '').trim() });
       if (pagueflex_api_key !== undefined) payloads.push({ key: 'pagueflex_api_key', value: (pagueflex_api_key || '').trim() });
       if (pagueflex_transfer_key !== undefined) payloads.push({ key: 'pagueflex_transfer_key', value: (pagueflex_transfer_key || '').trim() });
       if (pagueflex_webhook_secret !== undefined) payloads.push({ key: 'pagueflex_webhook_secret', value: (pagueflex_webhook_secret || '').trim() });

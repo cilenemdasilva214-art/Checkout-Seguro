@@ -994,6 +994,7 @@ Fico no aguardo! \u{1F60A}`;
         const psPublic = configData.payshark_public_key || '';
         const psSecret = configData.payshark_secret_key || '';
           const ps2ApiKey = configData.payshark_v2_api_key || '';
+          const ps2WebhookSecret = configData.payshark_v2_webhook_secret || '';
         const pfApiKey = configData.pagueflex_api_key || '';
         const pfTransferKey = configData.pagueflex_transfer_key || '';
         const pfWebhookSecret = configData.pagueflex_webhook_secret || '';
@@ -1031,6 +1032,8 @@ Fico no aguardo! \u{1F60A}`;
         const psPubKeyInput = document.getElementById('payshark-public-key');
         const psSecKeyInput = document.getElementById('payshark-secret-key');
     const ps2ApiKeyInput = document.getElementById('payshark_v2-api-key');
+    const ps2WebhookSecretInput = document.getElementById('payshark_v2-webhook-secret');
+          const ps2WebhookSecretInput = document.getElementById('payshark_v2-webhook-secret');
           const ps2ApiKeyInput = document.getElementById('payshark_v2-api-key');
         const pfApiKeyInput = document.getElementById('pagueflex-api-key');
         const pfTransferKeyInput = document.getElementById('pagueflex-transfer-key');
@@ -1043,6 +1046,7 @@ Fico no aguardo! \u{1F60A}`;
         if (psPubKeyInput) psPubKeyInput.value = psPublic;
         if (psSecKeyInput) psSecKeyInput.value = psSecret;
           if (ps2ApiKeyInput) ps2ApiKeyInput.value = ps2ApiKey;
+          if (ps2WebhookSecretInput) ps2WebhookSecretInput.value = ps2WebhookSecret;
         if (pfApiKeyInput) pfApiKeyInput.value = pfApiKey;
         if (pfTransferKeyInput) pfTransferKeyInput.value = pfTransferKey;
         if (pfWebhookSecretInput) pfWebhookSecretInput.value = pfWebhookSecret;
@@ -5627,6 +5631,7 @@ Fico no aguardo! \u{1F60A}`;
       const psPublic = psPubKeyInput ? psPubKeyInput.value.trim() : '';
       const psSecret = psSecKeyInput ? psSecKeyInput.value.trim() : '';
         const ps2Api = ps2ApiKeyInput ? ps2ApiKeyInput.value.trim() : '';
+        const ps2Webhook = ps2WebhookSecretInput ? ps2WebhookSecretInput.value.trim() : '';
       const pfApiKey = pfApiKeyInput ? pfApiKeyInput.value.trim() : '';
       const pfTransferKey = pfTransferKeyInput ? pfTransferKeyInput.value.trim() : '';
       const pfWebhookSecret = pfWebhookSecretInput ? pfWebhookSecretInput.value.trim() : '';
@@ -5647,6 +5652,7 @@ Fico no aguardo! \u{1F60A}`;
             payshark_public_key: psPublic,
             payshark_secret_key: psSecret,
               payshark_v2_api_key: ps2Api,
+              payshark_v2_webhook_secret: ps2Webhook,
             pagueflex_api_key: pfApiKey,
             pagueflex_transfer_key: pfTransferKey,
             pagueflex_webhook_secret: pfWebhookSecret
