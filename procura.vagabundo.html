@@ -2617,36 +2617,244 @@
                 <i class="fa-solid fa-code"></i> Script de Redirecionamento Direto
               </h3>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
-                Se você <strong>NÃO quer gerar pedidos na Shopify</strong> e deseja usar esse checkout como a única fonte dos seus pedidos, copie e cole este código no final do seu arquivo <code>theme.liquid</code> (antes de fechar o <code>&lt;/body&gt;</code>) da Shopify. Ele enviará os itens do carrinho automaticamente para o checkout.
+                Se você <strong>NÃO quer gerar pedidos na Shopify</strong> e deseja usar esse checkout como a única fonte dos seus pedidos, copie e cole este código no final do seu arquivo <code>VDACheckout.liquid</code> (antes de fechar o <code>&lt;/body&gt;</code>) da Shopify. Ele enviará os itens do carrinho automaticamente para o checkout.
               </p>
               
               <!-- Copiador de Script -->
               <div style="position: relative; background: rgba(0,0,0,0.4); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden;">
                 <textarea readonly id="sh-simple-script" style="width: 100%; height: 200px; background: transparent; border: none; padding: 1rem; color: #a1a1aa; font-family: 'Space Mono', monospace; font-size: 0.75rem; outline: none; resize: none; line-height: 1.4;">
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  document.body.addEventListener('click', function(e) {
-    var checkoutBtn = e.target.closest('button[name="checkout"], input[name="checkout"], a[href="/checkout"]');
-    if (checkoutBtn) {
-      e.preventDefault();
-      fetch('/cart.js').then(res => res.json()).then(cart => {
-        if (cart.item_count === 0) return;
-        var baseDomain = window.location.origin;
-        var checkoutDomain = "https://checkoutt-seguro.netlify.app"; 
-        var item = cart.items[0];
-        var title = encodeURIComponent(item.product_title);
-        var price = (cart.total_price / 100).toFixed(2);
-        var qty = item.quantity;
-        var sku = encodeURIComponent(item.sku || '');
-        var vId = item.variant_id;
-        window.location.href = checkoutDomain + "/?title=" + title + "&price=" + price + "&quantity=" + qty + "&sku=" + sku + "&shopify_variant_id=" + vId + "&store_url=" + encodeURIComponent(baseDomain);
-      });
+(function() {
+  const CHECKOUT_DOMAIN = "https://checkoutt-seguro.netlify.app";
+
+  console.log("⚡ Checkout Interceptor Super Veloz Ativo (Com Eventos Pixel)!");
+
+  function getLoader() {
+    let loader = document.getElementById('ptv-checkout-loader');
+    if (!loader) {
+      loader = document.createElement('div');
+      loader.id = 'ptv-checkout-loader';
+      loader.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); color: #fff; z-index: 9999999; display: flex; align-items: center; justify-content: center; flex-direction: column; font-family: system-ui, -apple-system, sans-serif; backdrop-filter: blur(5px);">
+          <div style="width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: #95bf47; border-radius: 50%; animation: ptv-spin 1s linear infinite;"></div>
+          <p style="margin-top: 20px; font-weight: 600; font-size: 16px; color: #fff; letter-spacing: 0.5px;">Redirecionando para o checkout seguro...</p>
+          <style>@keyframes ptv-spin { to { transform: rotate(360deg); } }</style>
+        </div>
+      `;
+      document.body.appendChild(loader);
     }
-  });
-});
+    return loader;
+  }
+
+  function showLoader() {
+    const loader = getLoader();
+    if (loader) loader.style.display = 'block';
+  }
+
+  function hideLoader() {
+    const loader = document.getElementById('ptv-checkout-loader');
+    if (loader) loader.style.display = 'none';
+  }
+
+  function trackUtms() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid'];
+    utmKeys.forEach(key => {
+      if (urlParams.has(key)) {
+        sessionStorage.setItem(`ptv_${key}`, urlParams.get(key));
+      }
+    });
+  }
+  trackUtms();
+
+  function getSavedUtmsQuery() {
+    const params = new URLSearchParams();
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid'];
+    utmKeys.forEach(key => {
+      const val = sessionStorage.getItem(`ptv_${key}`);
+      if (val) params.set(key, val);
+    });
+    return params.toString();
+  }
+
+  function redirectToCheckout(cartItems) {
+    showLoader();
+
+    const itemsArray = Array.isArray(cartItems) ? cartItems : [cartItems];
+    const cartItemsMapped = itemsArray.map(item => {
+      const priceVal = parseFloat(item.price) || 0;
+      const decimalPrice = (priceVal / 100).toFixed(2); 
+      
+      return {
+        title: item.title || item.product_title || 'Produto Shopify',
+        price: decimalPrice,
+        sku: item.sku || 'SHPFY-DEFAULT',
+        quantity: parseInt(item.quantity) || 1,
+        variant_id: item.variant_id || '',
+        product_id: item.product_id || '',
+        image: item.image || ''
+      };
+    });
+
+    const firstItem = cartItemsMapped[0];
+    const title = encodeURIComponent(firstItem.title);
+    const price = firstItem.price;
+    const sku = encodeURIComponent(firstItem.sku);
+    const quantity = firstItem.quantity;
+    const variantId = firstItem.variant_id;
+    const productId = firstItem.product_id;
+
+    const cartParam = encodeURIComponent(JSON.stringify(cartItemsMapped));
+    
+    let finalUrl = `${CHECKOUT_DOMAIN}/?title=${title}&price=${price}&sku=${sku}&quantity=${quantity}&shopify_variant_id=${variantId}&shopify_product_id=${productId}&cart=${cartParam}`;
+
+    const savedUtms = getSavedUtmsQuery();
+    if (savedUtms) {
+      finalUrl += '&' + savedUtms;
+    }
+
+    console.log("➡️ Preparando redirecionamento. Disparando eventos do Pixel...");
+
+    if (typeof fbq === 'function') {
+      try {
+        fbq('track', 'AddToCart', {
+          content_name: firstItem.title,
+          content_ids: [firstItem.sku || firstItem.variant_id],
+          content_type: 'product',
+          value: parseFloat(firstItem.price),
+          currency: 'BRL'
+        });
+        
+        fbq('track', 'InitiateCheckout', {
+          content_name: firstItem.title,
+          content_ids: [firstItem.sku || firstItem.variant_id],
+          content_type: 'product',
+          value: parseFloat(firstItem.price),
+          currency: 'BRL'
+        });
+        console.log("✅ Eventos AddToCart e InitiateCheckout disparados com sucesso!");
+      } catch (e) {
+        console.error("Erro ao disparar Pixel:", e);
+      }
+    }
+
+    setTimeout(function() {
+      window.location.href = finalUrl;
+    }, 400);
+  }
+
+  if (window.location.pathname === '/cart' || window.location.pathname === '/cart/') {
+    showLoader();
+    fetch('/cart.js')
+    .then(res => res.json())
+    .then(cart => {
+      if (cart && cart.items && cart.items.length > 0) {
+        const items = cart.items.map(item => ({
+          title: item.product_title || item.title,
+          price: item.price,
+          sku: item.sku || 'SHPFY-DEFAULT',
+          quantity: item.quantity,
+          variant_id: item.variant_id,
+          product_id: item.product_id,
+          image: item.image || (item.featured_image ? (item.featured_image.url || item.featured_image) : '') || ''
+        }));
+        redirectToCheckout(items);
+      } else {
+        hideLoader();
+      }
+    })
+    .catch(err => {
+      console.error("❌ Falha ao ler carrinho da Shopify:", err);
+      hideLoader();
+    });
+  }
+
+  document.addEventListener('click', function(e) {
+    const buyBtnSelectors = [
+      'button[name="add"]',
+      '.product-form__submit',
+      '.shopify-payment-button__button',
+      '.btn-buy',
+      '.add-to-cart-btn',
+      'input[type="submit"].add-to-cart',
+      '[data-add-to-cart]'
+    ];
+
+    let matchedBtn = null;
+    for (const selector of buyBtnSelectors) {
+      const match = e.target.matches(selector) ? e.target : e.target.closest(selector);
+      if (match) {
+        matchedBtn = match;
+        break;
+      }
+    }
+
+    if (matchedBtn) {
+      const form = matchedBtn.closest('form[action*="/cart/add"], form[action*="/cart"]');
+      if (form) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        showLoader();
+
+        const variantSelector = form.querySelector('select[name="id"], input[name="id"]');
+        const variantId = variantSelector ? variantSelector.value : 'default-variant';
+        
+        let productTitle = document.title || 'Produto Shopify';
+        if (variantSelector && variantSelector.tagName === 'SELECT') {
+          const selectedText = variantSelector.options[variantSelector.selectedIndex]?.text;
+          if (selectedText) productTitle += ' - ' + selectedText;
+        }
+
+        let productPrice = 15000;
+        const priceSelectors = [
+          '.price-item--sale', 
+          '.price-item--regular', 
+          '.product-single__price', 
+          '.price__current', 
+          '[data-product-price]',
+          '.current-price'
+        ];
+        
+        for (const selector of priceSelectors) {
+          const elem = document.querySelector(selector);
+          if (elem && elem.textContent) {
+            const cleanText = elem.textContent.replace(/[^0-9,]/g, '').replace(',', '.');
+            const parsed = parseFloat(cleanText);
+            if (!isNaN(parsed) && parsed > 0) {
+              productPrice = Math.round(parsed * 100);
+              break;
+            }
+          }
+        }
+
+        const qtyInput = form.querySelector('input[name="quantity"]');
+        const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+
+        const skuElem = document.querySelector('.variant-sku, [data-sku], .product__sku');
+        const sku = skuElem ? skuElem.textContent.trim() : ('SHPFY-' + variantId);
+
+        const ogImageElem = document.querySelector('meta[property="og:image"]');
+        const ogImage = ogImageElem ? ogImageElem.getAttribute('content') : '';
+
+        const productData = {
+          title: productTitle.trim(),
+          price: productPrice,
+          sku: sku,
+          quantity: quantity,
+          variant_id: variantId,
+          product_id: '',
+          image: ogImage
+        };
+
+        redirectToCheckout(productData);
+      }
+    }
+  }, true);
+})();
 </script>
                 </textarea>
-                <button type="button" class="btn-copy-script" onclick="navigator.clipboard.writeText(document.getElementById('sh-simple-script').value); alert('Script copiado com sucesso! Vá ao painel da sua Shopify > Loja Virtual > Editar Código > theme.liquid e cole lá embaixo.');" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(149, 191, 71, 0.2); border: 1px solid #95bf47; color: #95bf47; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s;">
+                <button type="button" class="btn-copy-script" onclick="navigator.clipboard.writeText(document.getElementById('sh-simple-script').value); alert('Script copiado com sucesso! Vá ao painel da sua Shopify > Loja Virtual > Editar Código > VDACheckout.liquid e cole lá embaixo.');" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(149, 191, 71, 0.2); border: 1px solid #95bf47; color: #95bf47; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s;">
                   <i class="fa-solid fa-copy"></i> Copiar
                 </button>
               </div>
