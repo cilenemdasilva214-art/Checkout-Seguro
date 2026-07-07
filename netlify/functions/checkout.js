@@ -115,6 +115,7 @@ exports.handler = async (event, context) => {
     let HYPERCASH_SECRET_KEY = process.env.HYPERCASH_SECRET_KEY || '';
     let PAYSHARK_PUBLIC_KEY = process.env.PAYSHARK_PUBLIC_KEY || '';
     let PAYSHARK_SECRET_KEY = process.env.PAYSHARK_SECRET_KEY || '';
+    let PAYSHARK_V2_API_KEY = process.env.PAYSHARK_V2_API_KEY || '';
     let PAGUEFLEX_API_KEY = process.env.PAGUEFLEX_API_KEY || '';
     let ACTIVE_GATEWAY = 'paguex';
     let THIRD_PARTY_WEBHOOK = null;
@@ -140,6 +141,7 @@ exports.handler = async (event, context) => {
             if (c.key === 'hypercash_secret_key' && c.value) HYPERCASH_SECRET_KEY = c.value;
             if (c.key === 'payshark_public_key' && c.value) PAYSHARK_PUBLIC_KEY = c.value;
             if (c.key === 'payshark_secret_key' && c.value) PAYSHARK_SECRET_KEY = c.value;
+            if (c.key === 'payshark_v2_api_key' && c.value) PAYSHARK_V2_API_KEY = c.value;
             if (c.key === 'pagueflex_api_key' && c.value) PAGUEFLEX_API_KEY = c.value;
             if (c.key === 'checkout_theme_config' && c.value) {
               try {
@@ -310,6 +312,56 @@ exports.handler = async (event, context) => {
             error_details: paysharkErr.message,
             message: 'Fallback local: o gateway PayShark recusou (conta nova sem chaves habilitadas PIX) ou está offline'
           };
+        }
+      } else if (ACTIVE_GATEWAY === 'payshark_v2') {
+        try {
+          console.log('🦈 Iniciando integração de Pix com a PayShark V2...');
+          const payshark2Url = 'https://api.gatewaypayshark.com.br/v1/payment';
+          const authHeader = 'Bearer ' + PAYSHARK_V2_API_KEY;
+          const amountCents = Math.round(totalAmount * 100);
+          
+          const payload = {
+            amount: amountCents,
+            currency: "BRL",
+            method: "PIX",
+            description: "Pagamento Checkout",
+            externalRef: checkoutSessionId || 'ps2-' + Date.now(),
+            notificationUrl: "https://checkoutt-seguro.netlify.app/api/webhook?gateway=payshark_v2",
+            payer: {
+              name: data.customer_name || 'Cliente',
+              taxId: String(data.customer_cpf || '').replace(/\D/g, ''),
+              email: data.customer_email || 'email@example.com',
+              phone: String(data.customer_phone || '').replace(/\D/g, '')
+            },
+            items: Array.isArray(data.items) && data.items.length > 0 ? data.items.map(i => ({
+              quantity: parseInt(i.quantity) || 1,
+              name: i.name || 'Produto',
+              price: i.price ? Math.round(parseFloat(i.price) * 100) : amountCents,
+              type: "PHYSICAL"
+            })) : [{ quantity: 1, name: 'Produto Checkout', price: amountCents, type: 'PHYSICAL' }]
+          };
+          
+          const ps2Res = await fetch(payshark2Url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+            body: JSON.stringify(payload)
+          });
+          const resData = await ps2Res.json();
+          
+          if (!ps2Res.ok) throw new Error(`Erro PayShark V2: ${JSON.stringify(resData)}`);
+          
+          transactionId = resData.id || resData.transactionId || resData.transaction_id || 'ps2-' + Date.now();
+          pixQrCode = resData.pixCode || resData.pix_code || (resData.pix && (resData.pix.qrCode || resData.pix.qrcode || resData.pix.copiaecola)) || resData.qrcode || resData.qrCode || resData.qr_code || resData.copyAndPaste || 'PIX_CODE_NOT_FOUND';
+          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          
+        } catch (err) {
+          console.error('❌ Erro na integração Pix PayShark V2:', err);
+          isMock = true;
+          transactionId = 'mock-payshark2-' + Date.now();
+          transactionStatus = 'PENDING';
+          pixQrCode = '00020101021126950014br.gov.bcb.pix0136mock-pix-key-for-payshark-v2-testing0233Pagamento simulado payshark v252040000530398654045.005802BR5915Antigravity Mock6009Sao Paulo62070503***6304E8A2';
+          pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          gatewayResponse = { success: true, mode: 'mock_fallback', error_details: err.message, message: 'Fallback local: erro na api payshark v2' };
         }
       } else if (ACTIVE_GATEWAY === 'pagueflex') {
         try {
@@ -786,7 +838,7 @@ exports.handler = async (event, context) => {
         mode: isMock ? 'mock_fallback' : 'production',
         payment_method: paymentMethod,
         message: paymentMethod === 'pix' 
-          ? `Transação Pix gerada via ${ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark' : (ACTIVE_GATEWAY === 'pagueflex' ? 'PagueFlex' : 'PagueX'))} e salva no Supabase!` 
+          ? `Transação Pix gerada via ${ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark' : (ACTIVE_GATEWAY === 'payshark_v2' ? 'PayShark V2' : (ACTIVE_GATEWAY === 'pagueflex' ? 'PagueFlex' : 'PagueX')))} e salva no Supabase!` 
           : 'Transação Cartão aprovada pelo Gateway e salva no Supabase!',
         pix_qr_code: pixQrCode,
         pix_expiration: pixExpiration,
@@ -877,7 +929,7 @@ async function createShopifyOrder(data, totalAmount, paymentMethod) {
       email: data.customer_email,
       phone: cleanPhone,
       financial_status: "pending",
-      gateway: paymentMethod === 'pix' ? (ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash Pix' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark Pix' : (ACTIVE_GATEWAY === 'pagueflex' ? 'PagueFlex Pix' : 'PagueX Pix'))) : 'PagueX Cartão'
+      gateway: paymentMethod === 'pix' ? (ACTIVE_GATEWAY === 'hypercash' ? 'HyperCash Pix' : (ACTIVE_GATEWAY === 'payshark' ? 'PayShark Pix' : (ACTIVE_GATEWAY === 'payshark_v2' ? 'PayShark V2 Pix' : (ACTIVE_GATEWAY === 'pagueflex' ? 'PagueFlex Pix' : 'PagueX Pix'))) : 'PagueX Cartão'
     }
   };
 
