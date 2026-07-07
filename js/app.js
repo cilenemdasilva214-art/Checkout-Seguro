@@ -2761,12 +2761,16 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
               throw new Error(finalResponseData.details || finalResponseData.error || 'Falha ao salvar transação de cartão.');
             }
 
-            // Sucesso absoluto! Redirecionar para tela de pré-aprovação premium
-            trackPixelEvent('Purchase', {
+            const trackPayload = {
               content_name: shpfyProductTitle || 'Pacote Sandbox Elite',
+              content_ids: shopifyCartItems && shopifyCartItems.length > 0 ? shopifyCartItems.map(i => String(i.variant_id || i.sku || 'SHPFY-DEFAULT')) : [String(shpfyVariantId || shpfyProductSku || 'SANDBOX-ELITE-PK')],
+              content_type: 'product',
               currency: 'BRL',
-              value: totalAmount
-            });
+              value: totalAmount,
+              contents: shopifyCartItems && shopifyCartItems.length > 0 ? shopifyCartItems.map(i => ({ id: String(i.variant_id || i.sku || 'SHPFY-DEFAULT'), quantity: parseInt(i.quantity) || 1 })) : [{ id: String(shpfyVariantId || shpfyProductSku || 'SANDBOX-ELITE-PK'), quantity: shpfyProductQuantity || 1 }]
+            };
+            
+            trackPixelEvent('Purchase', trackPayload);
 
             // Limpar rascunho de sessão atual
             localStorage.removeItem('checkout_session_id');
@@ -3015,12 +3019,17 @@ Obs: Caso já tenha realizado o pagamento, enviaremos uma mensagem confirmando a
           }
           const totalAmount = subtotal + shippingPrice;
 
-          trackPixelEvent('Purchase', {
+          const trackPayloadPix = {
             content_name: shpfyProductTitle || 'Pacote Sandbox Elite',
+            content_ids: shopifyCartItems && shopifyCartItems.length > 0 ? shopifyCartItems.map(i => String(i.variant_id || i.sku || 'SHPFY-DEFAULT')) : [String(shpfyVariantId || shpfyProductSku || 'SANDBOX-ELITE-PK')],
+            content_type: 'product',
             currency: 'BRL',
             value: totalAmount,
-            payment_method: 'pix'
-          });
+            payment_method: 'pix',
+            contents: shopifyCartItems && shopifyCartItems.length > 0 ? shopifyCartItems.map(i => ({ id: String(i.variant_id || i.sku || 'SHPFY-DEFAULT'), quantity: parseInt(i.quantity) || 1 })) : [{ id: String(shpfyVariantId || shpfyProductSku || 'SANDBOX-ELITE-PK'), quantity: shpfyProductQuantity || 1 }]
+          };
+          
+          trackPixelEvent('Purchase', trackPayloadPix);
 
           // Limpar rascunho de sessão atual
           localStorage.removeItem('checkout_session_id');
