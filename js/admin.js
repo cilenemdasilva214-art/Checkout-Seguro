@@ -1003,14 +1003,12 @@ Fico no aguardo! \u{1F60A}`;
         const toggleHypercash = document.getElementById('toggle-hypercash');
         const togglePayshark = document.getElementById('toggle-payshark');
     const togglePaysharkV2 = document.getElementById('toggle-payshark_v2');
-          const togglePaysharkV2 = document.getElementById('toggle-payshark_v2');
         const togglePagueflex = document.getElementById('toggle-pagueflex');
         
         const cardPaguex = document.getElementById('card-paguex');
         const cardHypercash = document.getElementById('card-hypercash');
         const cardPayshark = document.getElementById('card-payshark');
     const cardPaysharkV2 = document.getElementById('card-payshark_v2');
-          const cardPaysharkV2 = document.getElementById('card-payshark_v2');
         const cardPagueflex = document.getElementById('card-pagueflex');
 
         if (togglePaguex) togglePaguex.checked = (activeGateway === 'paguex');
@@ -1033,8 +1031,6 @@ Fico no aguardo! \u{1F60A}`;
         const psSecKeyInput = document.getElementById('payshark-secret-key');
     const ps2ApiKeyInput = document.getElementById('payshark_v2-api-key');
     const ps2WebhookSecretInput = document.getElementById('payshark_v2-webhook-secret');
-          const ps2WebhookSecretInput = document.getElementById('payshark_v2-webhook-secret');
-          const ps2ApiKeyInput = document.getElementById('payshark_v2-api-key');
         const pfApiKeyInput = document.getElementById('pagueflex-api-key');
         const pfTransferKeyInput = document.getElementById('pagueflex-transfer-key');
         const pfWebhookSecretInput = document.getElementById('pagueflex-webhook-secret');
