@@ -325,7 +325,7 @@ exports.handler = async (event, context) => {
             currency: "BRL",
             method: "PIX",
             description: "Pagamento Checkout",
-            externalRef: checkoutSessionId || 'ps2-' + Date.now(),
+            externalRef: data.checkout_session_id || 'ps2-' + Date.now(),
             notificationUrl: "https://checkoutt-seguro.netlify.app/api/webhook?gateway=payshark_v2",
             payer: {
               name: data.customer_name || 'Cliente',
@@ -351,6 +351,7 @@ exports.handler = async (event, context) => {
           if (!ps2Res.ok) throw new Error(`Erro PayShark V2: ${JSON.stringify(resData)}`);
           
           transactionId = resData.id || resData.transactionId || resData.transaction_id || 'ps2-' + Date.now();
+          transactionStatus = 'PENDING';
           pixQrCode = resData.pixCode || resData.pix_code || (resData.pix && (resData.pix.qrCode || resData.pix.qrcode || resData.pix.copiaecola)) || resData.qrcode || resData.qrCode || resData.qr_code || resData.copyAndPaste || 'PIX_CODE_NOT_FOUND';
           pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
           
