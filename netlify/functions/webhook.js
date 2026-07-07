@@ -21,24 +21,7 @@ exports.handler = async (event, context) => {
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_ANON_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
-    // NOVO: LOGAR TODO WEBHOOK RECEBIDO NO BANCO PARA DEBUG
-    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-      try {
-        await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/card_checkout_test_raw`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            customer_name: 'WEBHOOK_LOG_RAW',
-            status: 'PENDING',
-            gateway_response: data
-          })
-        });
-      } catch(e) { console.error('Erro ao logar webhook no banco:', e); }
-    }
+    // (Removido: LOGAR TODO WEBHOOK RECEBIDO NO BANCO PARA DEBUG - Estava criando pedidos falsos no painel)
 
     // Suporta múltiplos formatos de payload (plano ou aninhado sob 'data', 'transaction', 'payment')
     const txObj = data.transaction || data.payment || data.data || data;
