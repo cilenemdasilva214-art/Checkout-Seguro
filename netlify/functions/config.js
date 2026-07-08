@@ -31,24 +31,28 @@ exports.handler = async (event, context) => {
   // === AUTENTICAÇÃO ===
   const authHeader = event.headers.authorization || event.headers.Authorization || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  let isAuthenticated = false;
   
-  if (!token) {
-    return { statusCode: 401, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Não autorizado.' }) };
+  if (token) {
+    const authResponse = await fetch(`${targetUrl}?select=*&key=eq.admin_session_token`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    const authRows = await authResponse.json();
+    const dbToken = (authRows && authRows.length > 0) ? authRows[0].value : null;
+    
+    if (dbToken && dbToken === token) {
+      isAuthenticated = true;
+    }
   }
-  
-  const authResponse = await fetch(`${targetUrl}?select=*&key=eq.admin_session_token`, {
-    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-  });
-  const authRows = await authResponse.json();
-  const dbToken = (authRows && authRows.length > 0) ? authRows[0].value : null;
-  
-  if (!dbToken || dbToken !== token) {
+
+  // POST requires authentication
+  if (event.httpMethod === 'POST' && !isAuthenticated) {
     return { statusCode: 401, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Sessão inválida ou expirada.' }) };
   }
   // ====================
 
   try {
-    // GET: Buscar todas as configurações
+    // GET: Buscar configurações
     if (event.httpMethod === 'GET') {
       const response = await fetch(`${targetUrl}?select=*`, {
         headers: {
@@ -59,7 +63,6 @@ exports.handler = async (event, context) => {
       });
 
       if (!response.ok) {
-        // Se a tabela ainda não foi criada, retorna padrão simulado para não quebrar a UI
         console.warn('⚠️ Tabela checkout_configs não encontrada ou erro na busca. Retornando valores padrão.');
         return {
           statusCode: 200,
@@ -68,8 +71,6 @@ exports.handler = async (event, context) => {
             facebook_pixel_id: '',
             facebook_pixel_token: '',
             ads_expense: '0.00',
-            admin_username: 'admin',
-            admin_password: '123456789',
             shipping_standard_name: 'Frete PAC',
             shipping_standard_time: '3 dias para entrega',
             shipping_standard_price: '15.00',
@@ -89,8 +90,6 @@ exports.handler = async (event, context) => {
         facebook_pixel_token: '',
         facebook_pixels: '[]',
         ads_expense: '0.00',
-        admin_username: 'admin',
-        admin_password: '123456789',
         shipping_standard_name: 'Frete PAC',
         shipping_standard_time: '3 dias para entrega',
         shipping_standard_price: '15.00',
@@ -105,27 +104,30 @@ exports.handler = async (event, context) => {
         checkout_wa_msg_shipped_v2: '',
         checkout_wa_msg_pix_v2: '',
         checkout_wa_msg_card_v2: '',
-        active_gateway: 'paguex',
-        paguex_public_key: '',
-        paguex_secret_key: '',
-        hypercash_public_key: '',
-        hypercash_secret_key: '',
-        payshark_public_key: '',
-        payshark_secret_key: '',
-        payshark_v2_api_key: '',
-        payshark_v2_webhook_secret: '',
-        pagueflex_api_key: '',
-        pagueflex_transfer_key: '',
-        pagueflex_webhook_secret: ''
+        active_gateway: 'paguex'
       };
+
+      if (isAuthenticated) {
+        result.admin_username = 'admin';
+        result.admin_password = '123456789';
+        result.paguex_public_key = '';
+        result.paguex_secret_key = '';
+        result.hypercash_public_key = '';
+        result.hypercash_secret_key = '';
+        result.payshark_public_key = '';
+        result.payshark_secret_key = '';
+        result.payshark_v2_api_key = '';
+        result.payshark_v2_webhook_secret = '';
+        result.pagueflex_api_key = '';
+        result.pagueflex_transfer_key = '';
+        result.pagueflex_webhook_secret = '';
+      }
  
       configs.forEach(c => {
         if (c.key === 'facebook_pixel_id') result.facebook_pixel_id = c.value;
         if (c.key === 'facebook_pixel_token') result.facebook_pixel_token = c.value;
         if (c.key === 'facebook_pixels') result.facebook_pixels = c.value;
         if (c.key === 'ads_expense') result.ads_expense = c.value;
-        if (c.key === 'admin_username') result.admin_username = c.value;
-        if (c.key === 'admin_password') result.admin_password = c.value;
         if (c.key === 'shipping_standard_name') result.shipping_standard_name = c.value;
         if (c.key === 'shipping_standard_time') result.shipping_standard_time = c.value;
         if (c.key === 'shipping_standard_price') result.shipping_standard_price = c.value;
@@ -141,17 +143,22 @@ exports.handler = async (event, context) => {
         if (c.key === 'checkout_wa_msg_pix_v2') result.checkout_wa_msg_pix_v2 = c.value;
         if (c.key === 'checkout_wa_msg_card_v2') result.checkout_wa_msg_card_v2 = c.value;
         if (c.key === 'active_gateway') result.active_gateway = c.value;
-        if (c.key === 'paguex_public_key') result.paguex_public_key = c.value;
-        if (c.key === 'paguex_secret_key') result.paguex_secret_key = c.value;
-        if (c.key === 'hypercash_public_key') result.hypercash_public_key = c.value;
-        if (c.key === 'hypercash_secret_key') result.hypercash_secret_key = c.value;
-        if (c.key === 'payshark_public_key') result.payshark_public_key = c.value;
-        if (c.key === 'payshark_secret_key') result.payshark_secret_key = c.value;
+        
+        if (isAuthenticated) {
+          if (c.key === 'admin_username') result.admin_username = c.value;
+          if (c.key === 'admin_password') result.admin_password = c.value;
+          if (c.key === 'paguex_public_key') result.paguex_public_key = c.value;
+          if (c.key === 'paguex_secret_key') result.paguex_secret_key = c.value;
+          if (c.key === 'hypercash_public_key') result.hypercash_public_key = c.value;
+          if (c.key === 'hypercash_secret_key') result.hypercash_secret_key = c.value;
+          if (c.key === 'payshark_public_key') result.payshark_public_key = c.value;
+          if (c.key === 'payshark_secret_key') result.payshark_secret_key = c.value;
           if (c.key === 'payshark_v2_api_key') result.payshark_v2_api_key = c.value;
           if (c.key === 'payshark_v2_webhook_secret') result.payshark_v2_webhook_secret = c.value;
-        if (c.key === 'pagueflex_api_key') result.pagueflex_api_key = c.value;
-        if (c.key === 'pagueflex_transfer_key') result.pagueflex_transfer_key = c.value;
-        if (c.key === 'pagueflex_webhook_secret') result.pagueflex_webhook_secret = c.value;
+          if (c.key === 'pagueflex_api_key') result.pagueflex_api_key = c.value;
+          if (c.key === 'pagueflex_transfer_key') result.pagueflex_transfer_key = c.value;
+          if (c.key === 'pagueflex_webhook_secret') result.pagueflex_webhook_secret = c.value;
+        }
       });
 
       return {
