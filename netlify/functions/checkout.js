@@ -544,81 +544,27 @@ exports.handler = async (event, context) => {
         // PagueX
         try {
           console.log('⚡ Iniciando integração de Pix com a PagueX...');
-          const paguexUrl = 'https://app.pague-x.online/api/v1/gateway/pix/receive';
+          const paguexUrl = 'https://api.pague-x.com.br/v1/charges';
           
-          // Montar itens no formato exigido
-          const paguexItems = Array.isArray(data.items) && data.items.length > 0 
-            ? data.items.map((item, index) => ({
-                id: item.id || `item-${index}`,
-                name: item.name || 'Item do Checkout',
-                price: parseFloat(item.price) || totalAmount,
-                quantity: parseInt(item.quantity) || 1
-              }))
-            : [{
-                id: 'sandbox-elite',
-                name: 'Pacote Sandbox Elite',
-                price: totalAmount,
-                quantity: 1
-              }];
-
-          let formattedPhone = data.customer_phone ? data.customer_phone.replace(/\D/g, '') : '11999999999';
-          if (formattedPhone.length === 11) {
-            formattedPhone = `(${formattedPhone.substring(0, 2)}) ${formattedPhone.substring(2, 7)}-${formattedPhone.substring(7, 11)}`;
-          } else if (formattedPhone.length === 10) {
-            formattedPhone = `(${formattedPhone.substring(0, 2)}) ${formattedPhone.substring(2, 6)}-${formattedPhone.substring(6, 10)}`;
-          } else {
-            formattedPhone = '(11) 99999-9999';
-          }
-
-          let formattedCep = data.cep ? data.cep.replace(/\D/g, '') : '01001000';
-          if (formattedCep.length === 8) {
-            formattedCep = `${formattedCep.substring(0, 5)}-${formattedCep.substring(5, 8)}`;
-          } else {
-            formattedCep = '01001-000';
-          }
-
-          const productsSum = paguexItems.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity)), 0);
-          let discount = 0;
-          let extraFee = 0;
+          let formattedPhone = data.customer_phone ? data.customer_phone.replace(/\D/g, '') : '';
           
-          if (productsSum > totalAmount) {
-            discount = parseFloat((productsSum - totalAmount).toFixed(2));
-          } else if (productsSum < totalAmount) {
-            extraFee = parseFloat((totalAmount - productsSum).toFixed(2));
-          }
-
           const paguexPayload = {
-            identifier: data.checkout_session_id || 'px-' + Math.random().toString(36).substr(2, 9),
-            amount: totalAmount,
-            discount: discount > 0 ? discount : undefined,
-            extraFee: extraFee > 0 ? extraFee : undefined,
-            client: {
+            amount: Math.round(totalAmount * 100),
+            paymentMethod: "pix",
+            reference: data.checkout_session_id || 'px-' + Math.random().toString(36).substr(2, 9),
+            description: "Checkout Seguro",
+            customer: {
               name: data.customer_name || 'Cliente Checkout',
               email: data.customer_email || 'email@teste.com',
-              phone: formattedPhone,
               document: data.customer_cpf ? data.customer_cpf.replace(/\D/g, '') : '00000000000',
-              address: {
-                street: data.street || 'Não informado',
-                number: data.street_number || 'S/N',
-                neighborhood: data.neighborhood || 'Não informado',
-                city: data.city || 'São Paulo',
-                state: (data.state && data.state.length === 2) ? data.state.toUpperCase() : 'SP',
-                zipCode: formattedCep,
-                country: 'BR'
-              }
-            },
-            products: paguexItems,
-            metadata: {
-              checkout_session_id: data.checkout_session_id || 'no-session-id',
-              shopify_order_id: shopifyOrderId || 'no-order-id'
+              phone: formattedPhone
             }
           };
 
           const paguexRes = await fetch(paguexUrl, {
             method: 'POST',
             headers: {
-              'x-public-key': PAGUEX_PUBLIC_KEY,
-              'x-secret-key': PAGUEX_SECRET_KEY,
+              'Authorization': `Bearer ${PAGUEX_SECRET_KEY}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(paguexPayload)
@@ -627,15 +573,15 @@ exports.handler = async (event, context) => {
           const paguexData = await paguexRes.json();
 
           if (!paguexRes.ok) {
-            const errMsg = paguexData.message || paguexData.errorDescription || 'Erro desconhecido na PagueX';
+            const errMsg = paguexData.message || paguexData.error || 'Erro desconhecido na PagueX';
             throw new Error(`PagueX API Error: ${paguexRes.status} - ${errMsg}`);
           }
 
           // Sucesso na PagueX
-          transactionId = paguexData.transactionId;
-          transactionStatus = paguexData.status || 'PENDING';
+          transactionId = paguexData.id;
+          transactionStatus = paguexData.status ? paguexData.status.toUpperCase() : 'PENDING';
           gatewayResponse = paguexData;
-          pixQrCode = paguexData.pix.code;
+          pixQrCode = paguexData.pix.copiaECola;
           // PagueX response has no explicit expiration date in docs, fallback to 24h
           pixExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
           console.log(`✅ Pix criado na PagueX com sucesso! ID: ${transactionId}`);
