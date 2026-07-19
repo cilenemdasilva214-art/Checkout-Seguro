@@ -31,18 +31,22 @@ exports.handler = async (event, context) => {
   // === AUTENTICAÇÃO ===
   const authHeader = event.headers.authorization || event.headers.Authorization || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  let isAuthenticated = false;
   
-  if (!token) {
-    return { statusCode: 401, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Não autorizado.' }) };
+  if (token) {
+    const authResponse = await fetch(`${configTargetUrl}?select=*&key=eq.admin_session_token`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    const authRows = await authResponse.json();
+    const dbToken = (authRows && authRows.length > 0) ? authRows[0].value : null;
+    
+    if (dbToken && dbToken === token) {
+      isAuthenticated = true;
+    }
   }
-  
-  const authResponse = await fetch(`${configTargetUrl}?select=*&key=eq.admin_session_token`, {
-    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-  });
-  const authRows = await authResponse.json();
-  const dbToken = (authRows && authRows.length > 0) ? authRows[0].value : null;
-  
-  if (!dbToken || dbToken !== token) {
+
+  // POST/DELETE require authentication
+  if ((event.httpMethod === 'POST' || event.httpMethod === 'DELETE') && !isAuthenticated) {
     return { statusCode: 401, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Sessão inválida ou expirada.' }) };
   }
   // ====================
@@ -126,7 +130,7 @@ exports.handler = async (event, context) => {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates' // Efetua Upsert se houver conflito de PK
+          'Prefer': 'resolution=merge-duplicates,return=representation' // Efetua Upsert se houver conflito de PK, e retorna os dados
         },
         body: JSON.stringify(payload)
       });
@@ -136,7 +140,9 @@ exports.handler = async (event, context) => {
         throw new Error(`Erro ao gravar dados no Supabase: ${response.status} - ${errText}`);
       }
 
-      const result = await response.json();
+      const rawText = await response.text();
+      const result = rawText ? JSON.parse(rawText) : {};
+      
       return {
         statusCode: 200,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
